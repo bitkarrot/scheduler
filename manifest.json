@@ -1,0 +1,9 @@
+{
+    "repos": [
+        {
+            "id": "crontabs",
+            "organisation": "bitkarrot",
+            "repository": "crontabs"
+        }
+    ]
+}

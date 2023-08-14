@@ -1,1 +1,3 @@
-# lnbits-crontabs
+# crontabs extension
+
+lnbits crontabs extension

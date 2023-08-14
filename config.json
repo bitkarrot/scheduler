@@ -1,0 +1,6 @@
+{
+    "name": "Crontabs",
+    "short_description": "Generate crontabs for lnbits",
+	"tile": "/crontabs/static/image/crontabs.png",
+    "contributors": ["bitkarrot"]
+}
