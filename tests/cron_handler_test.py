@@ -10,7 +10,7 @@ from cron_handler import CronHandler
 
 async def main(): 
     print("testing CronHandler")
-    username = 'bitcarrot'
+    username = 'root'
     env_vars = {'SHELL': '/usr/bin/bash', 'API_URL': 'http://localhost:8000'}
     
     # unique job id number to be placed in comment

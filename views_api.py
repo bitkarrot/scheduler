@@ -30,8 +30,6 @@ from .models import (
     User,
     UserDetailed,
     UserFilters,
-    # CreateUserWallet,
-    # Wallet,
 )
 
 

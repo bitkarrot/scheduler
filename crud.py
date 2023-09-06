@@ -12,10 +12,51 @@ from .models import (
     UserFilters,
 )
 
+from .cron_handler import CronHandler
 
+# TODO - do we manage this in admin panel somewhere or in environment variable?
+# set username to match that of user account that is running lnbits server
+username = 'bitcarrot'
+
+# crontab-specific methods, direct to system cron
+async def create_cron(comment:str, command:str, schedule:str, env_vars:dict):    
+    try:
+        ch = CronHandler(username)
+        response = await ch.new_job_with_env(command, schedule, comment=comment, env=env_vars)
+        return response
+    except Exception as e: 
+        return f"Error creating job: {e}"
+    
+
+async def delete_cron(link_id: str):
+    # the comment in actual crontab is the job ID in LNBits
+    try:
+        ch = CronHandler(username)
+        response = await ch.remove_by_comment(link_id)
+        return response
+    except Exception as e: 
+        return f"Error deleting job: {e}"
+
+
+## database + crontab handling methods
 async def create_crontabs_user(admin_id: str, data: CreateUserData) -> UserDetailed:
     link_id = urlsafe_short_hash()[:6]
 
+    # temporary blank env_vars held here, left here for future customization
+    env_vars = {}
+    
+    ch = CronHandler(username)
+    is_valid = await ch.validate_cron_string(data.schedule)
+    if not is_valid:
+        assert is_valid, "Invalid cron string, please check the format."
+        return f"Error in cron string syntax {data.schedule}"
+
+    response = await create_cron(link_id, data.command, data.schedule, env_vars)
+    print(response)
+    if response.startswith("Error"):
+        assert response.startswith("Error"), "Error creating Cron job"
+        return f"Error creating cron job: {response}"
+    
     await db.execute(
         """
         INSERT INTO crontabs.jobs (id, name, admin, command, schedule, extra)
@@ -38,6 +79,7 @@ async def get_crontabs_user(user_id: str) -> Optional[UserDetailed]:
 
 
 async def get_crontabs_users(admin: str, filters: Filters[UserFilters]) -> list[User]:
+    # check that job id match crontab list
     rows = await db.fetchall(
         f"""
         SELECT * FROM crontabs.jobs
@@ -48,9 +90,12 @@ async def get_crontabs_users(admin: str, filters: Filters[UserFilters]) -> list[
     )
     return [User(**row) for row in rows]
 
-
 async def delete_crontabs_user(user_id: str, delete_core: bool = True) -> None:
+    #TODO: get rid of delete_core
+    deleted = await delete_cron(user_id)
+    print(f'Deletion status for {user_id} : {deleted}')
     await db.execute("DELETE FROM crontabs.jobs WHERE id = ?", (user_id,))
+
 
 async def update_crontabs_user(user_id: str, admin_id: str, data: UpdateUserData) -> UserDetailed:
     cols = []

@@ -61,6 +61,7 @@ class UserFilters(FilterModel):
     id: str
     name: str
     command: Optional[str] = None
+    schedule: Optional[str] = None
     extra: Optional[dict[str, str]]
 
 
