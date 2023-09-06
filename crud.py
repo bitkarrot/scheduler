@@ -10,7 +10,6 @@ from .models import (
     User,
     UserDetailed,
     UserFilters,
-    # Wallet,
 )
 
 
@@ -53,21 +52,29 @@ async def get_crontabs_users(admin: str, filters: Filters[UserFilters]) -> list[
 async def delete_crontabs_user(user_id: str, delete_core: bool = True) -> None:
     await db.execute("DELETE FROM crontabs.jobs WHERE id = ?", (user_id,))
 
-# this only works for UpdateUserData, adjust UpdateUserData to be the full set (e.g. command, schedule, etc)
 async def update_crontabs_user(user_id: str, admin_id: str, data: UpdateUserData) -> UserDetailed:
     cols = []
     values = []
-    if data.user_name:
+    if data.job_name:
         cols.append("name = ?")
-        values.append(data.user_name)
+        values.append(data.job_name)
     if data.extra:
         if db.type == POSTGRES:
             cols.append("extra = extra::jsonb || ?")
         else:
             cols.append("extra = json_patch(extra, ?)")
         values.append(json.dumps(data.extra))
+    if data.command:
+        cols.append("command = ?")
+        values.append(data.command)
+    if data.schedule:
+        cols.append("schedule = ?")
+        values.append(data.schedule)
     values.append(user_id)
     values.append(admin_id)
+
+    # validate cron job here
+    # write update to cron tab
 
     await db.execute(
         f"""

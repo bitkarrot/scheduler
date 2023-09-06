@@ -35,14 +35,16 @@ class Operator(Enum):
 
 
 class CreateUserData(BaseModel):
-    user_name: str = Query(..., description="Name of the user")
+    user_name: str = Query(..., description="Name of the Job")
     command: str = Query("")
     schedule: str = Query("")
     extra: Optional[dict[str, str]] = Query(default=None)
 
 
 class UpdateUserData(BaseModel):
-    user_name: Optional[str] = Query(default=None, description="Name of the user")
+    job_name: Optional[str] = Query(default=None, description="Name of the Job")
+    command: Optional[str] = Query(default=None, description='Command to run')
+    schedule: Optional[str] = Query(default=None, description='Schedule to run')
     extra: Optional[dict[str, str]] = Query(default=None, description='Partial update for extra field')
 
 
