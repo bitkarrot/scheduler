@@ -23,3 +23,4 @@ def crontabs_renderer():
 
 from .views import *  # noqa
 from .views_api import *  # noqa
+from .cron_handler import *  # noqa
