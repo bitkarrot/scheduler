@@ -5,11 +5,11 @@
     <q-card>
       <q-card-section>
         <q-btn unelevated color="primary" @click="userDialog.show = true"
-          >New User</q-btn
+          >New Cronjob</q-btn
         >
-        <q-btn unelevated color="primary" @click="walletDialog.show = true"
+        <!-- <q-btn unelevated color="primary" @click="walletDialog.show = true"
           >New Wallet
-        </q-btn>
+        </q-btn> -->
       </q-card-section>
     </q-card>
 
@@ -17,7 +17,7 @@
       <q-card-section>
         <div class="row items-center no-wrap q-mb-md">
           <div class="col">
-            <h5 class="text-subtitle1 q-my-none">Users</h5>
+            <h5 class="text-subtitle1 q-my-none">Cron Jobs</h5>
           </div>
           <div class="col-auto">
             <q-btn flat color="grey" @click="exportUsersCSV"
@@ -151,31 +151,31 @@
           filled
           dense
           v-model.trim="userDialog.data.usrname"
-          label="Username"
+          label="Job Name"
         ></q-input>
-        <q-input
+        <!-- <q-input
           filled
           dense
           v-model.trim="userDialog.data.walname"
           label="Initial wallet name"
+        ></q-input> -->
+        <q-input
+          filled
+          dense
+          v-model.trim="userDialog.data.command"
+          label="Command"
         ></q-input>
         <q-input
           filled
           dense
-          v-model.trim="userDialog.data.email"
-          label="Email"
-        ></q-input>
-        <q-input
-          filled
-          dense
-          v-model.trim="userDialog.data.password"
-          label="Password"
+          v-model.trim="userDialog.data.schedule"
+          label="schedule"
         ></q-input>
 
+        <!-- :disable="userDialog.data.walname == null" -->
         <q-btn
           unelevated
           color="primary"
-          :disable="userDialog.data.walname == null"
           type="submit"
           >Create User</q-btn
         >
@@ -183,7 +183,7 @@
       </q-form>
     </q-card>
   </q-dialog>
-
+<!-- 
   <q-dialog v-model="walletDialog.show" position="top">
     <q-card class="q-pa-lg q-pt-xl" style="width: 500px">
       <q-form @submit="sendWalletFormData" class="q-gutter-md">
@@ -212,7 +212,7 @@
         <q-btn v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
       </q-form>
     </q-card>
-  </q-dialog>
+  </q-dialog> -->
 </div>
 {% endblock %} {% block scripts %} {{ window_vars(user) }}
 <script>
@@ -238,13 +238,13 @@
         usersTable: {
           columns: [
             {name: 'id', align: 'left', label: 'ID', field: 'id'},
-            {name: 'name', align: 'left', label: 'Username', field: 'name'},
-            {name: 'email', align: 'left', label: 'Email', field: 'email'},
+            {name: 'name', align: 'left', label: 'Job Name', field: 'name'},
+            {name: 'command', align: 'left', label: 'Command', field: 'command'},
             {
-              name: 'password',
+              name: 'schedule',
               align: 'left',
-              label: 'Password',
-              field: 'password'
+              label: 'schedule',
+              field: 'schedule'
             }
           ],
           pagination: {
@@ -319,9 +319,11 @@
         } else {
           var data = {
             user_name: this.userDialog.data.usrname,
-            wallet_name: this.userDialog.data.walname,
-            email: this.userDialog.data.email,
-            password: this.userDialog.data.password
+//            wallet_name: 'none',
+//            admin_id: 'no admin id',
+//            wallet_name: this.userDialog.data.walname,
+            command: this.userDialog.data.command,
+            schedule: this.userDialog.data.schedule
           }
         }
 
@@ -344,7 +346,7 @@
             self.userDialog.show = false
             self.userDialog.data = {}
             data = {}
-            self.getWallets()
+//            self.getWallets()
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)
@@ -367,7 +369,7 @@
                 self.users = _.reject(self.users, function (obj) {
                   return obj.id == userId
                 })
-                self.getWallets()
+//                self.getWallets()
               })
               .catch(function (error) {
                 LNbits.utils.notifyApiError(error)
@@ -465,7 +467,7 @@
     created: function () {
       if (this.g.user.wallets.length) {
         this.getUsers()
-        this.getWallets()
+        //  this.getWallets()
       }
     }
   })

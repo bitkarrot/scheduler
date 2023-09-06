@@ -6,7 +6,7 @@ from starlette.exceptions import HTTPException
 
 from lnbits.core import update_user_extension
 from lnbits.core.crud import get_user
-from lnbits.core.models import Payment
+# from lnbits.core.models import Payment
 from lnbits.db import Filters
 from lnbits.decorators import (
     WalletTypeInfo,
@@ -19,25 +19,25 @@ from lnbits.helpers import generate_filter_params_openapi
 from . import crontabs_ext
 from .crud import (
     create_crontabs_user,
-    create_crontabs_wallet,
     delete_crontabs_user,
-    delete_crontabs_wallet,
     get_crontabs_user,
     get_crontabs_users,
-    get_crontabs_users_wallets,
-    get_crontabs_wallet,
-    get_crontabs_wallet_transactions,
-    get_crontabs_wallets,
     update_crontabs_user,
+    # create_crontabs_wallet,
+    # delete_crontabs_wallet,
+    # get_crontabs_users_wallets,
+    # get_crontabs_wallet,
+    # get_crontabs_wallet_transactions,
+    # get_crontabs_wallets,
 )
 from .models import (
     CreateUserData,
-    CreateUserWallet,
     UpdateUserData,
     User,
     UserDetailed,
     UserFilters,
-    Wallet,
+    # CreateUserWallet,
+    # Wallet,
 )
 
 
@@ -100,12 +100,13 @@ async def api_crontabs_user(user_id: str) -> UserDetailed:
     summary="Create a new user",
     description="Create a new user",
     response_description="New User",
-    response_model=UserDetailed,
+    #response_model=UserDetailed,
+    response_model=User,
 )
 async def api_crontabs_users_create(
     data: CreateUserData,
     info: WalletTypeInfo = Depends(require_admin_key)
-) -> UserDetailed:
+) -> User:
     return await create_crontabs_user(info.wallet.user, data)
 
 
@@ -172,71 +173,71 @@ async def api_crontabs_activate_extension(
 # Wallets
 
 
-@crontabs_ext.post(
-    "/api/v1/wallets",
-    name="Create wallet for user",
-    summary="Create wallet for user",
-    description="Create wallet for user",
-    response_model=Wallet,
-    dependencies=[Depends(get_key_type)],
-)
-async def api_crontabs_wallets_create(data: CreateUserWallet) -> Wallet:
-    return await create_crontabs_wallet(
-        user_id=data.user_id, wallet_name=data.wallet_name, admin_id=data.admin_id
-    )
+# @crontabs_ext.post(
+#     "/api/v1/wallets",
+#     name="Create wallet for user",
+#     summary="Create wallet for user",
+#     description="Create wallet for user",
+#     response_model=Wallet,
+#     dependencies=[Depends(get_key_type)],
+# )
+# async def api_crontabs_wallets_create(data: CreateUserWallet) -> Wallet:
+#     return await create_crontabs_wallet(
+#         user_id=data.user_id, wallet_name=data.wallet_name, admin_id=data.admin_id
+#     )
 
 
-@crontabs_ext.get(
-    "/api/v1/wallets",
-    name="Get all user wallets",
-    summary="Get all user wallets",
-    description="Get all user wallets",
-    response_model=List[Wallet],
-)
-async def api_crontabs_wallets(
-    wallet: WalletTypeInfo = Depends(require_admin_key),
-) -> List[Wallet]:
-    admin_id = wallet.wallet.user
-    return await get_crontabs_wallets(admin_id)
+# @crontabs_ext.get(
+#     "/api/v1/wallets",
+#     name="Get all user wallets",
+#     summary="Get all user wallets",
+#     description="Get all user wallets",
+#     response_model=List[Wallet],
+# )
+# async def api_crontabs_wallets(
+#     wallet: WalletTypeInfo = Depends(require_admin_key),
+# ) -> List[Wallet]:
+#     admin_id = wallet.wallet.user
+#     return await get_crontabs_wallets(admin_id)
 
 
-@crontabs_ext.get(
-    "/api/v1/transactions/{wallet_id}",
-    name="Get all wallet transactions",
-    summary="Get all wallet transactions",
-    description="Get all wallet transactions",
-    response_model=List[Payment],
-    dependencies=[Depends(get_key_type)],
-)
-async def api_crontabs_wallet_transactions(wallet_id) -> List[Payment]:
-    return await get_crontabs_wallet_transactions(wallet_id)
+# @crontabs_ext.get(
+#     "/api/v1/transactions/{wallet_id}",
+#     name="Get all wallet transactions",
+#     summary="Get all wallet transactions",
+#     description="Get all wallet transactions",
+#     response_model=List[Payment],
+#     dependencies=[Depends(get_key_type)],
+# )
+# async def api_crontabs_wallet_transactions(wallet_id) -> List[Payment]:
+#     return await get_crontabs_wallet_transactions(wallet_id)
 
 
-@crontabs_ext.get(
-    "/api/v1/wallets/{user_id}",
-    name="Get user wallet",
-    summary="Get user wallet",
-    description="Get user wallet",
-    response_model=List[Wallet],
-    dependencies=[Depends(require_admin_key)],
-)
-async def api_crontabs_users_wallets(user_id) -> List[Wallet]:
-    return await get_crontabs_users_wallets(user_id)
+# @crontabs_ext.get(
+#     "/api/v1/wallets/{user_id}",
+#     name="Get user wallet",
+#     summary="Get user wallet",
+#     description="Get user wallet",
+#     response_model=List[Wallet],
+#     dependencies=[Depends(require_admin_key)],
+# )
+# async def api_crontabs_users_wallets(user_id) -> List[Wallet]:
+#     return await get_crontabs_users_wallets(user_id)
 
 
-@crontabs_ext.delete(
-    "/api/v1/wallets/{wallet_id}",
-    name="Delete wallet by id",
-    summary="Delete wallet by id",
-    description="Delete wallet by id",
-    response_model=str,
-    dependencies=[Depends(require_admin_key)],
-    status_code=HTTPStatus.OK,
-)
-async def api_crontabs_wallets_delete(wallet_id) -> None:
-    get_wallet = await get_crontabs_wallet(wallet_id)
-    if not get_wallet:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Wallet does not exist."
-        )
-    await delete_crontabs_wallet(wallet_id, get_wallet.user)
+# @crontabs_ext.delete(
+#     "/api/v1/wallets/{wallet_id}",
+#     name="Delete wallet by id",
+#     summary="Delete wallet by id",
+#     description="Delete wallet by id",
+#     response_model=str,
+#     dependencies=[Depends(require_admin_key)],
+#     status_code=HTTPStatus.OK,
+# )
+# async def api_crontabs_wallets_delete(wallet_id) -> None:
+#     get_wallet = await get_crontabs_wallet(wallet_id)
+#     if not get_wallet:
+#         raise HTTPException(
+#             status_code=HTTPStatus.NOT_FOUND, detail="Wallet does not exist."
+#         )
+#     await delete_crontabs_wallet(wallet_id, get_wallet.user)
