@@ -23,6 +23,7 @@ from .crud import (
     get_crontabs_user,
     get_crontabs_users,
     update_crontabs_user,
+    pause_crontabs,
 )
 from .models import (
     CreateUserData,
@@ -137,6 +138,23 @@ async def api_crontabs_users_delete(
             status_code=HTTPStatus.NOT_FOUND, detail="User does not exist."
         )
     await delete_crontabs_user(user_id, delete_core)
+
+
+@crontabs_ext.post(
+    "/api/v1/pause/{job_id}/{status}",
+    name="Pause Jobs",
+    summary="Start or Stop Cron jobs",
+    description="Stop or Start Cron jobs",
+    response_description="Pause jobs",
+    dependencies=[Depends(require_admin_key)],
+    responses={404: {"description": "Job does not exist."}},
+    status_code=HTTPStatus.OK,
+)
+async def api_crontabs_pause(
+    job_id, status
+) -> bool:
+    return await pause_crontabs(job_id, status)
+
 
 
 # Activate Extension

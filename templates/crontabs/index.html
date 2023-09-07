@@ -5,11 +5,8 @@
     <q-card>
       <q-card-section>
         <q-btn unelevated color="primary" @click="userDialog.show = true"
-          >New Cronjob</q-btn
+          >New Cron Job</q-btn
         >
-        <!-- <q-btn unelevated color="primary" @click="walletDialog.show = true"
-          >New Wallet
-        </q-btn> -->
       </q-card-section>
     </q-card>
 
@@ -48,6 +45,43 @@
                 {{ col.value }}
               </q-td>
               <q-td auto-width>
+
+                <q-btn
+                  v-if="jobStatus.show === false"
+                  flat
+                  dense
+                  size="s"
+                  @click="pauseJob(props.row.id, false)"
+                  icon="stop"
+                  color="red"
+                  background-color="white"
+                >
+                  <q-tooltip>Stop Job</q-tooltip>
+                </q-btn>
+
+                  <q-btn
+                  v-if="jobStatus.show === true && props.row.id === jobStatus.data.id"
+                  flat
+                  dense
+                  size="m"
+                  @click="startJob(props.row.id)"
+                  icon="arrow_right"
+                  color="green"
+                  background-color="white"
+                >
+                  <q-tooltip>Start Job</q-tooltip>
+                </q-btn>
+
+              <q-btn
+                  flat
+                  dense
+                  size="xs"
+                  @click="openUserUpdateDialog(props.row.id)"
+                  icon="edit"
+                  color="light-blue"
+                >
+                  <q-tooltip>Edit</q-tooltip>
+                </q-btn>
                 <q-btn
                   flat
                   dense
@@ -68,64 +102,40 @@
       <q-card-section>
         <div class="row items-center no-wrap q-mb-md">
           <div class="col">
-            <h5 class="text-subtitle1 q-my-none">Wallets</h5>
+            <h5 class="text-subtitle1 q-my-none">Environment Variables</h5>
           </div>
           <div class="col-auto">
-            <q-btn flat color="grey" @click="exportWalletsCSV"
-              >Export to CSV</q-btn
-            >
           </div>
         </div>
-        <q-table
-          dense
+        <q-form             
+              @submit="storeEnvRequest"
+              class="q-gutter-md"
+            >
+        <q-input
+        filled
+        dense
+        type="textarea"
+        label="paste environment variables"
+        ref="textArea"
+      >
+      </q-input>
+      <div class="row q-mt-lg">
+        <q-btn
+          unelevated
+          color="primary"
+          type="submit"
+          label="Save"
+        ></q-btn>
+        <q-btn
+          v-close-popup
           flat
-          :data="wallets"
-          row-key="id"
-          :columns="walletsTable.columns"
-          :pagination.sync="walletsTable.pagination"
-        >
-          {% raw %}
-          <template v-slot:header="props">
-            <q-tr :props="props">
-              <q-th auto-width></q-th>
-              <q-th v-for="col in props.cols" :key="col.name" :props="props">
-                {{ col.label }}
-              </q-th>
-              <q-th auto-width></q-th>
-            </q-tr>
-          </template>
-          <template v-slot:body="props">
-            <q-tr :props="props">
-              <q-td auto-width>
-                <q-btn
-                  unelevated
-                  dense
-                  size="xs"
-                  icon="account_balance_wallet"
-                  :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
-                  type="a"
-                  :href="props.row.walllink"
-                  target="_blank"
-                ></q-btn>
-                <q-tooltip> Link to wallet </q-tooltip>
-              </q-td>
-              <q-td v-for="col in props.cols" :key="col.name" :props="props">
-                {{ col.value }}
-              </q-td>
-              <q-td auto-width>
-                <q-btn
-                  flat
-                  dense
-                  size="xs"
-                  @click="deleteWallet(props.row.id)"
-                  icon="cancel"
-                  color="pink"
-                ></q-btn>
-              </q-td>
-            </q-tr>
-          </template>
-          {% endraw %}
-        </q-table>
+          color="grey"
+          class="q-ml-auto"
+          label="Cancel"
+        ></q-btn>
+      </div>
+      </q-form>
+
       </q-card-section>
     </q-card>
   </div>
@@ -145,7 +155,7 @@
   </div>
 
   <q-dialog v-model="userDialog.show" position="top">
-    <q-card class="q-pa-lg q-pt-xl" style="width: 500px">
+    <q-card class="q-pa-lg q-pt-xl" style="width: 800px">
       <q-form @submit="sendUserFormData" class="q-gutter-md">
         <q-input
           filled
@@ -153,66 +163,41 @@
           v-model.trim="userDialog.data.usrname"
           label="Job Name"
         ></q-input>
-        <!-- <q-input
-          filled
-          dense
-          v-model.trim="userDialog.data.walname"
-          label="Initial wallet name"
-        ></q-input> -->
         <q-input
           filled
           dense
           v-model.trim="userDialog.data.command"
           label="Command"
         ></q-input>
+
+        <q-card>
+          <h5 class="text-subtitle1 q-my-none">Schedule</h5>
+          <p> todo: add shortcut buttons here: daily, hourly, etc.</p>
+          <q-tr>
+            <q-th v-for="slot in slots" :key="slot" class="text-center">
+              <q-input v-model="cron[slot]" :label="slot" dense filled />
+            </q-th>
+          </q-tr>
+        </q-card>
+
         <q-input
-          filled
-          dense
-          v-model.trim="userDialog.data.schedule"
-          label="schedule"
+        filled
+        dense
+        disable
+        v-model.trim="userDialog.data.schedule"
+        label="schedule"          
         ></q-input>
 
-        <!-- :disable="userDialog.data.walname == null" -->
         <q-btn
           unelevated
           color="primary"
           type="submit"
-          >Create User</q-btn
+          >Create New Job</q-btn
         >
         <q-btn v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
       </q-form>
     </q-card>
   </q-dialog>
-<!-- 
-  <q-dialog v-model="walletDialog.show" position="top">
-    <q-card class="q-pa-lg q-pt-xl" style="width: 500px">
-      <q-form @submit="sendWalletFormData" class="q-gutter-md">
-        <q-select
-          filled
-          dense
-          emit-value
-          v-model="walletDialog.data.user"
-          :options="userOptions"
-          label="User *"
-        >
-        </q-select>
-        <q-input
-          filled
-          dense
-          v-model.trim="walletDialog.data.walname"
-          label="Wallet name"
-        ></q-input>
-        <q-btn
-          unelevated
-          color="primary"
-          :disable="walletDialog.data.walname == null"
-          type="submit"
-          >Create Wallet</q-btn
-        >
-        <q-btn v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
-      </q-form>
-    </q-card>
-  </q-dialog> -->
 </div>
 {% endblock %} {% block scripts %} {{ window_vars(user) }}
 <script>
@@ -234,7 +219,14 @@
       return {
         wallets: [],
         users: [],
-
+        slots: ['minute', 'hour', 'day', 'month', 'weekday'],
+        cron: {
+          minute: '*',
+          hour: '*',
+          day: '*',
+          month: '*',
+          weekday: '*'
+        },
         usersTable: {
           columns: [
             {name: 'id', align: 'left', label: 'ID', field: 'id'},
@@ -243,9 +235,9 @@
             {
               name: 'schedule',
               align: 'left',
-              label: 'schedule',
+              label: 'Schedule',
               field: 'schedule'
-            }
+            },
           ],
           pagination: {
             rowsPerPage: 10
@@ -275,6 +267,10 @@
         userDialog: {
           show: false,
           data: {}
+        },
+        jobStatus: { 
+          show:false,
+          data: {}
         }
       }
     },
@@ -287,6 +283,16 @@
             label: String(obj.id)
           }
         })
+      },
+      concatenatedString() {
+        // do some validation checking here for cron string
+        return `${this.cron.minute} ${this.cron.hour} ${this.cron.day} ${this.cron.month} ${this.cron.weekday}`;
+      }
+    },
+    watch: {
+      concatenatedString(newValue) {
+        // for cron string
+        this.userDialog.data.schedule = newValue.trim();
       }
     },
     methods: {
@@ -319,9 +325,6 @@
         } else {
           var data = {
             user_name: this.userDialog.data.usrname,
-//            wallet_name: 'none',
-//            admin_id: 'no admin id',
-//            wallet_name: this.userDialog.data.walname,
             command: this.userDialog.data.command,
             schedule: this.userDialog.data.schedule
           }
@@ -346,7 +349,6 @@
             self.userDialog.show = false
             self.userDialog.data = {}
             data = {}
-//            self.getWallets()
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)
@@ -369,12 +371,45 @@
                 self.users = _.reject(self.users, function (obj) {
                   return obj.id == userId
                 })
-//                self.getWallets()
               })
               .catch(function (error) {
                 LNbits.utils.notifyApiError(error)
               })
           })
+      },
+
+      pauseJob: function (jobId, status) {
+        var self = this
+        console.log(jobId)
+        LNbits.utils
+          .confirmDialog('Are you sure you want to stop this Job?')
+          .onOk(function () {
+            LNbits.api
+              .request(
+                'POST',
+                '/crontabs/api/v1/pause/' + jobId + '/' + status,
+                self.g.user.wallets[0].adminkey
+              )
+              .then(function (response) {
+                // update response status with true/false for success/failure
+                // in jobStatus.data.id
+//                self.users = _.reject(self.users, function (obj) {
+//                  return obj.id == userId
+//                })
+
+              })
+              .catch(function (error) {
+                LNbits.utils.notifyApiError(error)
+              })
+          })
+      },
+
+      // add start job method here
+
+
+      storeEnvRequest: function (e) {
+        // todo - make this functional with api call to store ENV variables. 
+        console.log(e)        
       },
 
       exportUsersCSV: function () {

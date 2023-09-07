@@ -90,6 +90,21 @@ async def get_crontabs_users(admin: str, filters: Filters[UserFilters]) -> list[
     )
     return [User(**row) for row in rows]
 
+
+async def pause_crontabs(job_id: str, state: str) -> bool:
+    try: 
+        print(f'Pausing job: {job_id}, State: {state}') 
+        ch = CronHandler(username)
+        b = True
+        if state.lower() == "false":
+            b = False
+        status = await ch.enable_job_by_comment(comment=job_id, bool=b)
+        print(f'Status: {status}')
+        return status
+    except Exception as e: 
+        return f"Error pausing job: {e}"
+
+
 async def delete_crontabs_user(user_id: str, delete_core: bool = True) -> None:
     #TODO: get rid of delete_core
     deleted = await delete_cron(user_id)

@@ -71,6 +71,7 @@ class CronHandler():
             return f"Error creating job: {command}, {self._user}, {frequency}"
 
     async def enable_job_by_comment(self, comment:str, bool:bool):
+        print(f'enable_job_by_comment: {comment}, bool: {bool}')
         iter = self._cron.find_comment(comment)
         ## assume iter is only 1 long as using unique comment ID
         for job in iter:
