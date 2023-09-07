@@ -339,6 +339,7 @@
             self.userDialog.show = false
             self.userDialog.data = {}
             data = {}
+            window.location.reload();
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)
@@ -403,11 +404,9 @@
               .then(function (response) {
                 // update response status with true/false for success/failure
                 // in jobStatus.data.id
-
-                // self.users = _.reject(self.users, function (obj) {
-                //  return obj.id == userId
-                //  })
-
+                self.users = _.reject(self.users, function (obj) {
+                  return obj.id == jobId
+                })
               })
               .catch(function (error) {
                 LNbits.utils.notifyApiError(error)

@@ -133,8 +133,11 @@ async def update_crontabs_user(user_id: str, admin_id: str, data: UpdateUserData
     values.append(user_id)
     values.append(admin_id)
 
-    # validate cron job here
+    # validate cron job before here
     # write update to cron tab
+    ch = CronHandler(username)
+    await ch.edit_job(data.command, data.schedule, comment=user_id)
+
 
     await db.execute(
         f"""
