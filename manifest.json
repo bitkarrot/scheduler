@@ -1,9 +1,9 @@
 {
     "repos": [
         {
-            "id": "crontabs",
+            "id": "scheduler",
             "organisation": "bitkarrot",
-            "repository": "crontabs"
+            "repository": "scheduler"
         }
     ]
 }
