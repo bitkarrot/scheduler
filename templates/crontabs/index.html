@@ -54,22 +54,9 @@
                   @click="pauseJob(props.row.id, false)"
                   icon="stop"
                   color="red"
-                  background-color="white"
                 >
                   <q-tooltip>Stop Job</q-tooltip>
                 </q-btn>
-
-                  <q-btn
-                  v-if="jobStatus.show === true && props.row.id === jobStatus.data.id"
-                  flat
-                  dense
-                  size="m"
-                  @click="startJob(props.row.id)"
-                  icon="arrow_right"
-                  color="green"
-                  background-color="white"
-                >
-                  <q-tooltip>Start Job</q-tooltip>
                 </q-btn>
 
               <q-btn
@@ -160,7 +147,7 @@
         <q-input
           filled
           dense
-          v-model.trim="userDialog.data.usrname"
+          v-model.trim="userDialog.data.name"
           label="Job Name"
         ></q-input>
         <q-input
@@ -181,11 +168,11 @@
         </q-card>
 
         <q-input
-        filled
-        dense
-        disable
-        v-model.trim="userDialog.data.schedule"
-        label="schedule"          
+          filled
+          dense
+          disable
+          v-model.trim="userDialog.data.schedule"
+          label="schedule"          
         ></q-input>
 
         <q-btn
@@ -322,19 +309,37 @@
       },
       sendUserFormData: function () {
         if (this.userDialog.data.id) {
+          this.updateUser(this.userDialog.data)
+          console.log("update user data")
         } else {
           var data = {
-            user_name: this.userDialog.data.usrname,
+            user_name: this.userDialog.data.name,
             command: this.userDialog.data.command,
             schedule: this.userDialog.data.schedule
           }
-        }
-
-        {
           this.createUser(data)
         }
       },
+      updateUser: function (data) { 
+        var self = this
+        LNbits.api
+          .request(
+            'PUT',
+            '/crontabs/api/v1/users/' + data.id,
+            this.g.user.wallets[0].adminkey,
+            data
+          )
+          .then(function (response) {
+            self.users.push(mapcrontabs(response.data))
+            self.userDialog.show = false
+            self.userDialog.data = {}
+            data = {}
+          })
+          .catch(function (error) {
+            LNbits.utils.notifyApiError(error)
+          })
 
+      },
       createUser: function (data) {
         var self = this
         LNbits.api
@@ -409,95 +414,13 @@
 
       storeEnvRequest: function (e) {
         // todo - make this functional with api call to store ENV variables. 
-        console.log(e)        
+        console.log("store environment variables")
       },
 
       exportUsersCSV: function () {
         LNbits.utils.exportCSV(this.usersTable.columns, this.users)
       },
 
-      ///////////////Wallets////////////////////////////
-
-      getWallets: function () {
-        var self = this
-
-        LNbits.api
-          .request(
-            'GET',
-            '/crontabs/api/v1/wallets',
-            this.g.user.wallets[0].adminkey
-          )
-          .then(function (response) {
-            self.wallets = response.data.map(function (obj) {
-              return mapcrontabs(obj)
-            })
-          })
-      },
-      openWalletUpdateDialog: function (linkId) {
-        var link = _.findWhere(this.users, {id: linkId})
-
-        this.walletDialog.data = _.clone(link._data)
-        this.walletDialog.show = true
-      },
-      sendWalletFormData: function () {
-        if (this.walletDialog.data.id) {
-        } else {
-          var data = {
-            user_id: this.walletDialog.data.user,
-            admin_id: this.g.user.id,
-            wallet_name: this.walletDialog.data.walname
-          }
-        }
-
-        {
-          this.createWallet(data)
-        }
-      },
-
-      createWallet: function (data) {
-        var self = this
-        LNbits.api
-          .request(
-            'POST',
-            '/crontabs/api/v1/wallets',
-            this.g.user.wallets[0].inkey,
-            data
-          )
-          .then(function (response) {
-            self.wallets.push(mapcrontabs(response.data))
-            self.walletDialog.show = false
-            self.walletDialog.data = {}
-            data = {}
-          })
-          .catch(function (error) {
-            LNbits.utils.notifyApiError(error)
-          })
-      },
-      deleteWallet: function (userId) {
-        var self = this
-
-        LNbits.utils
-          .confirmDialog('Are you sure you want to delete this wallet link?')
-          .onOk(function () {
-            LNbits.api
-              .request(
-                'DELETE',
-                '/crontabs/api/v1/wallets/' + userId,
-                self.g.user.wallets[0].adminkey
-              )
-              .then(function (response) {
-                self.wallets = _.reject(self.wallets, function (obj) {
-                  return obj.id == userId
-                })
-              })
-              .catch(function (error) {
-                LNbits.utils.notifyApiError(error)
-              })
-          })
-      },
-      exportWalletsCSV: function () {
-        LNbits.utils.exportCSV(this.walletsTable.columns, this.wallets)
-      }
     },
     created: function () {
       if (this.g.user.wallets.length) {
