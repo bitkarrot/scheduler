@@ -181,7 +181,7 @@
           type="submit"
           >Create New Job</q-btn
         >
-        <q-btn v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
+        <q-btn @click="cancelEdit" v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
       </q-form>
     </q-card>
   </q-dialog>
@@ -320,6 +320,11 @@
           this.createUser(data)
         }
       },
+      cancelEdit: function() { 
+        this.userDialog.show = false
+        this.userDialog.data = {}
+        data = {}
+      },
       updateUser: function (data) { 
         var self = this
         LNbits.api
@@ -398,9 +403,10 @@
               .then(function (response) {
                 // update response status with true/false for success/failure
                 // in jobStatus.data.id
-//                self.users = _.reject(self.users, function (obj) {
-//                  return obj.id == userId
-//                })
+
+                // self.users = _.reject(self.users, function (obj) {
+                //  return obj.id == userId
+                //  })
 
               })
               .catch(function (error) {
