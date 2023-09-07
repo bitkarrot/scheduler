@@ -1,6 +1,6 @@
 {
-    "name": "Crontabs",
-    "short_description": "Generate crontabs for lnbits",
+    "name": "Scheduler",
+    "short_description": "Generate Scheduled tasks via crontabs for lnbits",
 	"tile": "/crontabs/static/image/crontabs.png",
     "contributors": ["bitkarrot"]
 }
