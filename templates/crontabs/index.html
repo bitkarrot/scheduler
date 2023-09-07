@@ -102,7 +102,7 @@
         filled
         dense
         type="textarea"
-        label="paste environment variables"
+        label="paste environment variables separated by commas, e.g. ENV_VAR=1, ENV_VAR=2"
         ref="textArea"
       >
       </q-input>
@@ -119,6 +119,7 @@
           color="grey"
           class="q-ml-auto"
           label="Cancel"
+          @click="cancelEdit"
         ></q-btn>
       </div>
       </q-form>
@@ -179,7 +180,7 @@
           unelevated
           color="primary"
           type="submit"
-          >Create New Job</q-btn
+          >Submit</q-btn
         >
         <q-btn @click="cancelEdit" v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
       </q-form>
@@ -415,7 +416,6 @@
       },
 
       // add start job method here
-
 
       storeEnvRequest: function (e) {
         // todo - make this functional with api call to store ENV variables. 

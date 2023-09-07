@@ -13,10 +13,12 @@ from .models import (
 )
 
 from .cron_handler import CronHandler
+import os 
 
 # TODO - do we manage this in admin panel somewhere or in environment variable?
 # set username to match that of user account that is running lnbits server
-username = 'bitcarrot'
+# username = 'bitcarrot'
+username = os.environ.get('CRON_USERNAME')
 
 # crontab-specific methods, direct to system cron
 async def create_cron(comment:str, command:str, schedule:str, env_vars:dict):    
