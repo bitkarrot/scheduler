@@ -4,21 +4,21 @@ from fastapi.staticfiles import StaticFiles
 from lnbits.db import Database
 from lnbits.helpers import template_renderer
 
-db = Database("ext_crontabs")
+db = Database("ext_scheduler")
 
-crontabs_ext: APIRouter = APIRouter(prefix="/crontabs", tags=["crontabs"])
+scheduler_ext: APIRouter = APIRouter(prefix="/scheduler", tags=["scheduler"])
 
-crontabs_static_files = [
+scheduler_static_files = [
     {
-        "path": "/crontabs/static",
-        "app": StaticFiles(directory="lnbits/extensions/crontabs/static"),
-        "name": "crontabs_static",
+        "path": "/scheduler/static",
+        "app": StaticFiles(directory="lnbits/extensions/scheduler/static"),
+        "name": "scheduler_static",
     }
 ]
 
 
-def crontabs_renderer():
-    return template_renderer(["lnbits/extensions/crontabs/templates"])
+def scheduler_renderer():
+    return template_renderer(["lnbits/extensions/scheduler/templates"])
 
 
 from .views import *  # noqa

@@ -4,7 +4,7 @@ async def m001_initial(db):
     """
     await db.execute(
         """
-        CREATE TABLE crontabs.jobs (
+        CREATE TABLE scheduler.jobs (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             admin TEXT NOT NULL,
@@ -21,6 +21,6 @@ async def m002_add_jobs_attrs_column(db):
     """
     await db.execute(
         """
-        ALTER TABLE crontabs.jobs ADD COLUMN extra JSON
+        ALTER TABLE scheduler.jobs ADD COLUMN extra JSON
     """
     )

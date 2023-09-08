@@ -41,7 +41,7 @@ async def delete_cron(link_id: str):
 
 
 ## database + crontab handling methods
-async def create_crontabs_user(admin_id: str, data: CreateUserData) -> UserDetailed:
+async def create_scheduler_user(admin_id: str, data: CreateUserData) -> UserDetailed:
     link_id = urlsafe_short_hash()[:6]
 
     # temporary blank env_vars held here, left here for future customization
@@ -61,30 +61,30 @@ async def create_crontabs_user(admin_id: str, data: CreateUserData) -> UserDetai
     
     await db.execute(
         """
-        INSERT INTO crontabs.jobs (id, name, admin, command, schedule, extra)
+        INSERT INTO scheduler.jobs (id, name, admin, command, schedule, extra)
         VALUES (?, ?, ?, ?, ?, ?)
         """,
         (link_id, data.user_name, admin_id, data.command, data.schedule,
          json.dumps(data.extra) if data.extra else None),
     )
 
-    user_created = await get_crontabs_user(link_id)
+    user_created = await get_scheduler_user(link_id)
     assert user_created, "Newly created user couldn't be retrieved"
     return user_created
 
 
-async def get_crontabs_user(user_id: str) -> Optional[UserDetailed]:
-    row = await db.fetchone("SELECT * FROM crontabs.jobs WHERE id = ?", (user_id,))
+async def get_scheduler_user(user_id: str) -> Optional[UserDetailed]:
+    row = await db.fetchone("SELECT * FROM scheduler.jobs WHERE id = ?", (user_id,))
     if row:
         return User(**row)
         # return UserDetailed(**row, wallets=wallets)
 
 
-async def get_crontabs_users(admin: str, filters: Filters[UserFilters]) -> list[User]:
+async def get_scheduler_users(admin: str, filters: Filters[UserFilters]) -> list[User]:
     # check that job id match crontab list
     rows = await db.fetchall(
         f"""
-        SELECT * FROM crontabs.jobs
+        SELECT * FROM scheduler.jobs
         {filters.where(["admin = ?"])}
         {filters.pagination()}
         """,
@@ -93,7 +93,7 @@ async def get_crontabs_users(admin: str, filters: Filters[UserFilters]) -> list[
     return [User(**row) for row in rows]
 
 
-async def pause_crontabs(job_id: str, state: str) -> bool:
+async def pause_scheduler(job_id: str, state: str) -> bool:
     try: 
         print(f'Pausing job: {job_id}, State: {state}') 
         ch = CronHandler(username)
@@ -107,14 +107,14 @@ async def pause_crontabs(job_id: str, state: str) -> bool:
         return f"Error pausing job: {e}"
 
 
-async def delete_crontabs_user(user_id: str, delete_core: bool = True) -> None:
+async def delete_scheduler_user(user_id: str, delete_core: bool = True) -> None:
     #TODO: get rid of delete_core
     deleted = await delete_cron(user_id)
     print(f'Deletion status for {user_id} : {deleted}')
-    await db.execute("DELETE FROM crontabs.jobs WHERE id = ?", (user_id,))
+    await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (user_id,))
 
 
-async def update_crontabs_user(user_id: str, admin_id: str, data: UpdateUserData) -> UserDetailed:
+async def update_scheduler_user(user_id: str, admin_id: str, data: UpdateUserData) -> UserDetailed:
     cols = []
     values = []
     if data.job_name:
@@ -143,8 +143,8 @@ async def update_crontabs_user(user_id: str, admin_id: str, data: UpdateUserData
 
     await db.execute(
         f"""
-        UPDATE crontabs.jobs SET {", ".join(cols)} WHERE id = ? AND admin = ?
+        UPDATE scheduler.jobs SET {", ".join(cols)} WHERE id = ? AND admin = ?
         """,
         values
     )
-    return await get_crontabs_user(user_id)
+    return await get_scheduler_user(user_id)

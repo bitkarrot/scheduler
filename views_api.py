@@ -16,14 +16,14 @@ from lnbits.decorators import (
 )
 from lnbits.helpers import generate_filter_params_openapi
 
-from . import crontabs_ext
+from . import scheduler_ext
 from .crud import (
-    create_crontabs_user,
-    delete_crontabs_user,
-    get_crontabs_user,
-    get_crontabs_users,
-    update_crontabs_user,
-    pause_crontabs,
+    create_scheduler_user,
+    delete_scheduler_user,
+    get_scheduler_user,
+    get_scheduler_users,
+    update_scheduler_user,
+    pause_scheduler,
 )
 from .models import (
     CreateUserData,
@@ -34,7 +34,7 @@ from .models import (
 )
 
 
-@crontabs_ext.get(
+@scheduler_ext.get(
     "/api/v1/users",
     status_code=HTTPStatus.OK,
     name="User List",
@@ -43,7 +43,7 @@ from .models import (
     response_model=List[User],
     openapi_extra=generate_filter_params_openapi(UserFilters),
 )
-async def api_crontabs_users(
+async def api_scheduler_users(
     wallet: WalletTypeInfo = Depends(require_admin_key),
     filters: Filters[UserFilters] = Depends(parse_filters(UserFilters))
 ) -> List[User]:
@@ -68,10 +68,10 @@ async def api_crontabs_users(
     Fitlers are AND-combined
     """
     admin_id = wallet.wallet.user
-    return await get_crontabs_users(admin_id, filters)
+    return await get_scheduler_users(admin_id, filters)
 
 
-@crontabs_ext.get(
+@scheduler_ext.get(
     "/api/v1/users/{user_id}",
     name="User Get",
     summary="Get a specific user",
@@ -80,14 +80,14 @@ async def api_crontabs_users(
     dependencies=[Depends(get_key_type)],
     response_model=UserDetailed
 )
-async def api_crontabs_user(user_id: str) -> UserDetailed:
-    user = await get_crontabs_user(user_id)
+async def api_scheduler_user(user_id: str) -> UserDetailed:
+    user = await get_scheduler_user(user_id)
     if not user:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='User not found')
     return user
 
 
-@crontabs_ext.post(
+@scheduler_ext.post(
     "/api/v1/users",
     name="User Create",
     summary="Create a new user",
@@ -96,14 +96,14 @@ async def api_crontabs_user(user_id: str) -> UserDetailed:
     #response_model=UserDetailed,
     response_model=User,
 )
-async def api_crontabs_users_create(
+async def api_scheduler_users_create(
     data: CreateUserData,
     info: WalletTypeInfo = Depends(require_admin_key)
 ) -> User:
-    return await create_crontabs_user(info.wallet.user, data)
+    return await create_scheduler_user(info.wallet.user, data)
 
 
-@crontabs_ext.put(
+@scheduler_ext.put(
     "/api/v1/users/{user_id}",
     name="User Update",
     summary="Update a user",
@@ -111,15 +111,15 @@ async def api_crontabs_users_create(
     response_description="Updated user",
     response_model=UserDetailed,
 )
-async def api_crontabs_users_create(
+async def api_scheduler_users_create(
     user_id: str,
     data: UpdateUserData,
     info: WalletTypeInfo = Depends(require_admin_key)
 ) -> UserDetailed:
-    return await update_crontabs_user(user_id, info.wallet.user, data)
+    return await update_scheduler_user(user_id, info.wallet.user, data)
 
 
-@crontabs_ext.delete(
+@scheduler_ext.delete(
     "/api/v1/users/{user_id}",
     name="User Delete",
     summary="Delete a user",
@@ -128,19 +128,19 @@ async def api_crontabs_users_create(
     responses={404: {"description": "User does not exist."}},
     status_code=HTTPStatus.OK,
 )
-async def api_crontabs_users_delete(
+async def api_scheduler_users_delete(
     user_id,
     delete_core: bool = Query(True),
 ) -> None:
-    user = await get_crontabs_user(user_id)
+    user = await get_scheduler_user(user_id)
     if not user:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="User does not exist."
         )
-    await delete_crontabs_user(user_id, delete_core)
+    await delete_scheduler_user(user_id, delete_core)
 
 
-@crontabs_ext.post(
+@scheduler_ext.post(
     "/api/v1/pause/{job_id}/{status}",
     name="Pause Jobs",
     summary="Start or Stop Cron jobs",
@@ -150,15 +150,15 @@ async def api_crontabs_users_delete(
     responses={404: {"description": "Job does not exist."}},
     status_code=HTTPStatus.OK,
 )
-async def api_crontabs_pause(
+async def api_scheduler_pause(
     job_id, status
 ) -> bool:
-    return await pause_crontabs(job_id, status)
+    return await pause_scheduler(job_id, status)
 
 
 
 # Activate Extension
-@crontabs_ext.post(
+@scheduler_ext.post(
     "/api/v1/extensions",
     name="Extension Toggle",
     summary="Extension Toggle",
@@ -166,7 +166,7 @@ async def api_crontabs_pause(
     response_model=dict[str, str],
     responses={404: {"description": "User does not exist."}},
 )
-async def api_crontabs_activate_extension(
+async def api_scheduler_activate_extension(
     extension: str = Query(...), userid: str = Query(...), active: bool = Query(...)
 ) -> dict:
     user = await get_user(userid)
