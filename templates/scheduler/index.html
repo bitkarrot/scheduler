@@ -5,7 +5,7 @@
     <q-card>
       <q-card-section>
         <q-btn unelevated color="primary" @click="userDialog.show = true"
-          >New Cron Job</q-btn
+          >New Scheduled Job</q-btn
         >
       </q-card-section>
     </q-card>
@@ -14,7 +14,7 @@
       <q-card-section>
         <div class="row items-center no-wrap q-mb-md">
           <div class="col">
-            <h5 class="text-subtitle1 q-my-none">Cron Jobs</h5>
+            <h5 class="text-subtitle1 q-my-none">Scheduled Jobs List</h5>
           </div>
           <div class="col-auto">
             <q-btn flat color="grey" @click="exportUsersCSV"
@@ -405,9 +405,9 @@
               .then(function (response) {
                 // update response status with true/false for success/failure
                 // in jobStatus.data.id
-                self.users = _.reject(self.users, function (obj) {
-                  return obj.id == jobId
-                })
+                //self.users = _.reject(self.users, function (obj) {
+                //  return obj.id == jobId
+                //})
               })
               .catch(function (error) {
                 LNbits.utils.notifyApiError(error)
