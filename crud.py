@@ -1,6 +1,7 @@
 import json
 from typing import List, Optional
-from lnbits.helpers import urlsafe_short_hash
+from uuid import uuid4
+
 from lnbits.db import POSTGRES, Filters
 
 from . import db
@@ -15,9 +16,8 @@ from .models import (
 from .cron_handler import CronHandler
 import os 
 
-# TODO - do we manage this in admin panel somewhere or in environment variable?
+# TODO - add to LNBits environment variables file
 # set username to match that of user account that is running lnbits server
-# username = 'bitcarrot'
 username = os.environ.get('CRON_USERNAME')
 
 # crontab-specific methods, direct to system cron
@@ -42,7 +42,7 @@ async def delete_cron(link_id: str):
 
 ## database + crontab handling methods
 async def create_scheduler_user(admin_id: str, data: CreateUserData) -> UserDetailed:
-    link_id = urlsafe_short_hash()[:6]
+    link_id = uuid4().hex 
 
     # temporary blank env_vars held here, left here for future customization
     env_vars = {}
