@@ -85,47 +85,7 @@
       </q-card-section>
     </q-card>
 
-    <q-card>
-      <q-card-section>
-        <div class="row items-center no-wrap q-mb-md">
-          <div class="col">
-            <h5 class="text-subtitle1 q-my-none">Environment Variables</h5>
-          </div>
-          <div class="col-auto">
-          </div>
-        </div>
-        <q-form             
-              @submit="storeEnvRequest"
-              class="q-gutter-md"
-            >
-        <q-input
-        filled
-        dense
-        type="textarea"
-        label="paste environment variables separated by commas, e.g. ENV_VAR=1, ENV_VAR=2"
-        ref="textArea"
-      >
-      </q-input>
-      <div class="row q-mt-lg">
-        <q-btn
-          unelevated
-          color="primary"
-          type="submit"
-          label="Save"
-        ></q-btn>
-        <q-btn
-          v-close-popup
-          flat
-          color="grey"
-          class="q-ml-auto"
-          label="Cancel"
-          @click="cancelEdit"
-        ></q-btn>
-      </div>
-      </q-form>
 
-      </q-card-section>
-    </q-card>
   </div>
 
   <div class="col-12 col-md-4 col-lg-5 q-gutter-y-md">
@@ -417,10 +377,6 @@
 
       // add start job method here
 
-      storeEnvRequest: function (e) {
-        // todo - make this functional with api call to store ENV variables. 
-        console.log("store environment variables")
-      },
 
       exportUsersCSV: function () {
         LNbits.utils.exportCSV(this.usersTable.columns, this.users)
