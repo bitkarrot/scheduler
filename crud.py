@@ -16,9 +16,17 @@ from .models import (
 from .cron_handler import CronHandler
 import os 
 
-# TODO - add to LNBits environment variables file
+# TODO: add to LNBits Repo - environment variables file
 # set username to match that of user account that is running lnbits server
-username = os.environ.get('CRON_USERNAME')
+
+# TODO throw an exception here if this username isn't set 
+# exception throwing might need to be handled higher up in the stack 
+# also need to address issues of cron not being able to write to /tmp/* 
+# if run from within vscode on OSX (https://apple.stackexchange.com/questions/378553/crontab-operation-not-permitted)
+try:
+    username = os.environ.get('CRON_USERNAME')
+except Exception as e:
+    raise f'Error getting CRON_USERNAME: {e}'
 
 # crontab-specific methods, direct to system cron
 async def create_cron(comment:str, command:str, schedule:str, env_vars:dict):    
