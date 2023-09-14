@@ -23,10 +23,15 @@ import os
 # exception throwing might need to be handled higher up in the stack 
 # also need to address issues of cron not being able to write to /tmp/* 
 # if run from within vscode on OSX (https://apple.stackexchange.com/questions/378553/crontab-operation-not-permitted)
-try:
-    username = os.environ.get('CRON_USERNAME')
-except Exception as e:
-    raise f'Error getting CRON_USERNAME: {e}'
+
+username = 'bitcarrot'
+
+# TODO Fix this. 
+# try:
+#     username = os.environ.get('CRON_USERNAME')
+# except Exception as e:
+#     raise f'Error getting CRON_USERNAME: {e}'
+
 
 # crontab-specific methods, direct to system cron
 async def create_cron(comment:str, command:str, schedule:str, env_vars:dict):    
@@ -116,7 +121,7 @@ async def pause_scheduler(job_id: str, state: str) -> bool:
 
 
 async def delete_scheduler_user(user_id: str, delete_core: bool = True) -> None:
-    #TODO: get rid of delete_core
+    # TODO: get rid of delete_core
     deleted = await delete_cron(user_id)
     print(f'Deletion status for {user_id} : {deleted}')
     await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (user_id,))
