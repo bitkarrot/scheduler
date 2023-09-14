@@ -4,9 +4,11 @@ lnbits scheduler extension [previously name crontabs]
 
 Notes: 
 
-- IMPORTANT: .env file set your system username that is running the LNBits instance. 
-Example: if the user that is running the server is 'lnbits', you need to set SCHEDULER_USER=lnbits in the .env file
-.env.example is the example file. 
+- IMPORTANT: .env file set your system username that is running the LNBits instance.
+
+  Example: if the user that is running the server is 'lnbits', you need to set SCHEDULER_USER=lnbits in the .env file
+
+  The .env.example is the example file. 
 
 - Additional Requirements: python-crontab==3.0.0
 - This is a Draft: running on OSX only at the moment. 
