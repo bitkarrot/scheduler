@@ -26,11 +26,11 @@ from .crud import (
     pause_scheduler,
 )
 from .models import (
-    CreateUserData,
-    UpdateUserData,
-    User,
-    UserDetailed,
-    UserFilters,
+    CreateJobData,
+    UpdateJobData,
+    Job,
+    JobDetailed,
+    JobFilters,
 )
 
 @scheduler_ext.get(
@@ -39,13 +39,13 @@ from .models import (
     name="Jobs List",
     summary="get list of jobs",
     response_description="list of jobs",
-    response_model=List[User],
-    openapi_extra=generate_filter_params_openapi(UserFilters),
+    response_model=List[Job],
+    openapi_extra=generate_filter_params_openapi(JobFilters),
 )
 async def api_scheduler_jobs(
     wallet: WalletTypeInfo = Depends(require_admin_key),
-    filters: Filters[UserFilters] = Depends(parse_filters(UserFilters))
-) -> List[User]:
+    filters: Filters[JobFilters] = Depends(parse_filters(JobFilters))
+) -> List[Job]:
     """
     Retrieves all jobs, supporting flexible filtering (LHS Brackets).
 
@@ -71,13 +71,13 @@ async def api_scheduler_jobs(
     description="get jobs",
     response_description="job if job exists",
     dependencies=[Depends(get_key_type)],
-    response_model=UserDetailed
+    response_model=JobDetailed
 )
-async def api_scheduler_user(job_id: str) -> UserDetailed:
-    user = await get_scheduler_job(job_id)
-    if not user:
+async def api_scheduler_user(job_id: str) -> JobDetailed:
+    Job = await get_scheduler_job(job_id)
+    if not Job:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Jobs not found')
-    return user
+    return Job
 
 
 @scheduler_ext.post(
@@ -86,13 +86,13 @@ async def api_scheduler_user(job_id: str) -> UserDetailed:
     summary="Create a new job",
     description="Create a new job",
     response_description="New Job",
-    #response_model=UserDetailed,
-    response_model=User,
+    response_model=Job,
+    # response_model=UserDetailed,
 )
 async def api_scheduler_jobs_create(
-    data: CreateUserData,
+    data: CreateJobData,
     info: WalletTypeInfo = Depends(require_admin_key)
-) -> User:
+) -> Job:
     return await create_scheduler_jobs(info.wallet.user, data)
 
 
@@ -102,13 +102,13 @@ async def api_scheduler_jobs_create(
     summary="Update a jobs",
     description="Update a jobs",
     response_description="Updated jobs",
-    response_model=UserDetailed,
+    response_model=JobDetailed,
 )
 async def api_scheduler_jobs_create(
     job_id: str,
-    data: UpdateUserData,
+    data: UpdateJobData,
     info: WalletTypeInfo = Depends(require_admin_key)
-) -> UserDetailed:
+) -> JobDetailed:
     return await update_scheduler_job(job_id, info.wallet.user, data)
 
 

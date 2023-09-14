@@ -34,21 +34,21 @@ class Operator(Enum):
             raise ValueError('Unknown')
 
 
-class CreateUserData(BaseModel):
+class CreateJobData(BaseModel):
     user_name: str = Query(..., description="Name of the Job")
     command: str = Query("")
     schedule: str = Query("")
     extra: Optional[dict[str, str]] = Query(default=None)
 
 
-class UpdateUserData(BaseModel):
+class UpdateJobData(BaseModel):
     job_name: Optional[str] = Query(default=None, description="Name of the Job")
     command: Optional[str] = Query(default=None, description='Command to run')
     schedule: Optional[str] = Query(default=None, description='Schedule to run')
     extra: Optional[dict[str, str]] = Query(default=None, description='Partial update for extra field')
 
 
-class User(BaseModel):
+class Job(BaseModel):
     id: str
     name: str
     admin: str
@@ -57,7 +57,7 @@ class User(BaseModel):
     extra: Optional[dict[str, str]]
 
 
-class UserFilters(FilterModel):
+class JobFilters(FilterModel):
     id: str
     name: str
     command: Optional[str] = None
@@ -65,6 +65,6 @@ class UserFilters(FilterModel):
     extra: Optional[dict[str, str]]
 
 
-class UserDetailed(User):
+class JobDetailed(Job):
     pass
     #wallets: list[Wallet]

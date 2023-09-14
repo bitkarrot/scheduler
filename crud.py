@@ -6,11 +6,11 @@ from lnbits.db import POSTGRES, Filters
 
 from . import db
 from .models import (
-    CreateUserData,
-    UpdateUserData,
-    User,
-    UserDetailed,
-    UserFilters,
+    CreateJobData,
+    UpdateJobData,
+    Job,
+    JobDetailed,
+    JobFilters,
 )
 
 from .cron_handler import CronHandler
@@ -52,7 +52,7 @@ async def delete_cron(link_id: str):
 
 
 ## database + crontab handling methods
-async def create_scheduler_jobs(admin_id: str, data: CreateUserData) -> UserDetailed:
+async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetailed:
     link_id = uuid4().hex 
 
     # temporary blank env_vars held here, left here for future customization
@@ -84,14 +84,13 @@ async def create_scheduler_jobs(admin_id: str, data: CreateUserData) -> UserDeta
     return job_created
 
 
-async def get_scheduler_job(job_id: str) -> Optional[UserDetailed]:
+async def get_scheduler_job(job_id: str) -> Optional[JobDetailed]:
     row = await db.fetchone("SELECT * FROM scheduler.jobs WHERE id = ?", (job_id,))
     if row:
-        return User(**row)
-        # return UserDetailed(**row, wallets=wallets)
+        return Job(**row)
 
 
-async def get_scheduler_jobs(admin: str, filters: Filters[UserFilters]) -> list[User]:
+async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> list[Job]:
     # check that job id match crontab list
     rows = await db.fetchall(
         f"""
@@ -101,7 +100,7 @@ async def get_scheduler_jobs(admin: str, filters: Filters[UserFilters]) -> list[
         """,
         filters.values([admin])
     )
-    return [User(**row) for row in rows]
+    return [Job(**row) for row in rows]
 
 
 async def pause_scheduler(job_id: str, state: str) -> bool:
@@ -125,7 +124,7 @@ async def delete_scheduler_jobs(job_id: str, delete_core: bool = True) -> None:
     await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (job_id,))
 
 
-async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateUserData) -> UserDetailed:
+async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) -> JobDetailed:
     cols = []
     values = []
     if data.job_name:
