@@ -18,11 +18,11 @@ from lnbits.helpers import generate_filter_params_openapi
 
 from . import scheduler_ext
 from .crud import (
-    create_scheduler_user,
-    delete_scheduler_user,
-    get_scheduler_user,
-    get_scheduler_users,
-    update_scheduler_user,
+    create_scheduler_jobs,
+    delete_scheduler_jobs,
+    get_scheduler_job,
+    get_scheduler_jobs,
+    update_scheduler_job,
     pause_scheduler,
 )
 from .models import (
@@ -33,111 +33,104 @@ from .models import (
     UserFilters,
 )
 
-
 @scheduler_ext.get(
-    "/api/v1/users",
+    "/api/v1/jobs",
     status_code=HTTPStatus.OK,
-    name="User List",
-    summary="get list of users",
-    response_description="list of users",
+    name="Jobs List",
+    summary="get list of jobs",
+    response_description="list of jobs",
     response_model=List[User],
     openapi_extra=generate_filter_params_openapi(UserFilters),
 )
-async def api_scheduler_users(
+async def api_scheduler_jobs(
     wallet: WalletTypeInfo = Depends(require_admin_key),
     filters: Filters[UserFilters] = Depends(parse_filters(UserFilters))
 ) -> List[User]:
     """
-    Retrieves all users, supporting flexible filtering (LHS Brackets).
+    Retrieves all jobs, supporting flexible filtering (LHS Brackets).
 
     ### Syntax
     `field[op]=value`
 
-    ### Example Query Strings
-    ```
-    email[eq]=test@mail.com
-    name[ex]=dont-want&name[ex]=dont-want-too
-    extra.role[ne]=role-id
-    ```
     ### Operators
     - eq, ne
     - gt, lt
     - in (include)
     - ex (exclude)
 
-    Fitlers are AND-combined
+    Filters are AND-combined
     """
     admin_id = wallet.wallet.user
-    return await get_scheduler_users(admin_id, filters)
+    return await get_scheduler_jobs(admin_id, filters)
 
 
 @scheduler_ext.get(
-    "/api/v1/users/{user_id}",
-    name="User Get",
-    summary="Get a specific user",
-    description="get user",
+    "/api/v1/jobs/{user_id}",
+    name="Jobs Get",
+    summary="Get a specific jobs",
+    description="get jobs",
     response_description="user if user exists",
     dependencies=[Depends(get_key_type)],
     response_model=UserDetailed
 )
 async def api_scheduler_user(user_id: str) -> UserDetailed:
-    user = await get_scheduler_user(user_id)
+    user = await get_scheduler_job(user_id)
     if not user:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='User not found')
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Jobs not found')
     return user
 
 
 @scheduler_ext.post(
-    "/api/v1/users",
-    name="User Create",
-    summary="Create a new user",
-    description="Create a new user",
-    response_description="New User",
+    "/api/v1/jobs",
+    name="Job Create",
+    summary="Create a new job",
+    description="Create a new job",
+    response_description="New Job",
     #response_model=UserDetailed,
     response_model=User,
 )
-async def api_scheduler_users_create(
+async def api_scheduler_jobs_create(
     data: CreateUserData,
     info: WalletTypeInfo = Depends(require_admin_key)
 ) -> User:
-    return await create_scheduler_user(info.wallet.user, data)
+    return await create_scheduler_jobs(info.wallet.user, data)
 
 
 @scheduler_ext.put(
-    "/api/v1/users/{user_id}",
-    name="User Update",
-    summary="Update a user",
-    description="Update a user",
-    response_description="Updated user",
+    "/api/v1/jobs/{user_id}",
+    name="Jobs Update",
+    summary="Update a jobs",
+    description="Update a jobs",
+    response_description="Updated jobs",
     response_model=UserDetailed,
 )
-async def api_scheduler_users_create(
+async def api_scheduler_jobs_create(
     user_id: str,
     data: UpdateUserData,
     info: WalletTypeInfo = Depends(require_admin_key)
 ) -> UserDetailed:
-    return await update_scheduler_user(user_id, info.wallet.user, data)
+    return await update_scheduler_job(user_id, info.wallet.user, data)
 
 
 @scheduler_ext.delete(
-    "/api/v1/users/{user_id}",
-    name="User Delete",
-    summary="Delete a user",
-    description="Delete a user",
+    "/api/v1/jobs/{jobs_id}",
+    name="Jobs Delete",
+    summary="Delete a jobs",
+    description="Delete a jobs",
     dependencies=[Depends(require_admin_key)],
-    responses={404: {"description": "User does not exist."}},
+    responses={404: {"description": "Jobs does not exist."}},
     status_code=HTTPStatus.OK,
 )
-async def api_scheduler_users_delete(
-    user_id,
+async def api_scheduler_jobs_delete(
+    jobs_id,
     delete_core: bool = Query(True),
 ) -> None:
-    user = await get_scheduler_user(user_id)
-    if not user:
+    jobs = await get_scheduler_job(jobs_id)
+    if not jobs:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="User does not exist."
+            status_code=HTTPStatus.NOT_FOUND, detail="Jobs does not exist."
         )
-    await delete_scheduler_user(user_id, delete_core)
+    await delete_scheduler_jobs(jobs_id, delete_core)
 
 
 @scheduler_ext.post(
@@ -164,16 +157,16 @@ async def api_scheduler_pause(
     summary="Extension Toggle",
     description="Extension Toggle",
     response_model=dict[str, str],
-    responses={404: {"description": "User does not exist."}},
+    responses={404: {"description": "Jobs does not exist."}},
 )
 async def api_scheduler_activate_extension(
-    extension: str = Query(...), userid: str = Query(...), active: bool = Query(...)
+    extension: str = Query(...), jobsid: str = Query(...), active: bool = Query(...)
 ) -> dict:
-    user = await get_user(userid)
-    if not user:
+    job = await get_user(jobsid)
+    if not job:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="User does not exist."
+            status_code=HTTPStatus.NOT_FOUND, detail="Job does not exist."
         )
-    await update_user_extension(user_id=userid, extension=extension, active=active)
+    await update_user_extension(job_id=jobsid, extension=extension, active=active)
     return {"extension": "updated"}
 

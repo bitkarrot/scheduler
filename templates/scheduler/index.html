@@ -73,7 +73,7 @@
                   flat
                   dense
                   size="xs"
-                  @click="deleteUser(props.row.id)"
+                  @click="deleteJob(props.row.id)"
                   icon="cancel"
                   color="pink"
                 ></q-btn>
@@ -191,27 +191,6 @@
             rowsPerPage: 10
           }
         },
-        walletsTable: {
-          columns: [
-            {name: 'id', align: 'left', label: 'ID', field: 'id'},
-            {name: 'name', align: 'left', label: 'Name', field: 'name'},
-            {name: 'user', align: 'left', label: 'User', field: 'user'},
-            {
-              name: 'adminkey',
-              align: 'left',
-              label: 'Admin Key',
-              field: 'adminkey'
-            },
-            {name: 'inkey', align: 'left', label: 'Invoice Key', field: 'inkey'}
-          ],
-          pagination: {
-            rowsPerPage: 10
-          }
-        },
-        walletDialog: {
-          show: false,
-          data: {}
-        },
         userDialog: {
           show: false,
           data: {}
@@ -243,16 +222,16 @@
         this.userDialog.data.schedule = newValue.trim();
       }
     },
-    methods: {
-      ///////////////Users////////////////////////////
+    methods: {      
+      ///////////////Jobs////////////////////////////
 
-      getUsers: function () {
+      getJobs: function () {
         var self = this
 
         LNbits.api
           .request(
             'GET',
-            '/scheduler/api/v1/users',
+            '/scheduler/api/v1/jobs',
             this.g.user.wallets[0].adminkey
           )
           .then(function (response) {
@@ -271,14 +250,14 @@
       sendUserFormData: function () {
         if (this.userDialog.data.id) {
           this.updateUser(this.userDialog.data)
-          console.log("update user data")
+          console.log("update job data")
         } else {
           var data = {
             user_name: this.userDialog.data.name,
             command: this.userDialog.data.command,
             schedule: this.userDialog.data.schedule
           }
-          this.createUser(data)
+          this.createJob(data)
         }
       },
       cancelEdit: function() { 
@@ -291,7 +270,7 @@
         LNbits.api
           .request(
             'PUT',
-            '/scheduler/api/v1/users/' + data.id,
+            '/scheduler/api/v1/jobs/' + data.id,
             this.g.user.wallets[0].adminkey,
             data
           )
@@ -307,12 +286,12 @@
           })
 
       },
-      createUser: function (data) {
+      createJob: function (data) {
         var self = this
         LNbits.api
           .request(
             'POST',
-            '/scheduler/api/v1/users',
+            '/scheduler/api/v1/jobs',
             this.g.user.wallets[0].adminkey,
             data
           )
@@ -326,7 +305,7 @@
             LNbits.utils.notifyApiError(error)
           })
       },
-      deleteUser: function (userId) {
+      deleteJob: function (userId) {
         var self = this
 
         console.log(userId)
@@ -336,7 +315,7 @@
             LNbits.api
               .request(
                 'DELETE',
-                '/scheduler/api/v1/users/' + userId,
+                '/scheduler/api/v1/jobs/' + userId,
                 self.g.user.wallets[0].adminkey
               )
               .then(function (response) {
@@ -385,7 +364,7 @@
     },
     created: function () {
       if (this.g.user.wallets.length) {
-        this.getUsers()
+        this.getJobs()
         //  this.getWallets()
       }
     }

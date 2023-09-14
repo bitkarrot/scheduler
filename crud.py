@@ -21,8 +21,6 @@ import os
 
 # TODO throw an exception here if this username isn't set 
 # exception throwing might need to be handled higher up in the stack 
-# also need to address issues of cron not being able to write to /tmp/* 
-# if run from within vscode on OSX (https://apple.stackexchange.com/questions/378553/crontab-operation-not-permitted)
 
 username = 'bitcarrot'
 
@@ -54,7 +52,7 @@ async def delete_cron(link_id: str):
 
 
 ## database + crontab handling methods
-async def create_scheduler_user(admin_id: str, data: CreateUserData) -> UserDetailed:
+async def create_scheduler_jobs(admin_id: str, data: CreateUserData) -> UserDetailed:
     link_id = uuid4().hex 
 
     # temporary blank env_vars held here, left here for future customization
@@ -81,19 +79,19 @@ async def create_scheduler_user(admin_id: str, data: CreateUserData) -> UserDeta
          json.dumps(data.extra) if data.extra else None),
     )
 
-    user_created = await get_scheduler_user(link_id)
+    user_created = await get_scheduler_job(link_id)
     assert user_created, "Newly created user couldn't be retrieved"
     return user_created
 
 
-async def get_scheduler_user(user_id: str) -> Optional[UserDetailed]:
+async def get_scheduler_job(user_id: str) -> Optional[UserDetailed]:
     row = await db.fetchone("SELECT * FROM scheduler.jobs WHERE id = ?", (user_id,))
     if row:
         return User(**row)
         # return UserDetailed(**row, wallets=wallets)
 
 
-async def get_scheduler_users(admin: str, filters: Filters[UserFilters]) -> list[User]:
+async def get_scheduler_jobs(admin: str, filters: Filters[UserFilters]) -> list[User]:
     # check that job id match crontab list
     rows = await db.fetchall(
         f"""
@@ -120,14 +118,14 @@ async def pause_scheduler(job_id: str, state: str) -> bool:
         return f"Error pausing job: {e}"
 
 
-async def delete_scheduler_user(user_id: str, delete_core: bool = True) -> None:
+async def delete_scheduler_jobs(user_id: str, delete_core: bool = True) -> None:
     # TODO: get rid of delete_core
     deleted = await delete_cron(user_id)
     print(f'Deletion status for {user_id} : {deleted}')
     await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (user_id,))
 
 
-async def update_scheduler_user(user_id: str, admin_id: str, data: UpdateUserData) -> UserDetailed:
+async def update_scheduler_job(user_id: str, admin_id: str, data: UpdateUserData) -> UserDetailed:
     cols = []
     values = []
     if data.job_name:
@@ -160,4 +158,4 @@ async def update_scheduler_user(user_id: str, admin_id: str, data: UpdateUserDat
         """,
         values
     )
-    return await get_scheduler_user(user_id)
+    return await get_scheduler_job(user_id)
