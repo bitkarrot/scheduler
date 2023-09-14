@@ -4,7 +4,7 @@
   <div class="col-12 col-md-8 col-lg-7 q-gutter-y-md">
     <q-card>
       <q-card-section>
-        <q-btn unelevated color="primary" @click="userDialog.show = true"
+        <q-btn unelevated color="primary" @click="jobDialog.show = true"
           >New Scheduled Job</q-btn
         >
       </q-card-section>
@@ -17,7 +17,7 @@
             <h5 class="text-subtitle1 q-my-none">Scheduled Jobs List</h5>
           </div>
           <div class="col-auto">
-            <q-btn flat color="grey" @click="exportUsersCSV"
+            <q-btn flat color="grey" @click="exportJobsCSV"
               >Export to CSV</q-btn
             >
           </div>
@@ -25,10 +25,10 @@
         <q-table
           dense
           flat
-          :data="users"
+          :data="jobs"
           row-key="id"
-          :columns="usersTable.columns"
-          :pagination.sync="usersTable.pagination"
+          :columns="jobsTable.columns"
+          :pagination.sync="jobsTable.pagination"
         >
           {% raw %}
           <template v-slot:header="props">
@@ -63,7 +63,7 @@
                   flat
                   dense
                   size="xs"
-                  @click="openUserUpdateDialog(props.row.id)"
+                  @click="openJobUpdateDialog(props.row.id)"
                   icon="edit"
                   color="light-blue"
                 >
@@ -102,19 +102,19 @@
     </q-card>
   </div>
 
-  <q-dialog v-model="userDialog.show" position="top">
+  <q-dialog v-model="jobDialog.show" position="top">
     <q-card class="q-pa-lg q-pt-xl" style="width: 800px">
-      <q-form @submit="sendUserFormData" class="q-gutter-md">
+      <q-form @submit="sendJobFormData" class="q-gutter-md">
         <q-input
           filled
           dense
-          v-model.trim="userDialog.data.name"
+          v-model.trim="jobDialog.data.name"
           label="Job Name"
         ></q-input>
         <q-input
           filled
           dense
-          v-model.trim="userDialog.data.command"
+          v-model.trim="jobDialog.data.command"
           label="Command"
         ></q-input>
 
@@ -132,7 +132,7 @@
           filled
           dense
           disable
-          v-model.trim="userDialog.data.schedule"
+          v-model.trim="jobDialog.data.schedule"
           label="schedule"          
         ></q-input>
 
@@ -166,7 +166,7 @@
     data: function () {
       return {
         wallets: [],
-        users: [],
+        jobs: [],
         slots: ['minute', 'hour', 'day', 'month', 'weekday'],
         cron: {
           minute: '*',
@@ -175,7 +175,7 @@
           month: '*',
           weekday: '*'
         },
-        usersTable: {
+        jobsTable: {
           columns: [
             {name: 'id', align: 'left', label: 'ID', field: 'id'},
             {name: 'name', align: 'left', label: 'Job Name', field: 'name'},
@@ -191,7 +191,7 @@
             rowsPerPage: 10
           }
         },
-        userDialog: {
+        jobDialog: {
           show: false,
           data: {}
         },
@@ -203,7 +203,7 @@
     },
     computed: {
       userOptions: function () {
-        return this.users.map(function (obj) {
+        return this.jobs.map(function (obj) {
           console.log(obj.id)
           return {
             value: String(obj.id),
@@ -219,7 +219,7 @@
     watch: {
       concatenatedString(newValue) {
         // for cron string
-        this.userDialog.data.schedule = newValue.trim();
+        this.jobDialog.data.schedule = newValue.trim();
       }
     },
     methods: {      
@@ -235,37 +235,37 @@
             this.g.user.wallets[0].adminkey
           )
           .then(function (response) {
-            self.users = response.data.map(function (obj) {
+            self.jobs = response.data.map(function (obj) {
               return mapcrontabs(obj)
             })
           })
       },
 
-      openUserUpdateDialog: function (linkId) {
-        var link = _.findWhere(this.users, {id: linkId})
+      openJobUpdateDialog: function (linkId) {
+        var link = _.findWhere(this.jobs, {id: linkId})
 
-        this.userDialog.data = _.clone(link._data)
-        this.userDialog.show = true
+        this.jobDialog.data = _.clone(link._data)
+        this.jobDialog.show = true
       },
-      sendUserFormData: function () {
-        if (this.userDialog.data.id) {
-          this.updateUser(this.userDialog.data)
+      sendJobFormData: function () {
+        if (this.jobDialog.data.id) {
+          this.updateJob(this.jobDialog.data)
           console.log("update job data")
         } else {
           var data = {
-            user_name: this.userDialog.data.name,
-            command: this.userDialog.data.command,
-            schedule: this.userDialog.data.schedule
+            user_name: this.jobDialog.data.name,
+            command: this.jobDialog.data.command,
+            schedule: this.jobDialog.data.schedule
           }
           this.createJob(data)
         }
       },
       cancelEdit: function() { 
-        this.userDialog.show = false
-        this.userDialog.data = {}
+        this.jobDialog.show = false
+        this.jobDialog.data = {}
         data = {}
       },
-      updateUser: function (data) { 
+      updateJob: function (data) { 
         var self = this
         LNbits.api
           .request(
@@ -275,9 +275,9 @@
             data
           )
           .then(function (response) {
-            self.users.push(mapcrontabs(response.data))
-            self.userDialog.show = false
-            self.userDialog.data = {}
+            self.jobs.push(mapcrontabs(response.data))
+            self.jobDialog.show = false
+            self.jobDialog.data = {}
             data = {}
             window.location.reload();
           })
@@ -296,31 +296,31 @@
             data
           )
           .then(function (response) {
-            self.users.push(mapcrontabs(response.data))
-            self.userDialog.show = false
-            self.userDialog.data = {}
+            self.jobs.push(mapcrontabs(response.data))
+            self.jobDialog.show = false
+            self.jobDialog.data = {}
             data = {}
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)
           })
       },
-      deleteJob: function (userId) {
+      deleteJob: function (jobId) {
         var self = this
 
-        console.log(userId)
+        console.log(jobId)
         LNbits.utils
-          .confirmDialog('Are you sure you want to delete this User link?')
+          .confirmDialog('Are you sure you want to delete this Job?')
           .onOk(function () {
             LNbits.api
               .request(
                 'DELETE',
-                '/scheduler/api/v1/jobs/' + userId,
+                '/scheduler/api/v1/jobs/' + jobId,
                 self.g.user.wallets[0].adminkey
               )
               .then(function (response) {
-                self.users = _.reject(self.users, function (obj) {
-                  return obj.id == userId
+                self.jobs = _.reject(self.jobs, function (obj) {
+                  return obj.id == jobId
                 })
               })
               .catch(function (error) {
@@ -344,7 +344,7 @@
               .then(function (response) {
                 // update response status with true/false for success/failure
                 // in jobStatus.data.id
-                //self.users = _.reject(self.users, function (obj) {
+                //self.jobs = _.reject(self.jobs, function (obj) {
                 //  return obj.id == jobId
                 //})
               })
@@ -357,8 +357,8 @@
       // add start job method here
 
 
-      exportUsersCSV: function () {
-        LNbits.utils.exportCSV(this.usersTable.columns, this.users)
+      exportJobsCSV: function () {
+        LNbits.utils.exportCSV(this.jobsTable.columns, this.jobs)
       },
 
     },

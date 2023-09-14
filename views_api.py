@@ -65,16 +65,16 @@ async def api_scheduler_jobs(
 
 
 @scheduler_ext.get(
-    "/api/v1/jobs/{user_id}",
+    "/api/v1/jobs/{job_id}",
     name="Jobs Get",
     summary="Get a specific jobs",
     description="get jobs",
-    response_description="user if user exists",
+    response_description="job if job exists",
     dependencies=[Depends(get_key_type)],
     response_model=UserDetailed
 )
-async def api_scheduler_user(user_id: str) -> UserDetailed:
-    user = await get_scheduler_job(user_id)
+async def api_scheduler_user(job_id: str) -> UserDetailed:
+    user = await get_scheduler_job(job_id)
     if not user:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Jobs not found')
     return user
@@ -97,7 +97,7 @@ async def api_scheduler_jobs_create(
 
 
 @scheduler_ext.put(
-    "/api/v1/jobs/{user_id}",
+    "/api/v1/jobs/{job_id}",
     name="Jobs Update",
     summary="Update a jobs",
     description="Update a jobs",
@@ -105,11 +105,11 @@ async def api_scheduler_jobs_create(
     response_model=UserDetailed,
 )
 async def api_scheduler_jobs_create(
-    user_id: str,
+    job_id: str,
     data: UpdateUserData,
     info: WalletTypeInfo = Depends(require_admin_key)
 ) -> UserDetailed:
-    return await update_scheduler_job(user_id, info.wallet.user, data)
+    return await update_scheduler_job(job_id, info.wallet.user, data)
 
 
 @scheduler_ext.delete(

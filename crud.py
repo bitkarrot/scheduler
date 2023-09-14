@@ -79,13 +79,13 @@ async def create_scheduler_jobs(admin_id: str, data: CreateUserData) -> UserDeta
          json.dumps(data.extra) if data.extra else None),
     )
 
-    user_created = await get_scheduler_job(link_id)
-    assert user_created, "Newly created user couldn't be retrieved"
-    return user_created
+    job_created = await get_scheduler_job(link_id)
+    assert job_created, "Newly created Job couldn't be retrieved"
+    return job_created
 
 
-async def get_scheduler_job(user_id: str) -> Optional[UserDetailed]:
-    row = await db.fetchone("SELECT * FROM scheduler.jobs WHERE id = ?", (user_id,))
+async def get_scheduler_job(job_id: str) -> Optional[UserDetailed]:
+    row = await db.fetchone("SELECT * FROM scheduler.jobs WHERE id = ?", (job_id,))
     if row:
         return User(**row)
         # return UserDetailed(**row, wallets=wallets)
@@ -118,14 +118,14 @@ async def pause_scheduler(job_id: str, state: str) -> bool:
         return f"Error pausing job: {e}"
 
 
-async def delete_scheduler_jobs(user_id: str, delete_core: bool = True) -> None:
+async def delete_scheduler_jobs(job_id: str, delete_core: bool = True) -> None:
     # TODO: get rid of delete_core
-    deleted = await delete_cron(user_id)
-    print(f'Deletion status for {user_id} : {deleted}')
-    await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (user_id,))
+    deleted = await delete_cron(job_id)
+    print(f'Deletion status for {job_id} : {deleted}')
+    await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (job_id,))
 
 
-async def update_scheduler_job(user_id: str, admin_id: str, data: UpdateUserData) -> UserDetailed:
+async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateUserData) -> UserDetailed:
     cols = []
     values = []
     if data.job_name:
@@ -143,13 +143,13 @@ async def update_scheduler_job(user_id: str, admin_id: str, data: UpdateUserData
     if data.schedule:
         cols.append("schedule = ?")
         values.append(data.schedule)
-    values.append(user_id)
+    values.append(job_id)
     values.append(admin_id)
 
     # validate cron job before here
     # write update to cron tab
     ch = CronHandler(username)
-    await ch.edit_job(data.command, data.schedule, comment=user_id)
+    await ch.edit_job(data.command, data.schedule, comment=job_id)
 
 
     await db.execute(
@@ -158,4 +158,4 @@ async def update_scheduler_job(user_id: str, admin_id: str, data: UpdateUserData
         """,
         values
     )
-    return await get_scheduler_job(user_id)
+    return await get_scheduler_job(job_id)
