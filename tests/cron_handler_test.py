@@ -4,13 +4,19 @@ import datetime as dt
 import sys
 sys.path.insert(0,'..')
 from cron_handler import CronHandler
+from utils import get_env_data_as_dict
 
 ## TODO make this a legit pytest
 ## UNIT TEST ALL THE THINGS!!
 
 async def main(): 
+    vars = get_env_data_as_dict('../.env')
+    print(vars)
+    username = vars['SCHEDULER_USER']
+    print(f'Scheduler Username: {username}')
+
     print("testing CronHandler")
-    username = 'bitcarrot'
+    # username = 'bitcarrot'
     env_vars = {'SHELL': '/usr/bin/bash', 'API_URL': 'http://localhost:8000'}
     
     # unique job id number to be placed in comment
@@ -25,6 +31,11 @@ async def main():
     # regular cron job with comment
     response = await ch.new_job("ls", "* * * * *", comment=comment)
     print(response)
+
+    # regular cron job with aliase
+    response = await ch.new_job("ls", "@hourly", comment=comment)
+    print(response)
+
 
     # cron job with env vars
     response = await ch.new_job_with_env("echo", "* * * * *", comment=echo_comment, env=env_vars)
@@ -52,6 +63,17 @@ async def main():
     is_valid = await ch.validate_cron_string(cron_string)
     print(f'cron string {cron_string} is valid: {is_valid}')    
 
+    # validate cron string is valid
+    cron_string = 'hourly'
+    is_valid = await ch.validate_cron_string(cron_string)
+    print(f'cron string {cron_string} is valid: {is_valid}')    
+
+    # validate cron string is valid
+    cron_string = '@reboot'
+    is_valid = await ch.validate_cron_string(cron_string)
+    print(f'cron string {cron_string} is valid: {is_valid}')    
+
+
     # set env vars
     print("set env vars")
     await ch.set_env_vars(env_vars)
@@ -65,6 +87,6 @@ async def main():
     await ch.clear_all_jobs()
 
 
+
 if __name__ == "__main__":
     asyncio.run(main())
-

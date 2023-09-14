@@ -14,22 +14,20 @@ from .models import (
 )
 
 from .cron_handler import CronHandler
-import os 
+from .utils import get_env_data_as_dict
+import os
 
-# TODO: add to LNBits Repo - environment variables file
+# TODO: Get username from environment 
+# variables file
 # set username to match that of user account that is running lnbits server
-
-# TODO throw an exception here if this username isn't set 
 # exception throwing might need to be handled higher up in the stack 
 
-username = 'bitcarrot'
+cwd = os.getcwd()
+vars = get_env_data_as_dict(cwd + '/lnbits/extensions/scheduler/.env')
+username = vars['SCHEDULER_USER']
+print(f'Scheduler Username: {username}')
 
-# TODO Fix this. 
-# try:
-#     username = os.environ.get('CRON_USERNAME')
-# except Exception as e:
-#     raise f'Error getting CRON_USERNAME: {e}'
-
+#username = 'bitcarrot'
 
 # crontab-specific methods, direct to system cron
 async def create_cron(comment:str, command:str, schedule:str, env_vars:dict):    
