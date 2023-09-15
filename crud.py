@@ -17,17 +17,12 @@ from .cron_handler import CronHandler
 from .utils import get_env_data_as_dict
 import os
 
-# TODO: Get username from environment 
-# variables file
-# set username to match that of user account that is running lnbits server
 # exception throwing might need to be handled higher up in the stack 
-
 cwd = os.getcwd()
 vars = get_env_data_as_dict(cwd + '/lnbits/extensions/scheduler/.env')
 username = vars['SCHEDULER_USER']
-print(f'Scheduler Username: {username}')
+# print(f'Scheduler Username: {username}')
 
-#username = 'bitcarrot'
 
 # crontab-specific methods, direct to system cron
 async def create_cron(comment:str, command:str, schedule:str, env_vars:dict):    
