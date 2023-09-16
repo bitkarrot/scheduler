@@ -51,11 +51,11 @@
                   flat
                   dense
                   size="s"
-                  @click="pauseJob(props.row.id, false)"
-                  icon="stop"
-                  color="red"
+                  @click="toggleButton(props.row.id)"
+                  :icon="getButtonIcon(props.row.id)"
+                  :color="getButtonColor(props.row.id)"
                 >
-                  <q-tooltip>Stop Job</q-tooltip>
+                  <q-tooltip>{{ getButtonText(props.row.id) }}</q-tooltip>
                 </q-btn>
                 </q-btn>
 
@@ -120,7 +120,7 @@
 
         <q-card>
           <h5 class="text-subtitle1 q-my-none">Schedule</h5>
-          <p> todo: add shortcut buttons here: daily, hourly, etc.</p>
+          <!-- <p> todo: add shortcut buttons here: daily, hourly, etc.</p> -->
           <q-tr>
             <q-th v-for="slot in slots" :key="slot" class="text-center">
               <q-input v-model="cron[slot]" :label="slot" dense filled />
@@ -165,8 +165,10 @@
     mixins: [windowMixin],
     data: function () {
       return {
+        jobStates: {}, // A data property to keep track of button states for each id
         wallets: [],
         jobs: [],
+        shortcuts: ['@reboot','@hourly','@daily','@weekly','@monthly','@yearly'],
         slots: ['minute', 'hour', 'day', 'month', 'weekday'],
         cron: {
           minute: '*',
@@ -328,12 +330,28 @@
               })
           })
       },
-
+      toggleButton(id) {
+        this.$set(this.jobStates, id, !this.jobStates[id]);
+        this.pauseJob(id, !this.jobStates[id]);
+      },
+      getButtonIcon(id) {
+        return this.jobStates[id] ? 'play_arrow' : 'stop';
+      },
+      getButtonText(id) {
+        return this.jobStates[id] ? 'Play' : 'Stop';
+      },
+      getButtonColor(id) {
+        return this.jobStates[id] ? 'green' : 'red';
+      },
       pauseJob: function (jobId, status) {
         var self = this
-        console.log(jobId)
+        console.log(jobId, status)
+        let confirm_msg = 'Are you sure you want to Stop this Job?'
+        if (status) { 
+          confirm_msg = 'Are you sure you want to Start this Job?'
+        }
         LNbits.utils
-          .confirmDialog('Are you sure you want to stop this Job?')
+          .confirmDialog(confirm_msg)
           .onOk(function () {
             LNbits.api
               .request(
@@ -353,14 +371,16 @@
               })
           })
       },
-
-      // add start job method here
-
-
       exportJobsCSV: function () {
         LNbits.utils.exportCSV(this.jobsTable.columns, this.jobs)
       },
 
+    },
+    props: {
+      row: {
+        type: Object,
+        default: () => ({ id: null }) // Define a default row object if none is provided
+      }
     },
     created: function () {
       if (this.g.user.wallets.length) {
