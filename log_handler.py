@@ -1,10 +1,11 @@
 import logging
 import os
 
+# This is a sample logging file
+# For Testing Purposes only
 dir_path = os.path.dirname(os.path.realpath(__file__))
 filename = os.path.join(dir_path, 'test_log.log')
 
-# # Logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
