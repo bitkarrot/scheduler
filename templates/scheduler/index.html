@@ -137,7 +137,53 @@
 
         <q-card>
           <h5 class="text-subtitle1 q-my-none">Headers</h5>
-          << Todo >> 
+          <p>Add headers to the request. For Example: <br/>
+            "X-Api-Key: 0b2569190e2f4bfc90a7ae25aa194518" <br/>
+          </p>
+
+          <q-list bordered separator>
+            <q-item
+              clickable
+              v-ripple
+              v-for="(item, index) in jobDialog.headers"
+              :key="index"
+            >
+          <q-item-section>
+            <q-input
+              filled
+              dense
+              label="Key"
+              placeholder="Content-type"
+              v-model="jobDialog.headers[index].key"
+            ></q-input>
+          </q-item-section>
+          <q-item-section>
+            <q-input
+              filled
+              dense
+              label="Value"
+              placeholder="application/json"
+              v-model="jobDialog.headers[index].value"
+            ></q-input>
+          </q-item-section>
+          <q-item-section side>
+            <q-btn
+              unelevated
+              dense
+              size="xs"
+              icon="delete"
+              :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
+              @click="jobDialog.headers.splice(index, 1)"
+            ></q-btn>
+          </q-item-section>
+        </q-item>
+        <q-item clickable v-ripple>
+          <q-btn flat icon="add" @click="jobDialog.headers.push({})">
+            Add Header Entry
+          </q-btn>
+        </q-item>
+      </q-list>
+
         </q-card>
   
         <q-card>
@@ -145,7 +191,7 @@
           <q-input
           filled
           v-model.trim="jobDialog.data.body"
-          label="Body"
+          label='Example: {"out": true, "bolt11": <string>}'
           type="textarea"
           rows="4" 
         />
@@ -194,6 +240,12 @@
     obj._data = _.clone(obj)
     return obj
   }
+  var mapHeaders = function (obj) {
+    obj.amount = parseFloat(obj.amount / 100).toFixed(2)
+
+    return obj
+  }
+
 
   new Vue({
     el: '#vue',
@@ -235,7 +287,8 @@
         },
         jobDialog: {
           show: false,
-          data: {}
+          data: {},
+          headers: [],
         },
         jobStatus: { 
           show:false,
@@ -296,13 +349,13 @@
           // console.log("update job data")
         } else {
           var data = {
-            user_name: this.jobDialog.data.name,
+            user_name: this.jobDialog.data.name, // switch to job_name
             // command: this.jobDialog.data.command,
-            // status: this.jobDialog.data.status,
+            status: this.jobDialog.data.status,
             schedule: this.jobDialog.data.schedule,
             httpverb: this.jobDialog.data.httpverb,
             url: this.jobDialog.data.url,
-            headers: this.jobDialog.data.headers,
+            headers: this.jobDialog.headers,
             body: this.jobDialog.data.body,
 
           }
@@ -312,6 +365,7 @@
       cancelEdit: function() { 
         this.jobDialog.show = false
         this.jobDialog.data = {}
+        this.jobDialog.headers = []
         data = {}
       },
       updateJob: function (data) { 
@@ -327,6 +381,7 @@
             self.jobs.push(mapcrontabs(response.data))
             self.jobDialog.show = false
             self.jobDialog.data = {}
+            self.jobDialog.headers = []
             data = {}
             window.location.reload();
           })
@@ -348,6 +403,7 @@
             self.jobs.push(mapcrontabs(response.data))
             self.jobDialog.show = false
             self.jobDialog.data = {}
+            self.jobDialog.headers = []
             data = {}
           })
           .catch(function (error) {

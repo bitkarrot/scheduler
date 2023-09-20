@@ -8,7 +8,7 @@ async def save_job_execution(response: str, jobID: str) -> bool:
     if response.status_code == 200:
         print(f"success, saving to database for jobID: {jobID}") 
         print(f'status_code: {response.status_code}')
-        print(f'response: {response.text}')
+        # print(f'response: {response.text}')
         # TODO: save result to database w/job ID as reference and timestamp?
     return True
 
