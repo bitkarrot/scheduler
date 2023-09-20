@@ -28,7 +28,7 @@ username = vars['SCHEDULER_USER']
 async def create_cron(comment:str, command:str, schedule:str, env_vars:dict):    
     try:
         ch = CronHandler(username)
-        response = await ch.new_job_with_env(command, schedule, comment=comment, env=env_vars)
+        response = await ch.new_job(command, schedule, comment=comment, env=env_vars)
         return response
     except Exception as e: 
         return f"Error creating job: {e}"

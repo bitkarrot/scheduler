@@ -31,16 +31,16 @@ async def main():
     ch = CronHandler(username)
 
     # regular cron job with comment
-    response = await ch.new_job("ls", "15 * * * *", comment=comment)
+    response = await ch.new_job("ls", "15 * * * *", comment=comment, env={})
     print(response)
 
     # regular cron job with log handler
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    response = await ch.new_job_with_env(f"/Users/bitcarrot/.pyenv/shims/python3 {dir_path}/../log_handler.py", "* * * * *", comment=id_vars['ID'], env=id_vars)
+    response = await ch.new_job(f"/Users/bitcarrot/.pyenv/shims/python3 {dir_path}/../log_handler.py", "* * * * *", comment=id_vars['ID'], env=id_vars)
     print(response)
 
     # cron job with env vars with errors redirected to text file
-    response = await ch.new_job_with_env(f"/Users/bitcarrot/.pyenv/shims/python3 {dir_path}/../log_handler.py >> /tmp/output.txt 2>&1", "* * * * *", comment=id_vars_2['ID'], env=id_vars_2)
+    response = await ch.new_job(f"/Users/bitcarrot/.pyenv/shims/python3 {dir_path}/../log_handler.py >> /tmp/output.txt 2>&1", "* * * * *", comment=id_vars_2['ID'], env=id_vars_2)
     print(response)
 
     # enable job
