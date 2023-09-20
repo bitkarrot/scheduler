@@ -20,10 +20,12 @@ async def main():
     print("testing CronHandler")
     # username = 'bitcarrot'
     env_vars = {'SHELL': '/usr/bin/bash', 'API_URL': 'http://localhost:8000'}
+    id_vars = { 'ID': '23487923847298347928987'}
+    id_vars_2 = { 'ID': 'adf098werlkj987'}
     
     # unique job id number to be placed in comment
     comment = "cron python script"
-    echo_comment = "cron now echo"
+    # echo_comment = "cron now echo"
 
     now = dt.datetime.now()
     print(f'current datetime: {now}')
@@ -36,12 +38,12 @@ async def main():
 
     # regular cron job with alias
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    response = await ch.new_job(f"/usr/bin/python3 {dir_path}/../log_handler.py", "* * * * *", comment=comment)
+    response = await ch.new_job(f"/Users/bitcarrot/.pyenv/shims/python3 {dir_path}/../log_handler.py", "* * * * *", comment=id_vars['ID'])
     print(response)
 
     # cron job with env vars
-    # response = await ch.new_job_with_env("echo", "@hourly", comment=echo_comment, env=env_vars)
-    # print(response)
+    response = await ch.new_job_with_env("/Users/bitcarrot/.pyenv/shims/python3 {dir_path}/../log_handler.py >> /tmp/output.txt >2&1", "* * * * *", comment=id_vars_2['ID'], env=id_vars_2)
+    print(response)
 
     # enable job
     print("Enable Job by Comment")

@@ -79,6 +79,11 @@ class CronHandler():
             self._cron.write_to_user(user=self._user)
             return job.is_enabled()
 
+    async def get_job_status(self, job_id: str) -> bool:
+        iter = self._cron.find_comment(job_id)
+        for job in iter:
+            return job.is_enabled()
+
 
     async def remove_job(self, command=str):
         self._cron.remove_all(command=command)
