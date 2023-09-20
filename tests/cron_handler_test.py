@@ -17,7 +17,6 @@ async def main():
     print(f'Scheduler Username: {username}')
 
     print("testing CronHandler")
-    # username = 'bitcarrot'
     env_vars = {'SHELL': '/usr/bin/bash', 'API_URL': 'http://localhost:8000'}
     id_vars = { 'ID': '23487923847298347928987'}
     id_vars_2 = { 'ID': 'adf098werlkj987'}
@@ -37,11 +36,11 @@ async def main():
 
     # regular cron job with alias
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    response = await ch.new_job(f"/Users/bitcarrot/.pyenv/shims/python3 {dir_path}/../log_handler.py", "* * * * *", comment=id_vars['ID'])
+    response = await ch.new_job_with_env(f"/Users/bitcarrot/.pyenv/shims/python3 {dir_path}/../log_handler.py", "* * * * *", comment=id_vars['ID'], env=id_vars)
     print(response)
 
     # cron job with env vars
-    response = await ch.new_job_with_env("/Users/bitcarrot/.pyenv/shims/python3 {dir_path}/../log_handler.py >> /tmp/output.txt >2&1", "* * * * *", comment=id_vars_2['ID'], env=id_vars_2)
+    response = await ch.new_job_with_env("/Users/bitcarrot/.pyenv/shims/python3 {dir_path}/../log_handler.py >> /tmp/output.txt 2>&1", "* * * * *", comment=id_vars_2['ID'], env=id_vars_2)
     print(response)
 
     # enable job
@@ -90,7 +89,7 @@ async def main():
     print(output)
 
     # remove all jobs
-    await ch.clear_all_jobs()
+    # await ch.clear_all_jobs()
 
 
 
