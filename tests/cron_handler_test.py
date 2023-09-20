@@ -53,6 +53,11 @@ async def main():
     disable_status = await ch.enable_job_by_comment(comment=comment, bool=False)
     print(f'enabled status: {disable_status}')
 
+    # job status
+    jobid = id_vars['ID']
+    status = await ch.get_job_status(jobid)
+    print(f'ID: {jobid}, Job Status: {status}')
+
     # pretty print jobs
     print("\npretty print jobs")
     await ch.pretty_print_jobs()
@@ -89,7 +94,7 @@ async def main():
     print(output)
 
     # remove all jobs
-    # await ch.clear_all_jobs()
+    await ch.clear_all_jobs()
 
 
 
