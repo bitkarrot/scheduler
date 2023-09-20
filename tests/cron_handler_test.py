@@ -2,11 +2,11 @@
 import asyncio
 import datetime as dt
 import sys
+sys.path.insert(0,'..')
+
 from cron_handler import CronHandler
 from utils import get_env_data_as_dict
 import os
-
-sys.path.insert(0,'..')
 
 ## TODO make this a legit pytest
 
