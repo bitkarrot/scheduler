@@ -35,15 +35,26 @@ class Operator(Enum):
 
 
 class CreateJobData(BaseModel):
-    user_name: str = Query(..., description="Name of the Job")
-    command: str = Query("")
+    #user_name: str = Query(..., description="Name of the Job")
+    #command: str = Query("")
+    job_name: Optional[str] = Query(default=None, description="Name of the Job")
+    status: bool  # true is active, false if paused
+    httpverb: Optional[str] = Query(default=None)
+    url: Optional[str] = Query(default=None)
+    headers: Optional[dict[str, str]] = Query(default=None)
+    body: Optional[dict[str, str]] = Query(default=None)
     schedule: str = Query("")
     extra: Optional[dict[str, str]] = Query(default=None)
 
 
 class UpdateJobData(BaseModel):
+#    command: Optional[str] = Query(default=None, description='Command to run')
     job_name: Optional[str] = Query(default=None, description="Name of the Job")
-    command: Optional[str] = Query(default=None, description='Command to run')
+    status: bool  # true is active, false if paused
+    httpverb: Optional[str] = None
+    url: Optional[str] = None
+    headers: Optional[dict[str, str]] = None
+    body: Optional[dict[str, str]] = None
     schedule: Optional[str] = Query(default=None, description='Schedule to run')
     extra: Optional[dict[str, str]] = Query(default=None, description='Partial update for extra field')
 
@@ -52,16 +63,25 @@ class Job(BaseModel):
     id: str
     name: str
     admin: str
-    command: Optional[str] = None
+    status: bool  # true is active, false if paused
     schedule: Optional[str] = None
+    # command: Optional[str] = None
+    httpverb: Optional[str] = None
+    url: Optional[str] = None
+    headers: Optional[dict[str, str]] = None
+    body: Optional[dict[str, str]] = None
     extra: Optional[dict[str, str]]
 
 
 class JobFilters(FilterModel):
     id: str
     name: str
-    command: Optional[str] = None
+    # command: Optional[str] = None
     schedule: Optional[str] = None
+    httpverb: Optional[str] = None
+    url: Optional[str] = None
+    headers: Optional[dict[str, str]] = None
+    body: Optional[dict[str, str]] = None
     extra: Optional[dict[str, str]]
 
 

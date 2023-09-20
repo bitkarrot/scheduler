@@ -220,6 +220,7 @@
           columns: [
             {name: 'id', align: 'left', label: 'ID', field: 'id'},
             {name: 'name', align: 'left', label: 'Job Name', field: 'name'},
+            {name: 'status', align: 'left', label: 'Status', field: 'status'},
             // {name: 'command', align: 'left', label: 'Command', field: 'command'},
             {
               name: 'schedule',
@@ -277,6 +278,7 @@
           )
           .then(function (response) {
             self.jobs = response.data.map(function (obj) {
+              console.log(mapcrontabs(obj))
               return mapcrontabs(obj)
             })
           })
@@ -296,6 +298,7 @@
           var data = {
             user_name: this.jobDialog.data.name,
             // command: this.jobDialog.data.command,
+            // status: this.jobDialog.data.status,
             schedule: this.jobDialog.data.schedule,
             httpverb: this.jobDialog.data.httpverb,
             url: this.jobDialog.data.url,
@@ -353,8 +356,6 @@
       },
       deleteJob: function (jobId) {
         var self = this
-
-        // console.log(jobId)
         LNbits.utils
           .confirmDialog('Are you sure you want to delete this Job?')
           .onOk(function () {
@@ -389,7 +390,7 @@
       },
       pauseJob: function (jobId, status) {
         var self = this
-        // console.log(jobId, status)
+       // console.log(jobId, status)
         let confirm_msg = 'Are you sure you want to Stop this Job?'
         if (status) { 
           confirm_msg = 'Are you sure you want to Start this Job?'
@@ -404,6 +405,8 @@
                 self.g.user.wallets[0].adminkey
               )
               .then(function (response) {
+                console.log(response.status)
+                // update the list of jobs paused or running
                 // response status for success/failure, we might not need this section?
                 // in jobStatus.data.id
                 // self.jobs = _.reject(self.jobs, function (obj) {

@@ -105,6 +105,7 @@ async def pause_scheduler(job_id: str, state: str) -> bool:
             b = False
         status = await ch.enable_job_by_comment(comment=job_id, bool=b)
         print(f'Status: {status}')
+        ## update database
         return status
     except Exception as e: 
         return f"Error pausing job: {e}"
