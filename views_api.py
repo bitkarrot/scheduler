@@ -42,6 +42,7 @@ from .models import (
     openapi_extra=generate_filter_params_openapi(JobFilters),
 )
 async def api_scheduler_jobs(
+    # trunk-ignore(ruff/B008)
     wallet: WalletTypeInfo = Depends(require_admin_key),
     filters: Filters[JobFilters] = Depends(parse_filters(JobFilters))
 ) -> List[Job]:

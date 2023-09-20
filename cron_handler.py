@@ -1,4 +1,5 @@
 from crontab import CronTab, CronSlices
+import json
 
 '''
 CronHanlder class contains methods for handling cron jobs, create, edit, delete
@@ -6,8 +7,6 @@ CronHanlder class contains methods for handling cron jobs, create, edit, delete
 see originaldocs for python-crontab package
 https://pypi.org/project/python-crontab/
 '''
-
-import json
 
 class CronHandler():
     def __init__(self, user:str):

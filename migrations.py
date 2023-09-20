@@ -1,4 +1,5 @@
 async def m001_initial(db):
+    # trunk-ignore(ruff/D401)
     """
     Initial jobs table.
     """
@@ -16,15 +17,3 @@ async def m001_initial(db):
         );
     """
     )
-
-
-# async def m002_add_jobs_attrs_column(db):
-#     """
-#     Initial jobs table.
-#     """
-#     await db.execute(
-#         """
-#         ALTER TABLE scheduler.jobs
-#         ADD COLUMN extra JSON
-#         """
-#     )

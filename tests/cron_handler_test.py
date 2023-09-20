@@ -9,7 +9,6 @@ import os
 sys.path.insert(0,'..')
 
 ## TODO make this a legit pytest
-## UNIT TEST ALL THE THINGS!!
 
 async def main(): 
     vars = get_env_data_as_dict('../.env')
