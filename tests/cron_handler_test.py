@@ -2,10 +2,11 @@
 import asyncio
 import datetime as dt
 import sys
-sys.path.insert(0,'..')
 from cron_handler import CronHandler
 from utils import get_env_data_as_dict
 import os
+
+sys.path.insert(0,'..')
 
 ## TODO make this a legit pytest
 ## UNIT TEST ALL THE THINGS!!
@@ -74,13 +75,17 @@ async def main():
     is_valid = await ch.validate_cron_string(cron_string)
     print(f'cron string {cron_string} is valid: {is_valid}')
 
-    # set env vars
-    #print("set env vars")
-    #await ch.set_env_vars(env_vars)
+    # set global env vars
+    print("set global env vars")
+    await ch.set_global_env_vars(env_vars)
 
     # print environment variables
     print("get env vars")
-    output = await ch.get_env_vars()
+    output = await ch.get_global_env_vars()
+    print(output)
+
+    print("clear global env vars")
+    output = await ch.clear_global_env_vars()
     print(output)
 
     # remove all jobs

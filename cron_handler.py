@@ -98,16 +98,20 @@ class CronHandler():
         self._cron.write_to_user(user=self._user)
 
 
-    async def set_env_vars(self, env:dict):
+    async def set_global_env_vars(self, env:dict):
         for (name, value) in env.items():
             self._cron.env[name] = value
         self._cron.write_to_user(user=self._user)
 
-    async def get_env_vars(self): 
+    async def get_global_env_vars(self):
         output = ''    
         for (name, value) in self._cron.env.items():
             output += f'name: {name}, value: {value}'
         return output
+
+    async def clear_global_env_vars(self):
+        self._cron.env.clear()
+        self._cron.write_to_user(user=self._user)
 
     async def validate_cron_string(self, timestring: str):
         is_valid = CronSlices.is_valid(timestring)
