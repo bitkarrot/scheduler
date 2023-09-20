@@ -35,8 +35,11 @@ async def main():
     print(response)
 
     # regular cron job with log handler
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    response = await ch.new_job(f"/Users/bitcarrot/.pyenv/shims/python3 {dir_path}/../log_handler.py", "* * * * *", comment=id_vars['ID'], env=id_vars)
+    py_path = sys.executable
+    dir_path = os.path.dirname(os.path.realpath(__name__))
+    command = py_path + f" {dir_path}/cron-job.py"
+
+    response = await ch.new_job(command, "* * * * *", comment=id_vars['ID'], env=id_vars)
     print(response)
 
     # cron job with env vars with errors redirected to text file
