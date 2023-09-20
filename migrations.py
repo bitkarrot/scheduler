@@ -26,16 +26,13 @@ async def m002_add_jobs_attrs_column(db):
     )
 
 async def m003_update_columns_for_api(db):
-    # trunk-ignore(ruff/D401)
     """
     Initial jobs table.
     """
-    await db.execute(
-    """
-        ALTER TABLE scheduler.jobs DROP COLUMN command TEXT;
-        ALTER TABLE scheduler.jobs ADD COLUMN httpverb TEXT;
-        ALTER TABLE scheduler.jobs ADD COLUMN url TEXT;
-        ALTER TABLE scheduler.jobs ADD COLUMN headers JSON;
-        ALTER TABLE scheduler.jobs ADD COLUMN body JSON;
-    """
-    )
+    await db.execute("ALTER TABLE scheduler.jobs RENAME COLUMN command To httpverb;")
+    await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN status boolean;")
+    await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN url TEXT;")
+    await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN headers JSON;")
+    await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN body JSON;")
+
+    #    await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN httpverb TEXT;")

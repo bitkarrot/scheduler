@@ -48,7 +48,7 @@ class CreateJobData(BaseModel):
 
 
 class UpdateJobData(BaseModel):
-#    command: Optional[str] = Query(default=None, description='Command to run')
+    #command: Optional[str] = Query(default=None, description='Command to run')
     job_name: Optional[str] = Query(default=None, description="Name of the Job")
     status: bool  # true is active, false if paused
     httpverb: Optional[str] = None
