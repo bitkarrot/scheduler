@@ -133,7 +133,7 @@ async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) 
         cols.append("name = ?")
         values.append(data.job_name)
     if data.status:
-        cols.append("status = ?")
+        cols.append("status = ?")  ## check if this works
         values.append(data.status)
     if data.schedule:
         cols.append("schedule = ?")
@@ -170,8 +170,8 @@ async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) 
     # write update to cron tab
     ch = CronHandler(username)
     # TODO update Job status w/ data.status
-    # await ch.enable_job_by_comment(comment=job_id, bool=data.status)
-    # await ch.edit_job(command, data.schedule, comment=job_id)
+    await ch.enable_job_by_comment(comment=job_id, bool=data.status)
+    await ch.edit_job(command, data.schedule, comment=job_id)
 
 
     await db.execute(
