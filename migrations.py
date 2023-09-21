@@ -33,8 +33,8 @@ async def m003_update_columns_for_api(db):
     await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN status BOOLEAN NOT NULL;")
     await db.execute("ALTER TABLE scheduler.jobs ALTER COLUMN status SET DEFAULT TRUE")
     await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN url TEXT;")
-    await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN headers JSON;")
-    await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN body JSON;")
+    await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN headers TEXT;")
+    await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN body TEXT;")
 
 async def m004_add_logging_db(db):
     """

@@ -76,7 +76,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (link_id, data.job_name, admin_id, data.status, data.schedule, data.httpverb, data.url,
-         json.dumps(data.headers) if data.headers else None, json.dumps(data.body) if data.body else None,
+         json.dumps(data.headers), json.dumps(data.body),
          json.dumps(data.extra) if data.extra else None),
     )
 
