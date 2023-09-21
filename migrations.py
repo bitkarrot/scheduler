@@ -35,3 +35,18 @@ async def m003_update_columns_for_api(db):
     await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN url TEXT;")
     await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN headers JSON;")
     await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN body JSON;")
+
+async def m004_add_logging_db(db):
+    """
+    Add table for API call results
+    """
+    await db.execute(
+        """
+         CREATE TABLE scheduler.logs (
+            id TEXT PRIMARY KEY,
+            status TEXT NOT NULL,
+            response TEXT NOT NULL,
+            timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )

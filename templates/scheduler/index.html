@@ -111,19 +111,13 @@
           v-model.trim="jobDialog.data.name"
           label="Job Name"
         ></q-input>
-        <!-- <q-input
-          filled
-          dense
-          v-model.trim="jobDialog.data.command"
-          label="Command"
-        ></q-input> -->
 
         <q-card>
           <h5 class="text-subtitle1 q-my-none">Action</h5>
           <q-tr>
             <q-td>
             <q-select
-            v-model.trim="selectedVerb"
+            v-model.trim="jobDialog.data.selectedVerb"
             :options="httpVerbs"
             dense
             filled
@@ -195,9 +189,7 @@
           type="textarea"
           rows="4" 
         />
-
         </q-card>
-
 
         <q-card>
           <h5 class="text-subtitle1 q-my-none">Schedule</h5>
@@ -216,6 +208,17 @@
           v-model.trim="jobDialog.data.schedule"
           label="schedule"          
         ></q-input>
+
+        <div class="row q-col-gutter-sm">
+          <div class="col">
+            <q-checkbox
+            filled
+            dense
+            v-model.trim="jobDialog.data.status"
+            label="Start Job on Submit?"
+          />
+          </div>
+        </div>
 
         <q-btn
           unelevated
@@ -242,10 +245,8 @@
   }
   var mapHeaders = function (obj) {
     obj.amount = parseFloat(obj.amount / 100).toFixed(2)
-
     return obj
   }
-
 
   new Vue({
     el: '#vue',
@@ -254,8 +255,11 @@
       return {
         httpVerbs: ['GET', 'PUT', 'POST', 'DELETE'],
         selectedVerb: 'GET',
+        httpverb: '',
         url: '',
-
+        headers: [], // headers as a json to ship to backend
+        body: '',
+        status: '',
         jobStates: {}, // A data property to keep track of button states for each id
         wallets: [],
         jobs: [],
@@ -273,7 +277,6 @@
             {name: 'id', align: 'left', label: 'ID', field: 'id'},
             {name: 'name', align: 'left', label: 'Job Name', field: 'name'},
             {name: 'status', align: 'left', label: 'Status', field: 'status'},
-            // {name: 'command', align: 'left', label: 'Command', field: 'command'},
             {
               name: 'schedule',
               align: 'left',
@@ -287,8 +290,19 @@
         },
         jobDialog: {
           show: false,
-          data: {},
-          headers: [],
+          // below is all sample fill in data
+          data: { 
+            status: false,
+            selectedVerb: 'GET',
+            name: 'test',
+            url:'https://example.com',
+            body: '{"out": true, "bolt11": "23o4u8298"}',
+            schedule: '* * * * *',
+          },
+          headers:[
+            { key: "Content-Type", value: "application/json" },
+            { key: "Authorization", value: "Bearer abc123def456" },
+          ],
         },
         jobStatus: { 
           show:false,
@@ -346,19 +360,22 @@
       sendJobFormData: function () {
         if (this.jobDialog.data.id) {
           this.updateJob(this.jobDialog.data)
-          // console.log("update job data")
+          console.log("update job data")
         } else {
-          var data = {
-            user_name: this.jobDialog.data.name, // switch to job_name
+            //user_name: this.jobDialog.data.name, // switch to job_name
             // command: this.jobDialog.data.command,
+          console.log("create new job entry")
+          var data = {
+            job_name: this.jobDialog.data.name,
             status: this.jobDialog.data.status,
-            schedule: this.jobDialog.data.schedule,
-            httpverb: this.jobDialog.data.httpverb,
+            httpverb: this.jobDialog.data.selectedVerb,
             url: this.jobDialog.data.url,
-            headers: this.jobDialog.headers,
+            headers: JSON.stringify(this.jobDialog.headers, null, 2),
             body: this.jobDialog.data.body,
-
+            schedule: this.jobDialog.data.schedule,
+            extra: {},
           }
+          console.log(data)
           this.createJob(data)
         }
       },
