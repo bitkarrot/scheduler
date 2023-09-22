@@ -26,7 +26,7 @@ username = vars['SCHEDULER_USER']
 # python path 
 py_path = sys.executable
 dir_path = os.path.dirname(os.path.realpath(__name__))
-command = py_path + f" {dir_path}/cron-job.py"
+command = py_path + f" {dir_path}/lnbits/extensions/scheduler/cron-job.py"
 
 
 # crontab-specific methods, direct to system cron
@@ -63,8 +63,8 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
         return f"Error in cron string syntax {data.schedule}"
     response = await create_cron(link_id, command, data.schedule, env_vars)
 
-    print(command)
-    print(response)
+    print(f'cron command: {command}')
+    print(f'create_scheduler_jobs: {response}')
 
     if response.startswith("Error"):
         assert response.startswith("Error"), "Error creating Cron job"
@@ -75,8 +75,9 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
         INSERT INTO scheduler.jobs (id, name, admin, status, schedule, httpverb, url, headers, body, extra)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (link_id, data.job_name, admin_id, data.status, data.schedule, data.httpverb, data.url,
-         json.dumps(data.headers), json.dumps(data.body),
+        (link_id, data.name, admin_id, data.status, 
+         data.schedule, data.selectedVerb, data.url,
+         data.headers, data.body,
          json.dumps(data.extra) if data.extra else None),
     )
 
@@ -106,14 +107,14 @@ async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> list[J
 
 async def pause_scheduler(job_id: str, state: str) -> bool:
     try: 
-        print(f'Pausing job: {job_id}, State: {state}') 
+        print(f'Pausing job in pause_scheduler: {job_id}, State: {state}') 
         ch = CronHandler(username)
         b = True
         if state.lower() == "false":
             b = False
         status = await ch.enable_job_by_comment(comment=job_id, bool=b)
-        print(f'Status: {status}')
-        ## update database
+        print(f'Pause Status: {status}')
+        ## TODO: update database
         return status
     except Exception as e: 
         return f"Error pausing job: {e}"
@@ -127,44 +128,40 @@ async def delete_scheduler_jobs(job_id: str, delete_core: bool = True) -> None:
 
 
 async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) -> JobDetailed:
+    print(UpdateJobData)
     cols = []
     values = []
-    if data.job_name:
+    if data.name:
         cols.append("name = ?")
-        values.append(data.job_name)
+        values.append(data.name)
     if data.status:
         cols.append("status = ?")  ## check if this works
         values.append(data.status)
     if data.schedule:
         cols.append("schedule = ?")
         values.append(data.schedule)
-    if data.httpverb:
+    if data.selectedVerb:
         cols.append("httpverb = ?")
-        values.append(data.httpverb)
+        values.append(data.selectedVerb)
     if data.url:
         cols.append("url = ?")
         values.append(data.url)
-
+    if data.headers:
+        cols.append("headers = ?")
+        values.append(data.headers)
+    if data.body:
+        cols.append("body = ?")
+        values.append(data.body)
+    
     values.append(job_id)
     values.append(admin_id)
+    
     if data.extra:
         if db.type == POSTGRES:
             cols.append("extra = extra::jsonb || ?")
         else:
             cols.append("extra = json_patch(extra, ?)")
         values.append(json.dumps(data.extra))
-    if data.headers:
-        if db.type == POSTGRES:
-            cols.append("headers = headers::jsonb || ?")
-        else:
-            cols.append("headers = json_patch(headers, ?)")
-        values.append(json.dumps(data.headers))
-    if data.data:
-        if db.type == POSTGRES:
-            cols.append("data = data::jsonb || ?")
-        else:
-            cols.append("data = json_patch(data, ?)")
-        values.append(json.dumps(data.data))
     
     # validate cron job before here
     # write update to cron tab

@@ -7,7 +7,6 @@ from pydantic import BaseModel
 
 from lnbits.db import FilterModel
 
-
 class Operator(Enum):
     GT = "gt"
     LT = "lt"
@@ -34,32 +33,24 @@ class Operator(Enum):
             raise ValueError('Unknown')
 
 
-    #user_name: str = Query(..., description="Name of the Job")
-    #command: str = Query("")
-
 class CreateJobData(BaseModel):
-    job_name: Optional[str] = Query(default=None, description="Name of the Job")
+    name: Optional[str] = Query(default=None, description="Name of the Job")
     status: bool = Query(False) # true is active, false if paused
-    httpverb: Optional[str] = Query(default=None)
+    selectedVerb: Optional[str] = Query(default=None)
     url: Optional[str] = Query(default=None)
     headers: Optional[str] = Query(default=None)
     body: Optional[str] = Query(default=None)
-    # headers: Optional[dict[str, str]] = Query(default=None)
-    # body: Optional[dict[str, str]] = Query(default=None)
     schedule: str = Query(default=None)
     extra: Optional[dict[str, str]] = Query(default=None)
 
 
 class UpdateJobData(BaseModel):
-    #command: Optional[str] = Query(default=None, description='Command to run')
-    job_name: Optional[str] = Query(default=None, description="Name of the Job")
+    name: Optional[str] = Query(default=None, description="Name of the Job")
     status: bool  # true is active, false if paused
-    httpverb: Optional[str] = None
+    selectedVerb: Optional[str] = None
     url: Optional[str] = None
     headers: Optional[str] = None
     body: Optional[str] = None
-    # headers: Optional[dict[str, str]] = None
-    # body: Optional[dict[str, str]] = None
     schedule: str = Query(default=None, description='Schedule to run')
     extra: Optional[dict[str, str]] = Query(default=None, description='Partial update for extra field')
 
@@ -70,26 +61,21 @@ class Job(BaseModel):
     admin: str
     status: bool  # true is active, false if paused
     schedule: str
-    httpverb: Optional[str] = None
+    selectedVerb: Optional[str] = None
     url: Optional[str] = None
     headers: Optional[str] = None
     body: Optional[str] = None
-    #headers: Optional[dict[str, str]] = None
-    #body: Optional[dict[str, str]] = None
     extra: Optional[dict[str, str]]
 
 
 class JobFilters(FilterModel):
     id: str
     name: str
-    # command: Optional[str] = None
     schedule: Optional[str] = None
-    httpverb: Optional[str] = None
+    selectedVerb: Optional[str] = None
     url: Optional[str] = None
     headers: Optional[str] = None
     body: Optional[str] = None
-    # headers: Optional[dict[str, str]] = None
-    # body: Optional[dict[str, str]] = None
     extra: Optional[dict[str, str]]
 
 
