@@ -1,6 +1,7 @@
 import json
 from typing import Optional
 from uuid import uuid4
+from datetime import datetime
 import sys
 
 from lnbits.db import POSTGRES, Filters
@@ -12,6 +13,7 @@ from .models import (
     Job,
     JobDetailed,
     JobFilters,
+    LogEntry
 )
 
 from .cron_handler import CronHandler
@@ -178,3 +180,24 @@ async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) 
         values
     )
     return await get_scheduler_job(job_id)
+
+
+
+async def create_log_entry(id: str, status: str, response: str) -> LogEntry:
+    timestamp =  datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    await db.execute(
+        """
+        INSERT INTO scheduler.logs (id, status, response, timestamp) VALUES (?, ?, ?, ?)
+        """,
+        (id, status, response, timestamp)
+    )
+    log_created = await get_log_entry(id)
+    assert log_created, "Newly created Log Entry couldn't be retrieved"
+    return log_created
+
+
+
+async def get_log_entry(id: str) -> Optional[LogEntry]:
+    row = await db.fetchone("SELECT * FROM scheduler.logs WHERE id = ?", (id,))
+    if row:
+        return LogEntry(**row)

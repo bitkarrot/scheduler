@@ -82,3 +82,10 @@ class JobFilters(FilterModel):
 class JobDetailed(Job):
     pass
     #wallets: list[Wallet]
+
+
+class LogEntry(BaseModel):
+    id: str
+    status: str
+    response: str
+    timestamp: str
