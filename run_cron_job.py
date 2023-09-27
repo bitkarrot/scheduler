@@ -20,7 +20,7 @@ http_verbs = ['get', 'post', 'put', 'delete', 'head', 'options']
 
 async def clear_log_file(logname: str) -> bool: 
     '''
-        Clears the log file
+        Clears the log file by deleting the file on disk
     '''
     status = True
     try: 
@@ -35,7 +35,8 @@ async def save_job_execution(response: str, jobID: str) -> None:
     '''
         Saves job execution to both db and to a logfile. 
         We can decide if we want to use either db or logfile or both later
-        Note: We are logging everything to a single file for now.
+        Note: We are logging everything to a single file for now, but
+        individual rows in db.
     '''
     if response.status_code == 200:
         logger.info(f"jobID: {jobID}, status_code: {response.status_code}")
