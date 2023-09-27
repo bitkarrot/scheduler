@@ -1,28 +1,46 @@
-import random
+import httpx
+import asyncio
 from datetime import datetime
+import logging
+import logging.handlers
+import os
 import sys
 sys.path.insert(0,'..')
 
-# Sample data for demonstration
-sample_data = [
-    {'id': '1', 'status': 'Success', 'response': 'Response Data 1'},
-    {'id': '2', 'status': 'Error', 'response': 'Error Message'}
-]
+logfile = 'test_scheduler.log'
 
-# Generate random timestamps for demonstration
-for data in sample_data:
-    data['timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger('scheduler')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename=logfile, encoding='utf-8', mode='a')
+dt_fmt = '%Y-%m-%d %H:%M:%S'
+formatter = logging.Formatter('[{asctime}] [{levelname}] {name}: {message}', dt_fmt, style='{')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
-# Generate the INSERT statement
-insert_statement = "INSERT INTO scheduler.logs (id, status, response, timestamp) VALUES"
 
-for data in sample_data:
-    values = f"('{data['id']}', '{data['status']}', '{data['response']}', '{data['timestamp']}')"
-    insert_statement += f"\n{values},"
+async def main_test() -> None:
+    http_verbs = ['get', 'post', 'put', 'delete', 'head', 'options']
+    try:
+        jobID = "12345test"
+        method_name = 'GET'  # HTTP verb determined by DB query    
+        url = 'https://example.com'
+        headers = {'X-Custom': 'value'}
+        data = {'key': 'value'}
 
-# Remove the trailing comma and add a semicolon to complete the statement
-insert_statement = insert_statement.rstrip(',') + ';'
+        # Check if the method_name is valid for httpx
+        if method_name.lower() in http_verbs:
+            method_to_call = getattr(httpx, method_name.lower())
+            response = method_to_call(url, headers=headers, params=data)
+            if response.status_code == 200:
+                logger.info(f"jobID: {jobID}, status_code: {response.status_code}")
+                logger.info(f'jobID: {jobID}, response text: {response.text}')
+            else:
+                logger.error(f"error, saving to database for jobID: {jobID}")
+        else:
+            logger.error(f'Invalid method name: {method_name}')
 
-print(insert_statement)
+    except Exception as e:
+        logger.error(f'exception thrown: {e}')
 
-#db.execute(insert_statement)
+
+asyncio.run(main_test())

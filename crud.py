@@ -28,7 +28,7 @@ username = vars['SCHEDULER_USER']
 # python path 
 py_path = sys.executable
 dir_path = os.path.dirname(os.path.realpath(__name__))
-command = py_path + f" {dir_path}/lnbits/extensions/scheduler/cron-job.py"
+command = py_path + f" {dir_path}/lnbits/extensions/scheduler/run_cron_job.py"
 
 
 # crontab-specific methods, direct to system cron
