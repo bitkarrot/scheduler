@@ -9,7 +9,7 @@ sys.path.insert(0,'..')
 
 logfile = 'test_scheduler.log'
 
-logger = logging.getLogger('scheduler')
+logger = logging.getLogger('test_scheduler')
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename=logfile, encoding='utf-8', mode='a')
 dt_fmt = '%Y-%m-%d %H:%M:%S'
