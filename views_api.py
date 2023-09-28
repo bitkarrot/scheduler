@@ -60,9 +60,9 @@ async def api_scheduler_jobs(
 
     Filters are AND-combined
     """
-    admin_id = wallet.wallet.user
-    return await get_scheduler_jobs(admin_id, filters)
-
+    #admin_id = wallet.wallet.user
+    #return await get_scheduler_jobs(admin_id, filters)
+    return await get_scheduler_jobs(wallet.wallet.adminkey, filters)
 
 @scheduler_ext.get(
     "/api/v1/jobs/{job_id}",
@@ -91,9 +91,11 @@ async def api_scheduler_user(job_id: str) -> JobDetailed:
 )
 async def api_scheduler_jobs_create(
     data: CreateJobData,
-    info: WalletTypeInfo = Depends(require_admin_key)
+    info: WalletTypeInfo = Depends(require_admin_key)  
 ) -> Job:
-    return await create_scheduler_jobs(info.wallet.user, data)
+#    return await create_scheduler_jobs(info.wallet.user, data)
+#    admin_id = info.wallet.adminkey
+     return await create_scheduler_jobs(info.wallet.adminkey, data)
 
 
 @scheduler_ext.put(
@@ -109,7 +111,8 @@ async def api_scheduler_jobs_create(
     data: UpdateJobData,
     info: WalletTypeInfo = Depends(require_admin_key)
 ) -> JobDetailed:
-    return await update_scheduler_job(job_id, info.wallet.user, data)
+    return await update_scheduler_job(job_id, info.wallet.adminkey, data)
+#    return await update_scheduler_job(job_id, info.wallet.user, data)
 
 
 @scheduler_ext.delete(

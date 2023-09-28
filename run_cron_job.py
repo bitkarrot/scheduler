@@ -2,7 +2,8 @@ import asyncio
 import httpx
 import os
 import json
-from crud import create_log_entry, get_scheduler_job
+# from crud import create_log_entry, get_scheduler_job
+# from crud import get_scheduler_job
 import logging
 import logging.handlers
 
@@ -41,10 +42,39 @@ async def save_job_execution(response: str, jobID: str) -> None:
     if response.status_code == 200:
         logger.info(f"jobID: {jobID}, status_code: {response.status_code}")
         logger.info(f'jobID: {jobID}, response text: {response.text}')
-        create_log_entry(jobID, "success", response.text)
     else:
         logger.error(f"error, saving to database for jobID: {jobID}")
-        create_log_entry(jobID, response.status_code, response.text)
+
+
+async def get_job_by_id(jobID: str, adminkey: str):
+    '''
+        Gets job by jobID from API, as this script run by cron
+        doesn't have access to entire lnbits environment
+    '''
+    try:
+        print("get_job_by_id: \n")
+        url = f'http://localhost:5000/scheduler/api/v1/jobs/{jobID}'
+        headers = {"X-Api-Key": adminkey}
+
+        print(f'url: {url}')
+        print(f'headers: {headers}')
+
+        logger.info(f'headers: {headers}')
+        logger.info(f'api call: {url}')
+
+        request = httpx.get(
+            url=url,
+            headers={"X-Api-Key": adminkey}
+        )
+        logger.info(request.status_code)
+        logger.info(request.text)
+        print(f'request: {request.status_code}')
+        print(f'request text: {request.text}')
+        
+        return request
+    except Exception as e:
+        print(f'exception thrown: {e}')
+        logger.error(f'Error trying to fetch data from db, check is LNBITS server running?: {e}')
 
 
 async def main() -> None:
@@ -56,14 +86,22 @@ async def main() -> None:
     '''
     try:
         jobID = os.environ.get('ID')
+        adminkey = os.environ.get('adminkey')
+        varinfo = f'run_cron_job jobID: {jobID}, adminkey: {adminkey}'
+        print(varinfo)
+        logger.info(varinfo)
 
         # TODO: test query DB for job and populate url, headers, data
-        job = get_scheduler_job(jobID)
+        job = await get_job_by_id(jobID, adminkey)
         method_name = job.selectedVerb
         url = job.url
         headers = json.loads(job.headers)
         data = json.loads(job.data)
-        
+
+        dbinfo = f'Database info jobID: {jobID}, method_name: {method_name}, url: {url}, headers: {headers}, data: {data}'
+        print(dbinfo)
+        logger.info(dbinfo)
+
         # Check if the method_name is valid for httpx
         if method_name.lower() in http_verbs:
             method_to_call = getattr(httpx, method_name.lower())

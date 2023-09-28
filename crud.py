@@ -56,8 +56,9 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
     link_id = uuid4().hex 
 
     # temporary blank env_vars held here, left here for future customization
-    env_vars = {"ID": link_id}
-    
+    env_vars = {"ID": link_id, "adminkey": admin_id}
+    print(f'env_vars: {env_vars}')
+
     ch = CronHandler(username)
     is_valid = await ch.validate_cron_string(data.schedule)
     if not is_valid:
@@ -67,6 +68,9 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
 
     print(f'cron command: {command}')
     print(f'create_scheduler_jobs: {response}')
+
+    print(f'admin_id: {admin_id}')
+    # this admin_id actually is the User id right now 
 
     if response.startswith("Error"):
         assert response.startswith("Error"), "Error creating Cron job"
@@ -89,6 +93,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
 
 
 async def get_scheduler_job(job_id: str) -> Optional[JobDetailed]:
+    # add admin key, as job info might store api keys
     row = await db.fetchone("SELECT * FROM scheduler.jobs WHERE id = ?", (job_id,))
     if row:
         return Job(**row)
@@ -96,6 +101,7 @@ async def get_scheduler_job(job_id: str) -> Optional[JobDetailed]:
 
 async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> list[Job]:
     # check that job id match crontab list
+
     rows = await db.fetchall(
         f"""
         SELECT * FROM scheduler.jobs
