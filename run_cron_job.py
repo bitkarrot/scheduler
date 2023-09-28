@@ -2,16 +2,14 @@ import asyncio
 import httpx
 import os
 import json
-# from crud import create_log_entry, get_scheduler_job
-# from crud import get_scheduler_job
 import logging
 import logging.handlers
 
-filename = 'scheduler.log'
+logname = 'scheduler.log'
 
 logger = logging.getLogger('scheduler')
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename=filename, encoding='utf-8', mode='a')
+handler = logging.FileHandler(filename=logname, encoding='utf-8', mode='a')
 dt_fmt = '%Y-%m-%d %H:%M:%S'
 formatter = logging.Formatter('[{asctime}] [{levelname}] {name}: {message}', dt_fmt, style='{')
 handler.setFormatter(formatter)
@@ -62,16 +60,21 @@ async def get_job_by_id(jobID: str, adminkey: str):
         logger.info(f'headers: {headers}')
         logger.info(f'api call: {url}')
 
-        request = httpx.get(
+        response = httpx.get(
             url=url,
             headers={"X-Api-Key": adminkey}
         )
-        logger.info(request.status_code)
-        logger.info(request.text)
-        print(f'request: {request.status_code}')
-        print(f'request text: {request.text}')
-        
-        return request
+        logger.info(response.status_code)
+        logger.info(response.text)
+        print(f'response: {response.status_code}')
+        print(f'response text: {response.text}')
+        print(f'type: {type(response.text)}')
+
+        items = json.loads(response.text)
+        print("response items in get_job_by_id: \n")
+        print({items['id']}, {items['name']}, {items['status']}, {items['selectedverb']}, {items['url']}, {items['headers']}, {items['body']}, {items['extra']})
+    
+        return response.text
     except Exception as e:
         print(f'exception thrown: {e}')
         logger.error(f'Error trying to fetch data from db, check is LNBITS server running?: {e}')
@@ -92,24 +95,33 @@ async def main() -> None:
         logger.info(varinfo)
 
         # TODO: test query DB for job and populate url, headers, data
-        job = await get_job_by_id(jobID, adminkey)
-        method_name = job.selectedVerb
-        url = job.url
-        headers = json.loads(job.headers)
-        data = json.loads(job.data)
+        job_response = await get_job_by_id(jobID, adminkey)
+        job = json.loads(job_response)
 
-        dbinfo = f'Database info jobID: {jobID}, method_name: {method_name}, url: {url}, headers: {headers}, data: {data}'
+        method_name = job['selectedverb']
+        url = job['url']
+        headers = {}
+        body = {}
+
+        if job['headers'] is not None:
+           headers = json.loads(job['headers'])
+        if job['body'] is not None:
+           body = json.loads(job['body'])
+
+        dbinfo = f'Database info jobID: {jobID}, method_name: {method_name}, url: {url}, headers: {headers}, body: {body}'    
         print(dbinfo)
         logger.info(dbinfo)
 
         # Check if the method_name is valid for httpx
         if method_name.lower() in http_verbs:
             method_to_call = getattr(httpx, method_name.lower())
-            response = method_to_call(url, headers=headers, params=data)
+            response = method_to_call(url, headers=headers, params=body)
             await save_job_execution(response=response, jobID=jobID)
         else:
             logger.error(f'Invalid method name: {method_name}')
+
     except Exception as e:
+        print(f'exception thrown: {e}')
         logger.error(f'exception thrown: {e}')
 
 
