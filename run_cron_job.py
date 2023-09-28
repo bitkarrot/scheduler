@@ -5,7 +5,8 @@ import json
 import logging
 import logging.handlers
 
-logname = 'scheduler.log'
+dir_path = os.path.dirname(os.path.realpath(__file__))
+logname = os.path.join(dir_path, 'scheduler.log')
 
 logger = logging.getLogger('scheduler')
 logger.setLevel(logging.DEBUG)
