@@ -32,7 +32,6 @@ class Operator(Enum):
         else:
             raise ValueError('Unknown')
 
-
 class CreateJobData(BaseModel):
     name: Optional[str] = Query(default=None, description="Name of the Job")
     status: bool = Query(False) # true is active, false if paused

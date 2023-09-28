@@ -23,6 +23,8 @@ from .crud import (
     get_scheduler_jobs,
     update_scheduler_job,
     pause_scheduler,
+    create_log_entry,
+    get_log_entry
 )
 from .models import (
     CreateJobData,
@@ -30,7 +32,36 @@ from .models import (
     Job,
     JobDetailed,
     JobFilters,
+    LogEntry
 )
+
+@scheduler_ext.get(
+    "/api/v1/logentry/{log_id}",
+    status_code=HTTPStatus.OK,
+    name="Jobs List",
+    summary="get list of jobs",
+    response_description="list of jobs",
+    response_model=List[LogEntry],
+    openapi_extra=generate_filter_params_openapi(LogEntry),
+)
+async def api_get_log_entry(log_id: str) -> LogEntry:
+    info: WalletTypeInfo = Depends(require_admin_key)
+    return await get_log_entry(log_id)
+
+@scheduler_ext.post(
+    "/api/v1/logentry",
+    name="Log Entry Create",
+    summary="Create a new log entry",
+    description="Create a new log entry",
+    response_description="New Log Entry",
+    response_model=LogEntry,
+)
+async def api_job_entry_create(
+    data: LogEntry,
+    info: WalletTypeInfo = Depends(require_admin_key)  
+) -> LogEntry:
+    return await create_log_entry(data)
+
 
 @scheduler_ext.get(
     "/api/v1/jobs",

@@ -188,8 +188,11 @@ async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) 
     return await get_scheduler_job(job_id)
 
 
-
-async def create_log_entry(id: str, status: str, response: str) -> LogEntry:
+#async def create_log_entry(id: str, status: str, response: str) -> LogEntry:
+async def create_log_entry(data: LogEntry) -> LogEntry:
+    id = data.id
+    status = data.status
+    response = data.response
     timestamp =  datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     await db.execute(
         """
@@ -202,8 +205,6 @@ async def create_log_entry(id: str, status: str, response: str) -> LogEntry:
     return log_created
 
 
-
-async def get_log_entry(id: str) -> Optional[LogEntry]:
-    row = await db.fetchone("SELECT * FROM scheduler.logs WHERE id = ?", (id,))
-    if row:
-        return LogEntry(**row)
+async def get_log_entry(id: str) -> list[LogEntry]:
+    rows = await db.fetchall("SELECT * FROM scheduler.logs WHERE id = ?", (id,))
+    return [LogEntry(**row) for row in rows]

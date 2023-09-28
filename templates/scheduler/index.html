@@ -7,6 +7,9 @@
         <q-btn unelevated color="primary" @click="jobDialog.show = true"
           >New Scheduled Job</q-btn
         >
+        <q-btn unelevated color="primary" @click="logDialog.show = true">
+          View Log
+        </q-btn>
       </q-card-section>
     </q-card>
 
@@ -102,6 +105,30 @@
     </q-card>
   </div>
 
+<q-dialog v-model="logDialog.show" position="top">
+  <q-card class="q-pa-lg q-pt-xl" style="width: 800px">
+
+   <q-card>
+      <h5 class="text-subtitle1 q-my-none">Logfile</h5>
+    </q-card>
+  <q-card>
+    <q-btn unelevated color="primary" @click="displayFileData">
+      Fetch data
+    </q-btn>
+    <q-btn @click="cancelEdit" v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
+  </q-card>
+  <q-card>
+    {{fileData}}
+      <q-input
+      filled
+      v-model.trim="fileData"
+      label='content'
+      type="textarea"
+      rows="4" 
+    />
+  </q-card>
+</q-card>
+</q-dialog>
   <q-dialog v-model="jobDialog.show" position="top">
     <q-card class="q-pa-lg q-pt-xl" style="width: 800px">
       <q-form @submit="sendJobFormData" class="q-gutter-md">
@@ -253,6 +280,7 @@
     mixins: [windowMixin],
     data: function () {
       return {
+        fileData: "Logfile content goes here",
         job_name: '',
         httpVerbs: ['GET', 'PUT', 'POST', 'DELETE'],
         selectedverb: 'GET',
@@ -288,22 +316,26 @@
             rowsPerPage: 10
           }
         },
+        logDialog: { 
+          show: false, 
+          output: '',
+        },
         jobDialog: {
           show: false,
           // below is all sample fill in data on initial load
           data: {
-        //            name:'blank',
+          // name:'blank',
             status: false,
             selectedverb: 'GET',
-          //          job_name: 'test123',
-           //         url: 'https://example.com',
-          //        body: '{"out": true, "bolt11": "23o4u8298"}',
+          // job_name: 'test123',
+          // url: 'https://example.com',
+          // body: '{"out": true, "bolt11": "23o4u8298"}',
             schedule: '* * * * *',
           },
-//          headers:[
-//            { key: "Content-Type", value: "application/json" },
-//            { key: "Authorization", value: "Bearer abc123def456" },
-//         ],
+          //          headers:[
+          //            { key: "Content-Type", value: "application/json" },
+          //            { key: "Authorization", value: "Bearer abc123def456" },
+          //         ],
         },
         jobStatus: { 
           show:false,
@@ -335,9 +367,41 @@
     methods: {
       ///////////////Jobs////////////////////////////
 
+      async fetchLogContent(filePath) {
+        // fetching content from local file
+        try {
+          const response = await fetch(filePath);
+          const text = await response.text();
+          this.fileData = text;
+        } catch (error) {
+          console.error('Error fetching file:', error);
+        }
+      },
+      displayFileData() {
+        // temp id for testing
+        data = '6b1a671df00f4429a88dcdf17cfa86bb' 
+        var self = this
+        LNbits.api
+          .request(
+            'GET',
+            '/scheduler/api/v1/logentry/' + data,
+            this.g.user.wallets[0].adminkey
+          )
+          .then(function (response) {
+            self.fileData = response.data.map(function (obj) {
+              console.log(mapcrontabs(obj))
+              return mapcrontabs(obj)
+            })
+            data = {}
+            window.location.reload();
+          })
+          .catch(function (error) {
+            LNbits.utils.notifyApiError(error)
+          })
+      },
+
       getJobs: function () {
         var self = this
-
         LNbits.api
           .request(
             'GET',

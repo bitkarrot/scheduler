@@ -17,33 +17,34 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 http_verbs = ['get', 'post', 'put', 'delete', 'head', 'options']
+LNBITS_BASE_URL = os.environ.get('LNBITS_BASE_URL') or 'http://localhost:5000'
 
-async def clear_log_file(logname: str) -> bool: 
-    '''
-        Clears the log file by deleting the file on disk
-    '''
-    status = True
-    try: 
-        os.remove(logname)
-        return status
-    except Exception as e:
-        logger.error(e)
-        status = False
-        return status
-
-async def save_job_execution(response: str, jobID: str) -> None:
+async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
     '''
         Saves job execution to both db and to a logfile. 
-        We can decide if we want to use either db or logfile or both later
+        We can decide if we want to prioritize either later
         Note: We are logging everything to a single file for now, but
         individual rows in db.
     '''
-    if response.status_code == 200:
-        logger.info(f"jobID: {jobID}, status_code: {response.status_code}")
-        logger.info(f'jobID: {jobID}, response text: {response.text}')
-    else:
-        logger.error(f"error, saving to database for jobID: {jobID}")
+    try:
+        if response.status_code == 200:
+            logger.info(f"jobID: {jobID}, status_code: {response.status_code}")
+            logger.info(f'jobID: {jobID}, response text: {response.text}')
 
+            url = f'{LNBITS_BASE_URL}/scheduler/api/v1/logentry/'
+            data = { 'id': jobID, 'status': response.status_code, 'response': response.text }
+            pushdb_response = httpx.post(
+                url=url,
+                headers={"X-Api-Key": adminkey},
+                params=data
+            )
+            if pushdb_response.status_code == 200:
+                logger.info(f'success: saved results to db for jobID: {jobID}')
+                return True
+    except Exception as e:
+        logger.error(f"error, saving to database for jobID: {jobID}")
+        logger.error(e)
+        return False
 
 async def get_job_by_id(jobID: str, adminkey: str):
     '''
@@ -51,8 +52,9 @@ async def get_job_by_id(jobID: str, adminkey: str):
         doesn't have access to entire lnbits environment
     '''
     try:
+
         print("get_job_by_id: \n")
-        url = f'http://localhost:5000/scheduler/api/v1/jobs/{jobID}'
+        url = f'{LNBITS_BASE_URL}/scheduler/api/v1/jobs/{jobID}'
         headers = {"X-Api-Key": adminkey}
 
         print(f'url: {url}')
@@ -80,6 +82,18 @@ async def get_job_by_id(jobID: str, adminkey: str):
         print(f'exception thrown: {e}')
         logger.error(f'Error trying to fetch data from db, check is LNBITS server running?: {e}')
 
+async def clear_log_file(logname: str) -> bool: 
+    '''
+        Clears the log file by deleting the file on disk
+    '''
+    status = True
+    try: 
+        os.remove(logname)
+        return status
+    except Exception as e:
+        logger.error(e)
+        status = False
+        return status
 
 async def main() -> None:
     '''
@@ -117,7 +131,7 @@ async def main() -> None:
         if method_name.lower() in http_verbs:
             method_to_call = getattr(httpx, method_name.lower())
             response = method_to_call(url, headers=headers, params=body)
-            await save_job_execution(response=response, jobID=jobID)
+            await save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
         else:
             logger.error(f'Invalid method name: {method_name}')
 
