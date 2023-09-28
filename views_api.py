@@ -60,6 +60,8 @@ async def api_job_entry_create(
     data: LogEntry,
     info: WalletTypeInfo = Depends(require_admin_key)  
 ) -> LogEntry:
+    print(f'data inside api_job_entry_create: {data}')
+    print(f'info of api_job_entry_create: {info}')
     return await create_log_entry(data)
 
 

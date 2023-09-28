@@ -4,6 +4,7 @@ import os
 import json
 import logging
 import logging.handlers
+import datetime as dt
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 logname = os.path.join(dir_path, 'scheduler.log')
@@ -31,13 +32,27 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
             logger.info(f"jobID: {jobID}, status_code: {response.status_code}")
             logger.info(f'jobID: {jobID}, response text: {response.text}')
 
-            url = f'{LNBITS_BASE_URL}/scheduler/api/v1/logentry/'
-            data = { 'id': jobID, 'status': response.status_code, 'response': response.text }
+
+            url = f'{LNBITS_BASE_URL}/scheduler/api/v1/logentry'
+            # data = { 'id': jobID, 'status': response.status_code, 'response': response.text }
+            data = { 'id': jobID, 'status': str(response.status_code), 'response': 'sample text', 'timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S') }
+
+            logger.info(f' now pushing execution data to the database for jobID: {jobID}')
+            logger.info(f'push db calling api : {url} with params: {data}')
+            print("pushdb_response: pushing now")
+            print(url)
+            print(data)
+
             pushdb_response = httpx.post(
                 url=url,
                 headers={"X-Api-Key": adminkey},
-                params=data
+                json=data
             )
+
+            print(f'pushdb status: {pushdb_response.status_code}')
+            logger.info(f'pushdb status: {pushdb_response.status_code}')
+            logger.info(f'pushdb text: {pushdb_response.text}')
+
             if pushdb_response.status_code == 200:
                 logger.info(f'success: saved results to db for jobID: {jobID}')
                 return True
@@ -68,9 +83,7 @@ async def get_job_by_id(jobID: str, adminkey: str):
             headers={"X-Api-Key": adminkey}
         )
         logger.info(response.status_code)
-        logger.info(response.text)
         print(f'response: {response.status_code}')
-        print(f'response text: {response.text}')
         print(f'type: {type(response.text)}')
 
         items = json.loads(response.text)
@@ -130,7 +143,7 @@ async def main() -> None:
         # Check if the method_name is valid for httpx
         if method_name.lower() in http_verbs:
             method_to_call = getattr(httpx, method_name.lower())
-            response = method_to_call(url, headers=headers, params=body)
+            response = method_to_call(url, headers=headers, params=body)        
             await save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
         else:
             logger.error(f'Invalid method name: {method_name}')
