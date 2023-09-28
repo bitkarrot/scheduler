@@ -29,9 +29,9 @@ async def m003_update_columns_for_api(db):
     """
     Initial jobs table.
     """
-    await db.execute("ALTER TABLE scheduler.jobs RENAME COLUMN command To httpverb;")
-    await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN status BOOLEAN NOT NULL;")
-    await db.execute("ALTER TABLE scheduler.jobs ALTER COLUMN status SET DEFAULT TRUE")
+    await db.execute("ALTER TABLE scheduler.jobs DROP COLUMN command;")
+    await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN selectedverb TEXT;")
+    await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN status BOOLEAN;")
     await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN url TEXT;")
     await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN headers TEXT;")
     await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN body TEXT;")

@@ -117,7 +117,7 @@
           <q-tr>
             <q-td>
             <q-select
-            v-model.trim="jobDialog.data.selectedVerb"
+            v-model.trim="jobDialog.data.selectedverb"
             :options="httpVerbs"
             dense
             filled
@@ -255,8 +255,7 @@
       return {
         job_name: '',
         httpVerbs: ['GET', 'PUT', 'POST', 'DELETE'],
-        selectedVerb: 'GET',
-        // httpverb: '',
+        selectedverb: 'GET',
         url: '',
         headers: '', // headers as an array for backend?
         body: '',
@@ -295,7 +294,7 @@
           data: {
         //            name:'blank',
             status: false,
-            selectedVerb: 'GET',
+            selectedverb: 'GET',
           //          job_name: 'test123',
            //         url: 'https://example.com',
           //        body: '{"out": true, "bolt11": "23o4u8298"}',
@@ -363,7 +362,7 @@
         var data = {
           name: this.jobDialog.data.name,
           status: this.jobDialog.data.status,
-          selectedVerb: this.jobDialog.data.selectedVerb,
+          selectedverb: this.jobDialog.data.selectedverb,
           url: this.jobDialog.data.url,
           headers: JSON.stringify(this.jobDialog.headers, null, 2),
           body: this.jobDialog.data.body,

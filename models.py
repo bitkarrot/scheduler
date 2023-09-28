@@ -36,7 +36,7 @@ class Operator(Enum):
 class CreateJobData(BaseModel):
     name: Optional[str] = Query(default=None, description="Name of the Job")
     status: bool = Query(False) # true is active, false if paused
-    selectedVerb: Optional[str] = Query(default=None)
+    selectedverb: Optional[str] = Query(default=None)
     url: Optional[str] = Query(default=None)
     headers: Optional[str] = Query(default=None)
     body: Optional[str] = Query(default=None)
@@ -47,7 +47,7 @@ class CreateJobData(BaseModel):
 class UpdateJobData(BaseModel):
     name: Optional[str] = Query(default=None, description="Name of the Job")
     status: bool  # true is active, false if paused
-    selectedVerb: Optional[str] = None
+    selectedverb: Optional[str] = None
     url: Optional[str] = None
     headers: Optional[str] = None
     body: Optional[str] = None
@@ -61,7 +61,7 @@ class Job(BaseModel):
     admin: str
     status: bool  # true is active, false if paused
     schedule: str
-    selectedVerb: Optional[str] = None
+    selectedverb: Optional[str] = None
     url: Optional[str] = None
     headers: Optional[str] = None
     body: Optional[str] = None
@@ -72,7 +72,7 @@ class JobFilters(FilterModel):
     id: str
     name: str
     schedule: Optional[str] = None
-    selectedVerb: Optional[str] = None
+    selectedverb: Optional[str] = None
     url: Optional[str] = None
     headers: Optional[str] = None
     body: Optional[str] = None

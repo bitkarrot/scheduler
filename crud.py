@@ -78,11 +78,11 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
     
     await db.execute(
         """
-        INSERT INTO scheduler.jobs (id, name, admin, status, schedule, httpverb, url, headers, body, extra)
+        INSERT INTO scheduler.jobs (id, name, admin, status, schedule, selectedverb, url, headers, body, extra)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (link_id, data.name, admin_id, data.status, 
-         data.schedule, data.selectedVerb, data.url,
+         data.schedule, data.selectedverb, data.url,
          data.headers, data.body,
          json.dumps(data.extra) if data.extra else None),
     )
@@ -148,9 +148,9 @@ async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) 
     if data.schedule:
         cols.append("schedule = ?")
         values.append(data.schedule)
-    if data.selectedVerb:
-        cols.append("httpverb = ?")
-        values.append(data.selectedVerb)
+    if data.selectedverb:
+        cols.append("selectedverb = ?")
+        values.append(data.selectedverb)
     if data.url:
         cols.append("url = ?")
         values.append(data.url)
