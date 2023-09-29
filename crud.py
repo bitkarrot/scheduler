@@ -3,6 +3,7 @@ from typing import Optional
 from uuid import uuid4
 from datetime import datetime
 import sys
+import datetime as dt
 
 from lnbits.db import POSTGRES, Filters
 
@@ -123,7 +124,8 @@ async def pause_scheduler(job_id: str, state: str) -> bool:
         if state.lower() == "false":
             b = False
         status = await ch.enable_job_by_comment(comment=job_id, bool=b)
-        print(f'Is Running?: {status}')
+        now =  datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f' Time: {now}, Is Running?: {status}')
         ## TODO: update database
         return status
     except Exception as e: 
@@ -199,21 +201,36 @@ async def create_log_entry(data: LogEntry) -> LogEntry:
     status = data.status
     response = data.response
     timestamp =  datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    id = uuid4().hex
+
     await db.execute(
         """
-        INSERT INTO scheduler.logs (job_id, status, response, timestamp) VALUES (?, ?, ?, ?)
+        INSERT INTO scheduler.logs (id, job_id, status, response, timestamp) VALUES (?, ?, ?, ?, ?)
         """,
-        (job_id, status, response, timestamp)
+        (id, job_id, status, response, timestamp)
     )
-    log_created = await get_log_entry(job_id)
+    print(f'Creating Log Entry in DB: {job_id}, {status}, {response}, {timestamp}')
+    log_created = await get_log_entry(id)
     assert log_created, "Newly created Log Entry couldn't be retrieved"
     return log_created
 
+    # log_created = await get_log_entries(job_id)
+    # assert log_created[0], "Newly created Log Entry couldn't be retrieved"
+    # return log_created[0]
 
-async def get_log_entry(job_id: str) -> list[LogEntry]:
+async def get_log_entry(id: str) -> LogEntry:
+    '''
+        get a single log entry based on primary key Unique ID        
+    '''
+    row = await db.fetchone("SELECT * FROM scheduler.logs WHERE id = ?", (id,))
+    return LogEntry(**row)
+
+
+async def get_log_entries(job_id: str) -> list[LogEntry]:
     '''
         get all log entries from data base for particular job
     '''
+    print(f'inside get_log_entries with job_id: {job_id}')
     rows = await db.fetchall("SELECT * FROM scheduler.logs WHERE job_id = ?", (job_id,))
     return [LogEntry(**row) for row in rows]
 

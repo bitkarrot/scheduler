@@ -25,6 +25,7 @@ from .crud import (
     pause_scheduler,
     create_log_entry,
     get_log_entry,
+    get_log_entries,
     get_complete_log
 )
 from .models import (
@@ -45,9 +46,9 @@ from .models import (
     response_model=List[LogEntry],
     openapi_extra=generate_filter_params_openapi(LogEntry),
 )
-async def api_get_log_entry(log_id: str) -> LogEntry:
+async def api_get_log_entries(log_id: str) -> LogEntry:
     info: WalletTypeInfo = Depends(require_admin_key)
-    return await get_log_entry(log_id)
+    return await get_log_entries(log_id)
 
 @scheduler_ext.post(
     "/api/v1/logentry",
@@ -59,10 +60,10 @@ async def api_get_log_entry(log_id: str) -> LogEntry:
 )
 async def api_job_entry_create(
     data: LogEntry,
-    info: WalletTypeInfo = Depends(require_admin_key)  
-) -> LogEntry:
+    info: WalletTypeInfo = Depends(require_admin_key)
+) -> bool:
     print(f'data inside api_job_entry_create: {data}')
-    print(f'info of api_job_entry_create: {info}')
+    print(f'info of api_job_entry_create: {info.wallet.adminkey}')
     return await create_log_entry(data)
 
 

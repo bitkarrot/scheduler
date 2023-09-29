@@ -83,7 +83,7 @@ class JobDetailed(Job):
     #wallets: list[Wallet]
 
 
-class LogEntry(BaseModel):    
+class LogEntry(BaseModel):
     job_id: str
     status: Optional[str] = None
     response: Optional[str] = None
