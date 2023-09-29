@@ -126,7 +126,14 @@ async def pause_scheduler(job_id: str, state: str) -> bool:
         status = await ch.enable_job_by_comment(comment=job_id, bool=b)
         now =  datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         print(f' Time: {now}, Is Running?: {status}')
-        ## TODO: update database
+        await db.execute(
+            f"""
+            UPDATE scheduler.jobs SET status = ? WHERE id = ?
+            """,
+            (status, job_id)
+        )
+        
+        print("Updated database with current status ")
         return status
     except Exception as e: 
         return f"Error pausing job: {e}"
@@ -181,8 +188,6 @@ async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) 
     # TODO update Job status w/ data.status
     await ch.enable_job_by_comment(comment=job_id, bool=data.status)
     await ch.edit_job(command, data.schedule, comment=job_id)
-
-
     await db.execute(
         f"""
         UPDATE scheduler.jobs SET {", ".join(cols)} WHERE id = ? AND admin = ?
@@ -213,10 +218,6 @@ async def create_log_entry(data: LogEntry) -> LogEntry:
     log_created = await get_log_entry(id)
     assert log_created, "Newly created Log Entry couldn't be retrieved"
     return log_created
-
-    # log_created = await get_log_entries(job_id)
-    # assert log_created[0], "Newly created Log Entry couldn't be retrieved"
-    # return log_created[0]
 
 async def get_log_entry(id: str) -> LogEntry:
     '''
