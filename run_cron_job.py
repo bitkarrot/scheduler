@@ -34,24 +34,21 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
             logger.info(f'jobID: {jobID}, response text: {response.text}')
 
             url = f'{LNBITS_BASE_URL}/scheduler/api/v1/logentry'
+
+            # we have some difficulty saving response.text to db, unicode?
             data = { 'job_id': jobID, 
                     'status': str(response.status_code), 
-                    'response': 'sample text', # str(response.text), 
+                    'response': 'sample text', # str(response.text),  
                     'timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S') }
 
             logger.info(f' now pushing execution data to the database for jobID: {jobID}')
             logger.info(f'push db calling api : {url} with params: {data}')
-            print("pushdb_response: pushing now")
-            print(url)
-            print(data)
            
             pushdb_response = httpx.post(
                 url=url,
                 headers={"X-Api-Key": adminkey},
                 json=data
             )
-
-            print(f'pushdb status: {pushdb_response.status_code}')
             logger.info(f'pushdb status: {pushdb_response.status_code}')
             logger.info(f'pushdb text: {pushdb_response.text}')
 
@@ -72,20 +69,11 @@ async def get_job_by_id(jobID: str, adminkey: str):
 
         print("get_job_by_id: \n")
         url = f'{LNBITS_BASE_URL}/scheduler/api/v1/jobs/{jobID}'
-        #headers = {"X-Api-Key": adminkey}
-        # print(f'url: {url}')
-        # print(f'headers: {headers}')
-        # logger.info(f'headers: {headers}')
-        # logger.info(f'api call: {url}')
 
         response = httpx.get(
             url=url,
             headers={"X-Api-Key": adminkey}
         )
-        # logger.info(response.status_code)
-        # print(f'response: {response.status_code}')
-        # print(f'type: {type(response.text)}')
-
         items = json.loads(response.text)
         print("response items in get_job_by_id: \n")
         print({items['id']}, {items['name']}, {items['status']}, 
@@ -144,7 +132,7 @@ async def main() -> None:
         # Check if the method_name is valid for httpx
         if method_name.lower() in http_verbs:
             method_to_call = getattr(httpx, method_name.lower())
-            response = method_to_call(url, headers=headers, params=body)
+            response = method_to_call(url, headers=headers, params=body) # json=body?
             print('method_name calling response ')       
             await save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
         else:

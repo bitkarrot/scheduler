@@ -45,21 +45,9 @@
           <template v-slot:body="props">
             <q-tr :props="props">
               <q-td v-for="col in props.cols" :key="col.name" :props="props">
-                {{ col.value }}
+                {{ col.value }} 
               </q-td>
               <q-td auto-width>
-
-              <q-btn
-                  flat
-                  dense
-                  size="xs"
-                  @click=""
-                  icon="info"
-                  color="light-blue"
-                >
-                  <q-tooltip>Log Details for this Job</q-tooltip>
-                </q-btn>
-
 
                 <q-btn
                   v-if="jobStatus.show === false"
@@ -72,6 +60,17 @@
                 >
                   <q-tooltip>{{ getButtonText(props.row.id) }}</q-tooltip>
                 </q-btn>
+                </q-btn>
+
+              <q-btn
+                  flat
+                  dense
+                  size="xs"
+                  @click=""
+                  icon="info"
+                  color="light-blue"
+                >
+                  <q-tooltip>Log Details for this Job</q-tooltip>
                 </q-btn>
 
               <q-btn
@@ -249,14 +248,17 @@
 
         <div class="row q-col-gutter-sm">
           <div class="col">
-            <q-checkbox
-            filled
-            dense
-            v-model.trim="jobDialog.data.status"
-            label="Start Job on Submit?"
-          />
+            <q-label> Job Status</q-label>
+            <q-input 
+              disabled
+              dense
+              filled
+              v-model.trim="jobDialog.data.status">
+            </q-input> 
           </div>
         </div>
+
+
 
         <q-btn
           unelevated
@@ -335,7 +337,7 @@
           show: false,
           // below is all sample fill in data on initial load
           data: {
-            status: false,
+            // status: false,
             selectedverb: 'GET',
           // job_name: 'test123',
           // url: 'https://example.com',
@@ -403,7 +405,7 @@
           )
           .then(function (response) {
             self.jobs = response.data.map(function (obj) {
-              console.log(mapcrontabs(obj))
+             // console.log(mapcrontabs(obj))
               return mapcrontabs(obj)
             })
           })
@@ -411,9 +413,12 @@
 
       openJobUpdateDialog: function (linkId) {
         var link = _.findWhere(this.jobs, {id: linkId})
-
         this.jobDialog.data = _.clone(link._data)
         this.jobDialog.show = true
+
+        console.log("job dialog data", this.jobDialog.data.status)
+        console.log("job dialog data", this.jobDialog.data.url)
+
       },
       sendJobFormData: function () {
         var data = {
@@ -512,6 +517,12 @@
           })
       },
       toggleButton(id) {
+        console.log(id)
+       // var link = _.findWhere(this.jobs, {id: id})
+       // this.jobDialog.data = _.clone(link._data)
+       // console.log("job dialog data", this.jobDialog.data.status)
+       // this.jobStates[id] = this.jobDialog.data.status
+        
         this.$set(this.jobStates, id, !this.jobStates[id]);
         this.pauseJob(id, !this.jobStates[id]);
       },
@@ -522,6 +533,8 @@
         return this.jobStates[id] ? 'Play' : 'Stop';
       },
       getButtonColor(id) {
+        console.log("job id: ", id)
+        console.log("button job state:", this.jobStates[id])
         return this.jobStates[id] ? 'green' : 'red';
       },
       pauseJob: function (jobId, status) {
@@ -545,7 +558,6 @@
                 window.location.reload();
 
                 // TODO: fix the status update displayed after post
-
                 // update the list of jobs paused or running
                 // response status for success/failure, we might not need this section?
                 // in jobStatus.data.id
@@ -561,7 +573,6 @@
       exportJobsCSV: function () {
         LNbits.utils.exportCSV(this.jobsTable.columns, this.jobs)
       },
-
     },
     props: {
       row: {
@@ -572,7 +583,6 @@
     created: function () {
       if (this.g.user.wallets.length) {
         this.getJobs()
-        //  this.getWallets()
       }
     }
   })
