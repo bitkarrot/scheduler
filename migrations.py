@@ -50,3 +50,10 @@ async def m004_add_logging_db(db):
         )
         """
     )
+
+async def m005_add_job_id_to_log_entry(db):
+    await db.execute(
+        """
+        ALTER TABLE scheduler.logs ADD COLUMN job_id TEXT
+        """
+    )

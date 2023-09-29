@@ -30,6 +30,8 @@ py_path = sys.executable
 dir_path = os.path.dirname(os.path.realpath(__name__))
 command = py_path + f" {dir_path}/lnbits/extensions/scheduler/run_cron_job.py"
 
+# .log path 
+log_path = f"{dir_path}/lnbits/extensions/scheduler/scheduler.log"
 
 # crontab-specific methods, direct to system cron
 async def create_cron(comment:str, command:str, schedule:str, env_vars:dict):    
@@ -190,21 +192,37 @@ async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) 
 
 #async def create_log_entry(id: str, status: str, response: str) -> LogEntry:
 async def create_log_entry(data: LogEntry) -> LogEntry:
-    id = data.id
+    '''
+        create log entry in database
+    '''
+    job_id = data.jobid
     status = data.status
     response = data.response
     timestamp =  datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     await db.execute(
         """
-        INSERT INTO scheduler.logs (id, status, response, timestamp) VALUES (?, ?, ?, ?)
+        INSERT INTO scheduler.logs (job_id, status, response, timestamp) VALUES (?, ?, ?, ?)
         """,
-        (id, status, response, timestamp)
+        (job_id, status, response, timestamp)
     )
-    log_created = await get_log_entry(id)
+    log_created = await get_log_entry(job_id)
     assert log_created, "Newly created Log Entry couldn't be retrieved"
     return log_created
 
 
-async def get_log_entry(id: str) -> list[LogEntry]:
-    rows = await db.fetchall("SELECT * FROM scheduler.logs WHERE id = ?", (id,))
+async def get_log_entry(job_id: str) -> list[LogEntry]:
+    '''
+        get all log entries from data base for particular job
+    '''
+    rows = await db.fetchall("SELECT * FROM scheduler.logs WHERE job_id = ?", (job_id,))
     return [LogEntry(**row) for row in rows]
+
+
+async def get_complete_log() -> str:
+    '''
+        return entire text log from disk, including other errors
+    '''
+    content = ''
+    with open(log_path, 'r') as file:
+        content = file.read()
+    return content

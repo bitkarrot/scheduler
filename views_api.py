@@ -24,7 +24,8 @@ from .crud import (
     update_scheduler_job,
     pause_scheduler,
     create_log_entry,
-    get_log_entry
+    get_log_entry,
+    get_complete_log
 )
 from .models import (
     CreateJobData,
@@ -63,6 +64,19 @@ async def api_job_entry_create(
     print(f'data inside api_job_entry_create: {data}')
     print(f'info of api_job_entry_create: {info}')
     return await create_log_entry(data)
+
+
+@scheduler_ext.get(
+    "/api/v1/complete_log",
+    status_code=HTTPStatus.OK,
+    name="Complete Log",
+    summary="get log of all the jobs plus additional logging messages",
+    response_description="complete log",
+    response_model=str,
+)
+async def api_get_complete_log() -> str:
+    info: WalletTypeInfo = Depends(require_admin_key)
+    return await get_complete_log()
 
 
 @scheduler_ext.get(

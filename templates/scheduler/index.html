@@ -8,7 +8,7 @@
           >New Scheduled Job</q-btn
         >
         <q-btn unelevated color="primary" @click="logDialog.show = true">
-          View Log
+          View All Logs
         </q-btn>
       </q-card-section>
     </q-card>
@@ -48,6 +48,18 @@
                 {{ col.value }}
               </q-td>
               <q-td auto-width>
+
+              <q-btn
+                  flat
+                  dense
+                  size="xs"
+                  @click=""
+                  icon="info"
+                  color="light-blue"
+                >
+                  <q-tooltip>Log Details for this Job</q-tooltip>
+                </q-btn>
+
 
                 <q-btn
                   v-if="jobStatus.show === false"
@@ -106,25 +118,24 @@
   </div>
 
 <q-dialog v-model="logDialog.show" position="top">
-  <q-card class="q-pa-lg q-pt-xl" style="width: 800px">
+  <q-card class="q-pa-lg q-pt-xl" style="width: 800px; height: 600px">
 
    <q-card>
-      <h5 class="text-subtitle1 q-my-none">Logfile</h5>
+      <h5 class="text-subtitle1 q-my-none">Entire Logfile</h5>
     </q-card>
-  <q-card>
+  <q-card class="q-pa-md">
     <q-btn unelevated color="primary" @click="displayFileData">
       Fetch data
     </q-btn>
-    <q-btn @click="cancelEdit" v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
+    <q-btn @click="clearLogDialog" v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
   </q-card>
   <q-card>
-    {{fileData}}
       <q-input
       filled
       v-model.trim="fileData"
-      label='content'
+      label='logfile content'
       type="textarea"
-      rows="4" 
+      rows="20" 
     />
   </q-card>
 </q-card>
@@ -280,8 +291,8 @@
     mixins: [windowMixin],
     data: function () {
       return {
-        fileData: "Logfile content goes here",
-        job_name: '',
+        fileData: "Logfile content", // for log file data
+        job_name: '', // for the create job dialog
         httpVerbs: ['GET', 'PUT', 'POST', 'DELETE'],
         selectedverb: 'GET',
         url: '',
@@ -367,33 +378,16 @@
     methods: {
       ///////////////Jobs////////////////////////////
 
-      async fetchLogContent(filePath) {
-        // fetching content from local file
-        try {
-          const response = await fetch(filePath);
-          const text = await response.text();
-          this.fileData = text;
-        } catch (error) {
-          console.error('Error fetching file:', error);
-        }
-      },
       displayFileData() {
-        // temp id for testing
-        data = '6b1a671df00f4429a88dcdf17cfa86bb' 
         var self = this
         LNbits.api
           .request(
             'GET',
-            '/scheduler/api/v1/logentry/' + data,
+            '/scheduler/api/v1/complete_log',
             this.g.user.wallets[0].adminkey
           )
           .then(function (response) {
-            self.fileData = response.data.map(function (obj) {
-              console.log(mapcrontabs(obj))
-              return mapcrontabs(obj)
-            })
-            data = {}
-            window.location.reload();
+            self.fileData = response.data
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)
@@ -444,6 +438,10 @@
           console.log(data)
           this.createJob(data)
         }
+      },
+      clearLogDialog: function() { 
+        this.logDialog.show = false
+        this.fileData = ''
       },
       cancelEdit: function() { 
         this.jobDialog.show = false
@@ -545,6 +543,8 @@
               )
               .then(function (response) {
                 console.log(response.status)
+                // TODO: fix the status update displayed after post
+
                 // update the list of jobs paused or running
                 // response status for success/failure, we might not need this section?
                 // in jobStatus.data.id

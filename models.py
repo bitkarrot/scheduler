@@ -83,8 +83,8 @@ class JobDetailed(Job):
     #wallets: list[Wallet]
 
 
-class LogEntry(BaseModel):
-    id: str
-    status: str
-    response: str
-    timestamp: str
+class LogEntry(BaseModel):    
+    jobid: str
+    status: Optional[str] = None
+    response: Optional[str] = None
+    timestamp: Optional[str] = None
