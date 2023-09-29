@@ -132,9 +132,9 @@ async def pause_scheduler(job_id: str, state: str) -> bool:
             """,
             (status, job_id)
         )
-        
         print("Updated database with current status ")
-        return status
+        return await get_scheduler_job(job_id)
+
     except Exception as e: 
         return f"Error pausing job: {e}"
 

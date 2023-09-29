@@ -196,7 +196,7 @@ async def api_scheduler_jobs_delete(
 )
 async def api_scheduler_pause(
     job_id, status
-) -> bool:
+) -> JobDetailed:
     return await pause_scheduler(job_id, status)
 
 

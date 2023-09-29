@@ -248,7 +248,7 @@
 
         <div class="row q-col-gutter-sm">
           <div class="col">
-            <q-label> Job Status</q-label>
+            <label> Job Status: Is Running?</label>
             <q-input 
               disabled
               dense
@@ -316,12 +316,7 @@
             {name: 'id', align: 'left', label: 'ID', field: 'id'},
             {name: 'name', align: 'left', label: 'Job Name', field: 'name'},
             {name: 'status', align: 'left', label: 'Is Running?', field: 'status'},
-            {
-              name: 'schedule',
-              align: 'left',
-              label: 'Schedule',
-              field: 'schedule'
-            },
+            {name: 'schedule', align: 'left',label: 'Schedule',field: 'schedule'},
           ],
           pagination: {
             rowsPerPage: 10
@@ -510,15 +505,15 @@
         this.$set(this.jobStates, id, !this.jobStates[id]);
         this.pauseJob(id, !this.jobStates[id]);
       },
-      getButtonIcon(id) {
+      getButtonIcon(id) { 
+        console.log("getButtonIcon: job id: ", id)
+        console.log("getButtonIcon: button job state:", this.jobStates[id]) 
         return this.jobStates[id] ? 'play_arrow' : 'stop';
       },
       getButtonText(id) {
         return this.jobStates[id] ? 'Play' : 'Stop';
       },
       getButtonColor(id) {
-        console.log("job id: ", id)
-        console.log("button job state:", this.jobStates[id])
         return this.jobStates[id] ? 'green' : 'red';
       },
       pauseJob: function (jobId, status) {
@@ -538,16 +533,10 @@
               )
               .then(function (response) {
                 console.log("Pause Response status", response.status);
-                this.getJobs();
-                window.location.reload();
+               // self.jobs[jobId] = mapcrontabs(response.data);
 
+                self.jobStates[jobId] = !status
                 // TODO: fix the status update displayed after post
-                // update the list of jobs paused or running
-                // response status for success/failure, we might not need this section?
-                // in jobStatus.data.id
-                // self.jobs = _.reject(self.jobs, function (obj) {
-                //  return obj.id == jobId
-                //})
               })
               .catch(function (error) {
                 LNbits.utils.notifyApiError(error)
