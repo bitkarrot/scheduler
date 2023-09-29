@@ -84,7 +84,7 @@ class JobDetailed(Job):
 
 
 class LogEntry(BaseModel):    
-    jobid: str
+    job_id: str
     status: Optional[str] = None
     response: Optional[str] = None
     timestamp: Optional[str] = None

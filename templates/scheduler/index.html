@@ -315,7 +315,7 @@
           columns: [
             {name: 'id', align: 'left', label: 'ID', field: 'id'},
             {name: 'name', align: 'left', label: 'Job Name', field: 'name'},
-            {name: 'status', align: 'left', label: 'Status', field: 'status'},
+            {name: 'status', align: 'left', label: 'Is Running?', field: 'status'},
             {
               name: 'schedule',
               align: 'left',
@@ -335,7 +335,6 @@
           show: false,
           // below is all sample fill in data on initial load
           data: {
-          // name:'blank',
             status: false,
             selectedverb: 'GET',
           // job_name: 'test123',
@@ -527,8 +526,7 @@
       },
       pauseJob: function (jobId, status) {
         var self = this
-       // console.log(jobId, status)
-        let confirm_msg = 'Are you sure you want to Stop this Job?'
+        let confirm_msg = 'Are you sure?' // stop
         if (status) { 
           confirm_msg = 'Are you sure you want to Start this Job?'
         }
@@ -542,7 +540,10 @@
                 self.g.user.wallets[0].adminkey
               )
               .then(function (response) {
-                console.log(response.status)
+                console.log(response.status);
+                this.getJobs();
+                window.location.reload();
+
                 // TODO: fix the status update displayed after post
 
                 // update the list of jobs paused or running

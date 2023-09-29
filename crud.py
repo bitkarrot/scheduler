@@ -123,7 +123,7 @@ async def pause_scheduler(job_id: str, state: str) -> bool:
         if state.lower() == "false":
             b = False
         status = await ch.enable_job_by_comment(comment=job_id, bool=b)
-        print(f'Pause Status: {status}')
+        print(f'Is Running?: {status}')
         ## TODO: update database
         return status
     except Exception as e: 
@@ -195,7 +195,7 @@ async def create_log_entry(data: LogEntry) -> LogEntry:
     '''
         create log entry in database
     '''
-    job_id = data.jobid
+    job_id = data.job_id
     status = data.status
     response = data.response
     timestamp =  datetime.now().strftime('%Y-%m-%d %H:%M:%S')

@@ -34,7 +34,7 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
 
             url = f'{LNBITS_BASE_URL}/scheduler/api/v1/logentry'
             # data = { 'jobid': jobID, 'status': str(response.status_code), 'response': response.text, 'timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S') }
-            data = { 'jobid': jobID, 'status': str(response.status_code), 'response': 'sample text', 'timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S') }
+            data = { 'job_id': jobID, 'status': str(response.status_code), 'response': 'sample text', 'timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S') }
 
             logger.info(f' now pushing execution data to the database for jobID: {jobID}')
             logger.info(f'push db calling api : {url} with params: {data}')
