@@ -43,7 +43,7 @@ async def m004_add_logging_db(db):
     await db.execute(
         """
          CREATE TABLE scheduler.logs (
-            id TEXT PRIMARY KEY,
+            id INT AUTO_INCREMENT PRIMARY KEY,
             status TEXT NOT NULL,
             response TEXT NOT NULL,
             timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
