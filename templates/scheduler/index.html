@@ -250,7 +250,7 @@
           <div class="col">
             <label> Job Status: Is Running?</label>
             <q-input 
-              disabled
+              disable
               dense
               filled
               v-model.trim="jobDialog.data.status">
@@ -299,7 +299,7 @@
         headers: '', // headers as an array for backend?
         body: '',
         status: '',
-        jobStates: {}, // A data property to keep track of button states for each id
+       // jobStates: {}, // A data property to keep track of button states for each id
         wallets: [],
         jobs: [],
         shortcuts: ['@reboot','@hourly','@daily','@weekly','@monthly','@yearly'],
@@ -329,7 +329,6 @@
         jobDialog: {
           show: false,
           data: {
-//            status: true,
             selectedverb: 'GET',
             schedule: '* * * * *',
           },
@@ -393,6 +392,7 @@
              // console.log(mapcrontabs(obj))
               return mapcrontabs(obj)
             })
+
           })
       },
 
@@ -430,7 +430,7 @@
       },
       clearLogDialog: function() { 
         this.logDialog.show = false
-        this.fileData = ''
+        // this.fileData = ''
       },
       cancelEdit: function() { 
         this.jobDialog.show = false
@@ -501,26 +501,56 @@
               })
           })
       },
-      toggleButton(id) {
-        this.$set(this.jobStates, id, !this.jobStates[id]);
-        this.pauseJob(id, !this.jobStates[id]);
+      toggleJobsStatus(id) {
+        var self = this
+        for (let i = 0; i < self.jobs.length; i++) {
+          if (self.jobs[i].id === id) {
+            var newstatus = self.jobs[i].status;
+            if (newstatus === true){
+                self.jobs[i].status = false;
+            } else { 
+                self.jobs[i].status = true;
+            }
+            console.log("jobs id: ", self.jobs[i].id, "status:", self.jobs[i].status)
+            //break; // Stop the loop once the target object is found
+            return self.jobs[i].status
+          }
+        }
       },
-      getButtonIcon(id) { 
-        console.log("getButtonIcon: job id: ", id)
-        console.log("getButtonIcon: button job state:", this.jobStates[id]) 
-        return this.jobStates[id] ? 'play_arrow' : 'stop';
+      lookupJobsStatus(id) {
+        var self = this 
+        for (let i =0; i < self.jobs.length; i++ ) {
+          if (self.jobs[i].id === id) {
+            return self.jobs[i].status
+          }
+        }
+      },
+      toggleButton(id) {
+      var lookup_state = this.lookupJobsStatus(id)
+      //console.log("lookup: ", lookup_state)
+      //console.log("opposite: ", !lookup_state)
+
+      var result =  this.pauseJob(id, !lookup_state);
+      //console.log("result: ", result)
+
+      },
+      getButtonIcon(id) {
+        var lookup_state = this.lookupJobsStatus(id)
+        return lookup_state ?  'stop' : 'play_arrow'; 
       },
       getButtonText(id) {
-        return this.jobStates[id] ? 'Play' : 'Stop';
+        var lookup_state = this.lookupJobsStatus(id)
+        return lookup_state ?  'Stop' : 'Play';
       },
       getButtonColor(id) {
-        return this.jobStates[id] ? 'green' : 'red';
+        var lookup_state = this.lookupJobsStatus(id)
+        return lookup_state ? 'red': 'green';
       },
       pauseJob: function (jobId, status) {
         var self = this
-        let confirm_msg = 'Are you sure?' // stop
+        let confirm_msg = 'Stopping, Are you sure?' // stop
         if (status) { 
-          confirm_msg = 'Are you sure you want to Start this Job?'
+          confirm_msg = 'Are you sure you want to Start?'
         }
         LNbits.utils
           .confirmDialog(confirm_msg)
@@ -532,11 +562,15 @@
                 self.g.user.wallets[0].adminkey
               )
               .then(function (response) {
-                console.log("Pause Response status", response.status);
-               // self.jobs[jobId] = mapcrontabs(response.data);
+                //console.log("Pause Response status", response.status);
+                //console.log(response.data)
+                //console.log("response id:", response.data.id)
+                //console.log("response status:", response.data.status)
+                //console.log(" job id : ", jobId)
+                
+                var toggle_state = self.toggleJobsStatus(jobId)
 
-                self.jobStates[jobId] = !status
-                // TODO: fix the status update displayed after post
+                //console.log('toggle states: ', toggle_state)
               })
               .catch(function (error) {
                 LNbits.utils.notifyApiError(error)
