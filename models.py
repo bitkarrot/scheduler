@@ -1,6 +1,6 @@
 from enum import Enum
 from sqlite3 import Row
-from typing import Optional
+from typing import Optional, List, Dict
 
 from fastapi.param_functions import Query
 from pydantic import BaseModel
@@ -32,12 +32,24 @@ class Operator(Enum):
         else:
             raise ValueError('Unknown')
 
+
+class HeaderItems(BaseModel):
+    key: str
+    value: str
+    # def to_dict(self):
+    #     return {
+    #     'key': self.key,
+    #     'value': self.value
+    # }
+
+
 class CreateJobData(BaseModel):
     name: Optional[str] = Query(default=None, description="Name of the Job")
     status: bool = Query(False) # true is active, false if paused
     selectedverb: Optional[str] = Query(default=None)
     url: Optional[str] = Query(default=None)
-    headers: Optional[str] = Query(default=None)
+    # headers: Optional[str] = Query(default=None)
+    headers: Optional[List[HeaderItems]] = Query(default=None)
     body: Optional[str] = Query(default=None)
     schedule: str = Query(default=None)
     extra: Optional[dict[str, str]] = Query(default=None)
@@ -48,7 +60,8 @@ class UpdateJobData(BaseModel):
     status: bool  # true is active, false if paused
     selectedverb: Optional[str] = None
     url: Optional[str] = None
-    headers: Optional[str] = None
+    # headers: Optional[str] = None
+    headers: Optional[List[HeaderItems]] = None
     body: Optional[str] = None
     schedule: str = Query(default=None, description='Schedule to run')
     extra: Optional[dict[str, str]] = Query(default=None, description='Partial update for extra field')
@@ -62,7 +75,8 @@ class Job(BaseModel):
     schedule: str
     selectedverb: Optional[str] = None
     url: Optional[str] = None
-    headers: Optional[str] = None
+    headers: Optional[List[HeaderItems]] = None
+    # headers: Optional[str] = None
     body: Optional[str] = None
     extra: Optional[dict[str, str]]
 
@@ -73,7 +87,8 @@ class JobFilters(FilterModel):
     schedule: Optional[str] = None
     selectedverb: Optional[str] = None
     url: Optional[str] = None
-    headers: Optional[str] = None
+    # headers: Optional[List[HeaderItems]] = None
+    # headers: Optional[str] = None
     body: Optional[str] = None
     extra: Optional[dict[str, str]]
 

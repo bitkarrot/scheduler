@@ -4,7 +4,8 @@ import httpx
 http_verbs = ['get', 'post', 'put', 'delete', 'head', 'options']
 
 def call_api(method_name, url, headers, body):
-    # assume body is a string
+    # assume body is a string from the db here
+    # this method called from run_cron_job.py for job execution
     print(f'body: {body} , type: {type(body)}')
     try:
         body_json = None

@@ -10,6 +10,7 @@ from lnbits.db import POSTGRES, Filters
 from . import db
 from .models import (
     CreateJobData,
+    HeaderItems,
     UpdateJobData,
     Job,
     JobDetailed,
@@ -61,6 +62,12 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
     # temporary blank env_vars held here, left here for future customization
     env_vars = {"ID": link_id, "adminkey": admin_id}
     print(f'env_vars: {env_vars}')
+    
+    headers = data.headers
+    print(headers)
+    allitems_as_dicts = [item.to_dict() for item in headers]
+    headers_string = json.dumps(allitems_as_dicts)
+    print(f'headers as json string: {headers_string}')
 
     ch = CronHandler(username)
     is_valid = await ch.validate_cron_string(data.schedule)
@@ -86,7 +93,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
         """,
         (link_id, data.name, admin_id, data.status, 
          data.schedule, data.selectedverb, data.url,
-         data.headers, data.body,
+         headers_string, data.body,
          json.dumps(data.extra) if data.extra else None),
     )
 

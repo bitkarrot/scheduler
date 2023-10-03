@@ -135,14 +135,11 @@ async def api_scheduler_user(job_id: str) -> JobDetailed:
     description="Create a new job",
     response_description="New Job",
     response_model=Job,
-    # response_model=UserDetailed,
 )
 async def api_scheduler_jobs_create(
     data: CreateJobData,
     info: WalletTypeInfo = Depends(require_admin_key)  
 ) -> Job:
-#    return await create_scheduler_jobs(info.wallet.user, data)
-#    admin_id = info.wallet.adminkey
      return await create_scheduler_jobs(info.wallet.adminkey, data)
 
 

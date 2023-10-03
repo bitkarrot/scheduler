@@ -118,7 +118,6 @@
 
 <q-dialog v-model="logDialog.show" position="top">
   <q-card class="q-pa-lg q-pt-xl" style="width: 800px; height: 600px">
-
    <q-card>
       <h5 class="text-subtitle1 q-my-none">Entire Logfile</h5>
     </q-card>
@@ -281,10 +280,10 @@
     obj._data = _.clone(obj)
     return obj
   }
-  var mapHeaders = function (obj) {
-    obj.amount = parseFloat(obj.amount / 100).toFixed(2)
-    return obj
-  }
+ // var mapHeaders = function (obj) { // originally from map invoiceItems
+ //   obj.amount = parseFloat(obj.amount / 100).toFixed(2)
+ //   return obj
+ // }
 
   new Vue({
     el: '#vue',
@@ -296,7 +295,7 @@
         httpVerbs: ['GET', 'PUT', 'POST', 'DELETE'],
         selectedverb: 'GET',
         url: '',
-        headers: '', // headers as an array for backend?
+        // headers: '', // headers as an array for backend?
         body: '',
         status: '',
        // jobStates: {}, // A data property to keep track of button states for each id
@@ -331,7 +330,9 @@
           data: {
             selectedverb: 'GET',
             schedule: '* * * * *',
+            status: 'false',
           },
+        headers: [],
         },
         jobStatus: { 
           show:false,
@@ -392,7 +393,7 @@
              // console.log(mapcrontabs(obj))
               return mapcrontabs(obj)
             })
-
+            console.log(JSON.stringify(self.jobs))
           })
       },
 
@@ -401,17 +402,23 @@
         this.jobDialog.data = _.clone(link._data)
         this.jobDialog.show = true
 
+          // headers?? 
         console.log("job dialog data", this.jobDialog.data.status)
         console.log("job dialog data", this.jobDialog.data.url)
 
       },
       sendJobFormData: function () {
+
+        console.log('headers: ', JSON.stringify(this.jobDialog.headers, null, 2))
+        console.log('headers: ', this.jobDialog.headers)
+      
         var data = {
           name: this.jobDialog.data.name,
           status: this.jobDialog.data.status,
           selectedverb: this.jobDialog.data.selectedverb,
           url: this.jobDialog.data.url,
-          headers: JSON.stringify(this.jobDialog.headers, null, 2),
+          //headers: JSON.stringify(this.jobDialog.headers, null, 2),
+          headers: this.jobDialog.headers,
           body: this.jobDialog.data.body,
           schedule: this.jobDialog.data.schedule,
           extra: {},
@@ -420,7 +427,6 @@
         if (this.jobDialog.data.id) {
           console.log("update job data")
           console.log(data)
-
           this.updateJob(this.jobDialog.data)
         } else {
           console.log("create new job entry")
@@ -434,9 +440,16 @@
       },
       cancelEdit: function() { 
         this.jobDialog.show = false
-        this.jobDialog.data = {}
         this.jobDialog.headers = []
-        data = {}
+        default_data = {
+          selectedverb: 'GET',
+          schedule: '* * * * *',
+          status: 'false',
+          name: '',
+          url: '',
+          body: '',
+        }
+        this.jobDialog.data = default_data
       },
       updateJob: function (data) { 
         var self = this
@@ -470,7 +483,8 @@
             data
           )
           .then(function (response) {
-            self.jobs.push(mapcrontabs(response.data))
+            console.log(response.text)
+//            self.jobs.push(mapcrontabs(response.data))
             self.jobDialog.show = false
             self.jobDialog.data = {}
             self.jobDialog.headers = []
