@@ -6,6 +6,7 @@ from fastapi.param_functions import Query
 from pydantic import BaseModel
 
 from lnbits.db import FilterModel
+import json
 
 class Operator(Enum):
     GT = "gt"
@@ -76,9 +77,30 @@ class Job(BaseModel):
     selectedverb: Optional[str] = None
     url: Optional[str] = None
     headers: Optional[List[HeaderItems]] = None
-    # headers: Optional[str] = None
     body: Optional[str] = None
     extra: Optional[dict[str, str]]
+
+    @classmethod
+    def from_db_row(cls, row):
+        # Convert the 'headers' column from a string to a list of dictionaries
+        if row['headers']:
+            headers = json.loads(row['headers'])
+            headers = [HeaderItems(**header) for header in headers]
+        else:
+            headers = None
+
+        return cls(
+            id=row['id'],
+            name=row['name'],
+            admin=row['admin'],
+            status=row['status'],
+            schedule=row['schedule'],
+            selectedverb=row['selectedverb'],
+            url=row['url'],
+            headers=headers,
+            body=row['body'],
+            extra=row['extra']
+        )
 
 
 class JobFilters(FilterModel):
@@ -87,10 +109,10 @@ class JobFilters(FilterModel):
     schedule: Optional[str] = None
     selectedverb: Optional[str] = None
     url: Optional[str] = None
-    # headers: Optional[List[HeaderItems]] = None
-    # headers: Optional[str] = None
     body: Optional[str] = None
     extra: Optional[dict[str, str]]
+    # headers: Optional[List[HeaderItems]] = None
+    # headers: Optional[str] = None
 
 
 class JobDetailed(Job):

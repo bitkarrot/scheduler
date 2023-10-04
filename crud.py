@@ -86,7 +86,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
     print(f'create_scheduler_jobs: {response}')
 
     print(f'admin_id: {admin_id}')
-    # this admin_id actually is the User id right now 
+    # this admin_id actually is the api key of the admin user
 
     if response.startswith("Error"):
         assert response.startswith("Error"), "Error creating Cron job"
@@ -112,7 +112,9 @@ async def get_scheduler_job(job_id: str) -> Optional[JobDetailed]:
     # add admin key, as job info might store api keys
     row = await db.fetchone("SELECT * FROM scheduler.jobs WHERE id = ?", (job_id,))
     if row:
-        return Job(**row)
+        return Job.from_db_row(row)
+    #    return Job(**row)
+    # also return headers as a valid list[HeaderItems]
 
 
 async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> list[Job]:
@@ -126,7 +128,9 @@ async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> list[J
         """,
         filters.values([admin])
     )
-    return [Job(**row) for row in rows]
+    jobs = [Job.from_db_row(row) for row in rows]
+    return jobs
+    #return [Job(**row) for row in rows]
 
 
 async def pause_scheduler(job_id: str, state: str) -> bool:
