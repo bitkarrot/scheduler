@@ -332,7 +332,10 @@
             schedule: '* * * * *',
             status: 'false',
           },
-        headers: [],
+          headers: [{
+            "key": "Content-type",
+            "value": "application/json"
+          }],
         },
         jobStatus: { 
           show:false,

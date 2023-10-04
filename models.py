@@ -36,11 +36,11 @@ class Operator(Enum):
 class HeaderItems(BaseModel):
     key: str
     value: str
-    # def to_dict(self):
-    #     return {
-    #     'key': self.key,
-    #     'value': self.value
-    # }
+    def to_dict(self):
+        return {
+        'key': self.key,
+        'value': self.value
+    }
 
 
 class CreateJobData(BaseModel):

@@ -40,9 +40,15 @@ async def create_cron(comment:str, command:str, schedule:str, env_vars:dict):
     try:
         ch = CronHandler(username)
         response = await ch.new_job(command, schedule, comment=comment, env=env_vars)
-        return response
+        # make sure job is not running on creation by default
+        status = await ch.enable_job_by_comment(comment=comment, bool=False)
+        print(f'create_cron: {response}, {status}')
+        if status == False:
+            return response
+        else: # error setting job to 'Not Running' and creating job
+            raise e
     except Exception as e: 
-        return f"Error creating job: {e}"
+        return f"Error creating cron job: {e}"
     
 
 async def delete_cron(link_id: str):
