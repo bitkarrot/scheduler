@@ -466,9 +466,9 @@
         LNbits.api
           .request(
             'POST',
-            '/scheduler/api/v1/deletelog/',
+            '/scheduler/api/v1/deletelog',
             this.g.user.wallets[0].adminkey,
-            id
+            id.toString()
           )
           .then(function (response) {
             console.log(response.status)
