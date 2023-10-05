@@ -26,6 +26,7 @@ from .crud import (
     create_log_entry,
     # get_log_entry,
     get_log_entries,
+    delete_log_entries,
     get_complete_log,
     delete_complete_log
 )
@@ -41,21 +42,41 @@ from .models import (
 @scheduler_ext.get(
     "/api/v1/logentry/{log_id}",
     status_code=HTTPStatus.OK,
-    name="Jobs List",
-    summary="get list of jobs",
-    response_description="list of jobs",
-    response_model=List[LogEntry],
-    openapi_extra=generate_filter_params_openapi(LogEntry),
+    name="Log entries for a specific job id from DB",
+    summary="get log entires for job from DB",
+    response_description="log entries for a job from DB",
+    response_model=str,
 )
-async def api_get_log_entries(log_id: str) -> LogEntry:
+async def api_get_log_entries(log_id: str) -> str:
     info: WalletTypeInfo = Depends(require_admin_key)
     return await get_log_entries(log_id)
+
+
+@scheduler_ext.post(
+    "/api/v1/deletelog",
+    name="Job Log Delete",
+    summary="Delete a Job's Log from DB",
+    description="Delete Job Log from DB",
+    response_model=bool,
+    # dependencies=[Depends(require_admin_key)],
+    # responses={404: {"description": "Jobs does not exist."}},
+    # status_code=HTTPStatus.OK,
+)
+async def api_job_log_delete(
+    id: str,
+    info: WalletTypeInfo = Depends(require_admin_key)
+) -> bool:
+    print(f'inside api_job_log_delete: {id}')    
+    return True
+    #return await delete_log_entries(id)
+
+
 
 @scheduler_ext.post(
     "/api/v1/logentry",
     name="Log Entry Create",
-    summary="Create a new log entry",
-    description="Create a new log entry",
+    summary="Create a new log entry in DB",
+    description="Create a new log entry in DB",
     response_description="New Log Entry",
     response_model=LogEntry,
 )
@@ -63,17 +84,18 @@ async def api_job_entry_create(
     data: LogEntry,
     info: WalletTypeInfo = Depends(require_admin_key)
 ) -> bool:
-    print(f'data inside api_job_entry_create: {data}')
-    print(f'info of api_job_entry_create: {info.wallet.adminkey}')
+    # print(f'data inside api_job_entry_create: {data}')
+    # print(f'info of api_job_entry_create: {info.wallet.adminkey}')
     return await create_log_entry(data)
 
 
+# entries are written to file log by run_cron_job.py
 @scheduler_ext.get(
     "/api/v1/complete_log",
     status_code=HTTPStatus.OK,
     name="Complete Log",
-    summary="get log of all the jobs plus additional logging messages",
-    response_description="complete log",
+    summary="get log of all the jobs plus extra logs",
+    response_description="complete log from scheduler.log",
     response_model=str,
 )
 async def api_get_complete_log() -> str:
@@ -86,7 +108,7 @@ async def api_get_complete_log() -> str:
     status_code=HTTPStatus.OK,
     name="delete Log",
     summary="clear all log messages",
-    response_description="delete complete log",
+    response_description="delete complete log from scheduler.log",
     response_model=bool,
 )
 async def api_delete_complete_log() -> bool:
@@ -190,7 +212,7 @@ async def api_scheduler_jobs_delete(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Jobs does not exist."
         )
-    await delete_scheduler_jobs(jobs_id) # , delete_core)
+    await delete_scheduler_jobs(jobs_id)
 
 
 @scheduler_ext.post(

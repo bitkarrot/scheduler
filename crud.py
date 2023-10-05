@@ -242,13 +242,17 @@ async def get_log_entry(id: str) -> LogEntry:
     return LogEntry(**row)
 
 
-async def get_log_entries(job_id: str) -> list[LogEntry]:
+#async def get_log_entries(job_id: str) -> list[LogEntry]:
+async def get_log_entries(job_id: str) -> str:
     '''
         get all log entries from data base for particular job
     '''
-    # print(f'inside get_log_entries with job_id: {job_id}')
+    print(f'inside get_log_entries with job_id: {job_id}')
     rows = await db.fetchall("SELECT * FROM scheduler.logs WHERE job_id = ?", (job_id,))
-    return [LogEntry(**row) for row in rows]
+    allentries = [LogEntry(**row) for row in rows]
+    print(f'all entries: {allentries}') # turn this into a string delimited by new line
+    return "foobarbaz"
+
 
 async def delete_log_entries(job_id: str) -> bool:
     '''
@@ -258,7 +262,8 @@ async def delete_log_entries(job_id: str) -> bool:
         await db.execute("DELETE FROM scheduler.logs WHERE job_id = ?", (job_id,))
         return True
     except Exception as e:
-        raise e
+        # raise e
+        return False
 
 
 async def read_last_n_lines(file_path, n):

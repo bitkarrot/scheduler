@@ -170,7 +170,7 @@
     />
   </q-card>
   <q-card class="q-pa-md">
-  <q-btn unelevated color="red" @click="deleteJobLogDialog" class="q-ml-auto">
+  <q-btn unelevated color="red" @click="deleteJobLog" class="q-ml-auto">
     Delete Log
   </q-btn>
 </q-card>
@@ -363,6 +363,7 @@
         jobLogDialog: { 
           show: false, 
           output: '',
+          id: ''
         },
         jobDialog: {
           show: false,
@@ -421,12 +422,18 @@
             // console.log("[index] getjobs: ", JSON.stringify(self.jobs))
           })
       },
-      openLogDialog: function(id) { 
+      openLogDialog: function(linkId) { 
         this.jobLogDialog.show = true
-        this.output = 'output for job ID: ' + id
+        var link = _.findWhere(this.jobs, {id: linkId})
+        this.jobLogDialog.id = _.clone(link._data.id)
+        this.output = 'output for job ID: ' + this.jobLogDialog.id
+
       },
       fetchJobLogDialog: function(id){
         var self = this
+        var id = self.jobLogDialog.id
+        console.log("this.jobLogDialog.id ", self.jobLogDialog.id)
+        console.log("fetch job Log Dialog: ", id)
         LNbits.api
           .request(
             'GET',
@@ -444,11 +451,33 @@
           })
       },
       clearJobLogDialog: function() { 
+        var self = this
         this.jobLogDialog.show = false
+        self.output =''
       },
-      deleteJobLogDialog: function() { 
-        this.jobLogDialog.show = false
+      deleteJobLog: function(id) { 
+        //this.jobLogDialog.show = false
         // api call to delete log entries in database here
+        var self = this
+        var id = self.jobLogDialog.id
+        console.log("this.jobLogDialog.id ", self.jobLogDialog.id)
+        console.log("delete Job log: ", id)
+      
+        LNbits.api
+          .request(
+            'POST',
+            '/scheduler/api/v1/deletelog/',
+            this.g.user.wallets[0].adminkey,
+            id
+          )
+          .then(function (response) {
+            console.log(response.status)
+            // this.jobLogDialog.show = True
+            self.output = 'log has been deleted from db'
+          })
+          .catch(function (error) {
+            LNbits.utils.notifyApiError(error)
+          })
       },
       openJobUpdateDialog: function (linkId) {
         var link = _.findWhere(this.jobs, {id: linkId})
