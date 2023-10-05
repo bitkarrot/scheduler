@@ -66,7 +66,7 @@
                   flat
                   dense
                   size="xs"
-                  @click=""
+                  @click="openLogDialog(props.row.id)"
                   icon="info"
                   color="light-blue"
                 >
@@ -116,10 +116,12 @@
     </q-card>
   </div>
 
+
+
 <q-dialog v-model="logDialog.show" position="top">
   <q-card class="q-pa-lg q-pt-xl" style="width: 800px; height: 600px">
    <q-card>
-      <h5 class="text-subtitle1 q-my-none">Entire Logfile</h5>
+      <h5 class="text-subtitle1 q-my-none">Logfile</h5>
     </q-card>
   <q-card class="q-pa-md">
     <q-btn unelevated color="primary" @click="displayFileData">
@@ -144,6 +146,39 @@
 </q-card>
 </q-card>
 </q-dialog>
+
+
+<q-dialog v-model="jobLogDialog.show" position="top">
+  <q-card class="q-pa-lg q-pt-xl" style="width: 800px; height: 600px">
+   <q-card>
+      <h5 class="text-subtitle1 q-my-none">Logfile</h5>
+    </q-card>
+  <q-card class="q-pa-md">
+    <q-btn unelevated color="primary" @click="fetchJobLogDialog">
+      Fetch data
+    </q-btn>
+    <q-btn @click="clearJobLogDialog" v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
+  </q-card>
+
+  <q-card>
+      <q-input
+      filled
+      v-model.trim="output"
+      label='logfile content'
+      type="textarea"
+      rows="20" 
+    />
+  </q-card>
+  <q-card class="q-pa-md">
+  <q-btn unelevated color="red" @click="deleteJobLogDialog" class="q-ml-auto">
+    Delete Log
+  </q-btn>
+</q-card>
+</q-card>
+</q-dialog>
+
+
+
   <q-dialog v-model="jobDialog.show" position="top">
     <q-card class="q-pa-lg q-pt-xl" style="width: 800px">
       <q-form @submit="sendJobFormData" class="q-gutter-md">
@@ -286,25 +321,20 @@
     obj._data = _.clone(obj)
     return obj
   }
- // var mapHeaders = function (obj) { // originally from map invoiceItems
- //   obj.amount = parseFloat(obj.amount / 100).toFixed(2)
- //   return obj
- // }
 
   new Vue({
     el: '#vue',
     mixins: [windowMixin],
     data: function () {
       return {
-        fileData: "Logfile content", // for log file data
+        fileData: "All Logfile content", // for log file data
+        output: "Individual Job Logs",
         job_name: '', // for the create job dialog
         httpVerbs: ['GET', 'PUT', 'POST', 'DELETE'],
         selectedverb: 'GET',
         url: '',
-        // headers: '', // headers as an array for backend?
         body: '',
         status: '',
-       // jobStates: {}, // A data property to keep track of button states for each id
         wallets: [],
         jobs: [],
         shortcuts: ['@reboot','@hourly','@daily','@weekly','@monthly','@yearly'],
@@ -328,6 +358,9 @@
           }
         },
         logDialog: { 
+          show: false, 
+        },
+        jobLogDialog: { 
           show: false, 
           output: '',
         },
@@ -373,22 +406,6 @@
     },
     methods: {
       ///////////////Jobs////////////////////////////
-      displayFileData() {
-        var self = this
-        LNbits.api
-          .request(
-            'GET',
-            '/scheduler/api/v1/complete_log',
-            this.g.user.wallets[0].adminkey
-          )
-          .then(function (response) {
-            self.fileData = response.data
-          })
-          .catch(function (error) {
-            LNbits.utils.notifyApiError(error)
-          })
-      },
-
       getJobs: function () {
         var self = this
         LNbits.api
@@ -404,7 +421,35 @@
             // console.log("[index] getjobs: ", JSON.stringify(self.jobs))
           })
       },
-
+      openLogDialog: function(id) { 
+        this.jobLogDialog.show = true
+        this.output = 'output for job ID: ' + id
+      },
+      fetchJobLogDialog: function(id){
+        var self = this
+        LNbits.api
+          .request(
+            'GET',
+            '/scheduler/api/v1/logentry/' + id,
+            this.g.user.wallets[0].adminkey
+          )
+          .then(function (response) {
+            console.log("fetch job Log Dialog: ")
+            console.log(JSON.stringify(response))
+            console.log(response.status)
+            self.output = response.data
+          })
+          .catch(function (error) {
+            LNbits.utils.notifyApiError(error)
+          })
+      },
+      clearJobLogDialog: function() { 
+        this.jobLogDialog.show = false
+      },
+      deleteJobLogDialog: function() { 
+        this.jobLogDialog.show = false
+        // api call to delete log entries in database here
+      },
       openJobUpdateDialog: function (linkId) {
         var link = _.findWhere(this.jobs, {id: linkId})
         this.jobDialog.data = _.clone(link._data)
@@ -427,7 +472,6 @@
 
       },
       sendJobFormData: function () {
-
        console.log('[index] sendJobFormData headers: ', JSON.stringify(this.jobDialog.headers, null, 2))
        // console.log('sendJobFormData headers: ', this.jobDialog.headers)
       
@@ -456,11 +500,28 @@
           this.createJob(data)
         }
       },
+      displayFileData() { // for complete log data
+        var self = this
+        LNbits.api
+          .request(
+            'GET',
+            '/scheduler/api/v1/complete_log',
+            this.g.user.wallets[0].adminkey
+          )
+          .then(function (response) {
+            self.fileData = response.data
+          })
+          .catch(function (error) {
+            LNbits.utils.notifyApiError(error)
+          })
+      },
       clearLogDialog: function() { 
+        // for complete log data
         this.logDialog.show = false
         // this.fileData = ''
       },
       deleteLog: function() {
+        // for complete log data
           var self = this
           LNbits.api
             .request(
