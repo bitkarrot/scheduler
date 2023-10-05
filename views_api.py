@@ -170,15 +170,15 @@ async def api_scheduler_jobs_create(
     status_code=HTTPStatus.OK,
 )
 async def api_scheduler_jobs_delete(
-    jobs_id,
-    delete_core: bool = Query(True),
+    jobs_id
+   # delete_core: bool = Query(True),
 ) -> None:
     jobs = await get_scheduler_job(jobs_id)
     if not jobs:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Jobs does not exist."
         )
-    await delete_scheduler_jobs(jobs_id, delete_core)
+    await delete_scheduler_jobs(jobs_id) # , delete_core)
 
 
 @scheduler_ext.post(

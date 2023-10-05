@@ -329,13 +329,14 @@
           show: false,
           data: {
             selectedverb: 'GET',
-            schedule: '* * * * *',
+            //schedule: '* * * * *',
             status: 'false',
           },
-          headers: [{
-            "key": "Content-type",
-            "value": "application/json"
-          }],
+          headers:[]
+         // headers: [{
+         //   "key": "Content-type",
+         //   "value": "application/json"
+         // }],
         },
         jobStatus: { 
           show:false,
@@ -366,7 +367,6 @@
     },
     methods: {
       ///////////////Jobs////////////////////////////
-
       displayFileData() {
         var self = this
         LNbits.api
@@ -393,29 +393,40 @@
           )
           .then(function (response) {
             self.jobs = response.data.map(function (obj) {
-             // console.log(mapcrontabs(obj))
               return mapcrontabs(obj)
             })
-            console.log(JSON.stringify(self.jobs))
+            // console.log("[index] getjobs: ", JSON.stringify(self.jobs))
           })
       },
 
       openJobUpdateDialog: function (linkId) {
         var link = _.findWhere(this.jobs, {id: linkId})
         this.jobDialog.data = _.clone(link._data)
+        if (link._data.headers === null || link._data.headers === undefined) {
+          console.log("[index] open Job Update Dialog: headers is null or undefined") 
+          this.jobDialog.headers = []
+        } else {
+          this.jobDialog.headers = _.clone(link._data.headers)
+        }
         this.jobDialog.show = true
 
-          // headers?? 
-        console.log("job dialog data", this.jobDialog.data.status)
-        console.log("job dialog data", this.jobDialog.data.url)
+        console.log("[index] open Job Update Dialog: name ", this.jobDialog.data.name)
+        console.log("[index] open Job Update Dialog: id ", this.jobDialog.data.id)
+//        console.log("[index] open Job Update Dialog: status: ", this.jobDialog.data.status)
+//        console.log("[index] open Job Update Dialog: httpverb ", this.jobDialog.data.selectedverb)
+ //       console.log("[index] open Job Update Dialog: url: ", this.jobDialog.data.url)
+ //       console.log("[index] open Job Update Dialog: schedule ", this.jobDialog.data.schedule)
+ //       console.log("[index] open Job Update Dialog: body ", this.jobDialog.data.body)
+        console.log("[index] open Job Update Dialog: headers: ",  JSON.stringify(this.jobDialog.headers))
 
       },
       sendJobFormData: function () {
 
-        console.log('headers: ', JSON.stringify(this.jobDialog.headers, null, 2))
-        console.log('headers: ', this.jobDialog.headers)
+       console.log('[index] sendJobFormData headers: ', JSON.stringify(this.jobDialog.headers, null, 2))
+       // console.log('sendJobFormData headers: ', this.jobDialog.headers)
       
         var data = {
+          id: this.jobDialog.data.id,
           name: this.jobDialog.data.name,
           status: this.jobDialog.data.status,
           selectedverb: this.jobDialog.data.selectedverb,
@@ -428,11 +439,13 @@
         }
 
         if (this.jobDialog.data.id) {
-          console.log("update job data")
+          console.log("[index] sendJobFormData: update job data")
           console.log(data)
-          this.updateJob(this.jobDialog.data)
+          console.log('[index] sendJobFormData: headers: ', JSON.stringify(data.headers))
+         //  this.updateJob(this.jobDialog.data)
+         this.updateJob(data)
         } else {
-          console.log("create new job entry")
+          console.log("[index] sendJobFormData: create new job entry")
           console.log(data)
           this.createJob(data)
         }
@@ -456,6 +469,8 @@
       },
       updateJob: function (data) { 
         var self = this
+        console.log("[index] update job data.id ", data.id )
+        console.log("[index] update job", data)
         LNbits.api
           .request(
             'PUT',
@@ -463,13 +478,14 @@
             this.g.user.wallets[0].adminkey,
             data
           )
-          .then(function (response) {
-            self.jobs.push(mapcrontabs(response.data))
+          .then(function (response) {            
+           // self.jobs.push(mapcrontabs(response.data))
             self.jobDialog.show = false
             self.jobDialog.data = {}
             self.jobDialog.headers = []
             data = {}
-            window.location.reload();
+
+            self.getJobs()
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)
@@ -485,13 +501,16 @@
             this.g.user.wallets[0].adminkey,
             data
           )
-          .then(function (response) {
-            console.log(response.text)
-//            self.jobs.push(mapcrontabs(response.data))
+          .then(function (response) {            
+            console.log("[index] createJob response: ", response.text)
+
+            self.jobs.push(mapcrontabs(response.data))
+            console.log("[index] createJob: self.jobs ", JSON.stringify(self.jobs))
+  
             self.jobDialog.show = false
             self.jobDialog.data = {}
             self.jobDialog.headers = []
-            data = {}
+            // data = {}
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)

@@ -42,7 +42,7 @@ async def create_cron(comment:str, command:str, schedule:str, env_vars:dict):
         response = await ch.new_job(command, schedule, comment=comment, env=env_vars)
         # make sure job is not running on creation by default
         status = await ch.enable_job_by_comment(comment=comment, bool=False)
-        print(f'create_cron: {response}, {status}')
+        # print(f'create_cron: {response}, {status}')
         if status == False:
             return response
         else: # error setting job to 'Not Running' and creating job
@@ -61,19 +61,21 @@ async def delete_cron(link_id: str):
         return f"Error deleting job: {e}"
 
 
-## database + crontab handling methods
+async def convert_headers(headers: list):
+    # print(f'header list length: "{len(headers)}')
+    allitems_as_dicts = [item.to_dict() for item in headers]
+    headers_string = json.dumps(allitems_as_dicts)
+    # print(f'headers as json string: {headers_string}')
+    return headers_string
+
+
 async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetailed:
     link_id = uuid4().hex 
 
     # temporary blank env_vars held here, left here for future customization
     env_vars = {"ID": link_id, "adminkey": admin_id}
-    print(f'env_vars: {env_vars}')
-    
-    headers = data.headers
-    print(headers)
-    allitems_as_dicts = [item.to_dict() for item in headers]
-    headers_string = json.dumps(allitems_as_dicts)
-    print(f'headers as json string: {headers_string}')
+    # print(f'env_vars: {env_vars}')
+    headers_string = await convert_headers(data.headers)
 
     ch = CronHandler(username)
     is_valid = await ch.validate_cron_string(data.schedule)
@@ -82,10 +84,9 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
         return f"Error in cron string syntax {data.schedule}"
     response = await create_cron(link_id, command, data.schedule, env_vars)
 
-    print(f'cron command: {command}')
-    print(f'create_scheduler_jobs: {response}')
-
-    print(f'admin_id: {admin_id}')
+    # print(f'cron command: {command}')
+    # print(f'create_scheduler_jobs: {response}')
+    # print(f'admin_id: {admin_id}')
     # this admin_id actually is the api key of the admin user
 
     if response.startswith("Error"):
@@ -113,8 +114,6 @@ async def get_scheduler_job(job_id: str) -> Optional[JobDetailed]:
     row = await db.fetchone("SELECT * FROM scheduler.jobs WHERE id = ?", (job_id,))
     if row:
         return Job.from_db_row(row)
-    #    return Job(**row)
-    # also return headers as a valid list[HeaderItems]
 
 
 async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> list[Job]:
@@ -130,7 +129,6 @@ async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> list[J
     )
     jobs = [Job.from_db_row(row) for row in rows]
     return jobs
-    #return [Job(**row) for row in rows]
 
 
 async def pause_scheduler(job_id: str, state: str) -> bool:
@@ -149,22 +147,20 @@ async def pause_scheduler(job_id: str, state: str) -> bool:
             """,
             (status, job_id)
         )
-        print("Updated database with current status ")
+        # print("Updated database with current status ")
         return await get_scheduler_job(job_id)
 
     except Exception as e: 
         return f"Error pausing job: {e}"
 
 
-async def delete_scheduler_jobs(job_id: str, delete_core: bool = True) -> None:
-    # TODO: get rid of delete_core
+async def delete_scheduler_jobs(job_id: str) -> None: # , delete_core: bool = True) -> None:
     deleted = await delete_cron(job_id)
-    print(f'Deletion status for {job_id} : {deleted}')
+    # print(f'Deletion status for {job_id} : {deleted}')
     await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (job_id,))
 
 
 async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) -> JobDetailed:
-    print(UpdateJobData)
     cols = []
     values = []
     if data.name:
@@ -184,7 +180,8 @@ async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) 
         values.append(data.url)
     if data.headers:
         cols.append("headers = ?")
-        values.append(data.headers)
+        headers_string = await convert_headers(data.headers)
+        values.append(headers_string)
     if data.body:
         cols.append("body = ?")
         values.append(data.body)
@@ -199,22 +196,21 @@ async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) 
             cols.append("extra = json_patch(extra, ?)")
         values.append(json.dumps(data.extra))
     
-    # validate cron job before here
-    # write update to cron tab
-    ch = CronHandler(username)
-    # TODO update Job status w/ data.status
-    await ch.enable_job_by_comment(comment=job_id, bool=data.status)
-    await ch.edit_job(command, data.schedule, comment=job_id)
     await db.execute(
         f"""
         UPDATE scheduler.jobs SET {", ".join(cols)} WHERE id = ? AND admin = ?
         """,
         values
     )
+    # check to make sure DB was updated
+    # write update to cron tab
+    ch = CronHandler(username)
+    await ch.enable_job_by_comment(comment=job_id, bool=data.status)
+    await ch.edit_job(command, data.schedule, comment=job_id)
+
     return await get_scheduler_job(job_id)
 
 
-#async def create_log_entry(id: str, status: str, response: str) -> LogEntry:
 async def create_log_entry(data: LogEntry) -> LogEntry:
     '''
         create log entry in database
@@ -248,7 +244,7 @@ async def get_log_entries(job_id: str) -> list[LogEntry]:
     '''
         get all log entries from data base for particular job
     '''
-    print(f'inside get_log_entries with job_id: {job_id}')
+    # print(f'inside get_log_entries with job_id: {job_id}')
     rows = await db.fetchall("SELECT * FROM scheduler.logs WHERE job_id = ?", (job_id,))
     return [LogEntry(**row) for row in rows]
 
