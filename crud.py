@@ -260,14 +260,23 @@ async def delete_log_entries(job_id: str) -> bool:
     except Exception as e:
         raise e
 
+
+async def read_last_n_lines(file_path, n):
+    with open(file_path, 'r') as file:
+        lines = file.readlines()[-n:]
+    return lines
+
+
 async def get_complete_log() -> str:
     '''
         return entire text log from disk, including other errors
+        only fetch the last 1000 lines, so that response does not get too large
     '''
     if os.path.exists(log_path):  
         content = ''
-        with open(log_path, 'r') as file:
-            content = file.read()
+        last_1000_lines = await read_last_n_lines(log_path, 1000)
+        for line in last_1000_lines:
+            content += line
         return content
     else: 
         return f'log file does not exist at location: {log_path}'

@@ -24,7 +24,7 @@ from .crud import (
     update_scheduler_job,
     pause_scheduler,
     create_log_entry,
-    get_log_entry,
+    # get_log_entry,
     get_log_entries,
     get_complete_log,
     delete_complete_log

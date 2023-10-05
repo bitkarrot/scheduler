@@ -1,6 +1,6 @@
 from enum import Enum
 from sqlite3 import Row
-from typing import Optional, List, Dict
+from typing import Optional, List
 
 from fastapi.param_functions import Query
 from pydantic import BaseModel
@@ -111,7 +111,6 @@ class JobFilters(FilterModel):
     body: Optional[str] = None
     extra: Optional[dict[str, str]]
     # headers: Optional[List[HeaderItems]] = None
-    # headers: Optional[str] = None
 
 
 class JobDetailed(Job):
