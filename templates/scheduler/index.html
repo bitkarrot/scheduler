@@ -127,6 +127,7 @@
     </q-btn>
     <q-btn @click="clearLogDialog" v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
   </q-card>
+
   <q-card>
       <q-input
       filled
@@ -136,6 +137,11 @@
       rows="20" 
     />
   </q-card>
+  <q-card class="q-pa-md">
+  <q-btn unelevated color="red" @click="deleteLog" class="q-ml-auto">
+    Delete Log
+  </q-btn>
+</q-card>
 </q-card>
 </q-dialog>
   <q-dialog v-model="jobDialog.show" position="top">
@@ -453,6 +459,23 @@
       clearLogDialog: function() { 
         this.logDialog.show = false
         // this.fileData = ''
+      },
+      deleteLog: function() {
+          var self = this
+          LNbits.api
+            .request(
+              'POST',
+              '/scheduler/api/v1/delete_log',
+              this.g.user.wallets[0].adminkey
+            )
+            .then(function (response) {
+              if (response.status == 200) {
+                self.fileData = ''                
+              }
+            })
+            .catch(function (error) {
+              LNbits.utils.notifyApiError(error)
+            })
       },
       cancelEdit: function() { 
         this.jobDialog.show = false

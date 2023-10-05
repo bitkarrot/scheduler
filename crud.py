@@ -155,10 +155,12 @@ async def pause_scheduler(job_id: str, state: str) -> bool:
 
 
 async def delete_scheduler_jobs(job_id: str) -> None: # , delete_core: bool = True) -> None:
-    deleted = await delete_cron(job_id)
-    # print(f'Deletion status for {job_id} : {deleted}')
-    await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (job_id,))
-
+    try:
+        deleted = await delete_cron(job_id)
+        # print(f'Deletion status for {job_id} : {deleted}')
+        await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (job_id,))
+    except Exception as e:
+        raise e
 
 async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) -> JobDetailed:
     cols = []
@@ -248,12 +250,36 @@ async def get_log_entries(job_id: str) -> list[LogEntry]:
     rows = await db.fetchall("SELECT * FROM scheduler.logs WHERE job_id = ?", (job_id,))
     return [LogEntry(**row) for row in rows]
 
+async def delete_log_entries(job_id: str) -> bool:
+    '''
+        delete all log entries from data base for particular job
+    '''
+    try:
+        await db.execute("DELETE FROM scheduler.logs WHERE job_id = ?", (job_id,))
+        return True
+    except Exception as e:
+        raise e
 
 async def get_complete_log() -> str:
     '''
         return entire text log from disk, including other errors
     '''
-    content = ''
-    with open(log_path, 'r') as file:
-        content = file.read()
-    return content
+    if os.path.exists(log_path):  
+        content = ''
+        with open(log_path, 'r') as file:
+            content = file.read()
+        return content
+    else: 
+        return f'log file does not exist at location: {log_path}'
+
+async def delete_complete_log() -> bool: 
+    '''
+        clear the contents of the text log on disk
+    '''
+    # Check if the file exists before trying to delete it
+    if os.path.exists(log_path):
+        os.remove(log_path)
+        return True
+    else:
+        return False
+

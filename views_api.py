@@ -26,7 +26,8 @@ from .crud import (
     create_log_entry,
     get_log_entry,
     get_log_entries,
-    get_complete_log
+    get_complete_log,
+    delete_complete_log
 )
 from .models import (
     CreateJobData,
@@ -78,6 +79,19 @@ async def api_job_entry_create(
 async def api_get_complete_log() -> str:
     info: WalletTypeInfo = Depends(require_admin_key)
     return await get_complete_log()
+
+
+@scheduler_ext.post(
+    "/api/v1/delete_log",
+    status_code=HTTPStatus.OK,
+    name="delete Log",
+    summary="clear all log messages",
+    response_description="delete complete log",
+    response_model=bool,
+)
+async def api_delete_complete_log() -> bool:
+    info: WalletTypeInfo = Depends(require_admin_key)    
+    return await delete_complete_log()
 
 
 @scheduler_ext.get(
@@ -157,7 +171,6 @@ async def api_scheduler_jobs_create(
     info: WalletTypeInfo = Depends(require_admin_key)
 ) -> JobDetailed:
     return await update_scheduler_job(job_id, info.wallet.adminkey, data)
-#    return await update_scheduler_job(job_id, info.wallet.user, data)
 
 
 @scheduler_ext.delete(
@@ -171,7 +184,6 @@ async def api_scheduler_jobs_create(
 )
 async def api_scheduler_jobs_delete(
     jobs_id
-   # delete_core: bool = Query(True),
 ) -> None:
     jobs = await get_scheduler_job(jobs_id)
     if not jobs:
