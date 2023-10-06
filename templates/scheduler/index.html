@@ -170,9 +170,9 @@
     />
   </q-card>
   <q-card class="q-pa-md">
-  <q-btn unelevated color="red" @click="deleteJobLog" class="q-ml-auto">
+  <!-- <q-btn unelevated color="red" @click="deleteJobLog" class="q-ml-auto">
     Delete Log
-  </q-btn>
+  </q-btn> -->
 </q-card>
 </q-card>
 </q-dialog>
@@ -373,10 +373,6 @@
             status: 'false',
           },
           headers:[]
-         // headers: [{
-         //   "key": "Content-type",
-         //   "value": "application/json"
-         // }],
         },
         jobStatus: { 
           show:false,
@@ -455,8 +451,7 @@
         this.jobLogDialog.show = false
         self.output =''
       },
-      deleteJobLog: function(id) { 
-        //this.jobLogDialog.show = false
+      /*      deleteJobLog: function(id) {
         // api call to delete log entries in database here
         var self = this
         var id = self.jobLogDialog.id
@@ -479,6 +474,7 @@
             LNbits.utils.notifyApiError(error)
           })
       },
+      */
       openJobUpdateDialog: function (linkId) {
         var link = _.findWhere(this.jobs, {id: linkId})
         this.jobDialog.data = _.clone(link._data)
@@ -510,7 +506,6 @@
           status: this.jobDialog.data.status,
           selectedverb: this.jobDialog.data.selectedverb,
           url: this.jobDialog.data.url,
-          //headers: JSON.stringify(this.jobDialog.headers, null, 2),
           headers: this.jobDialog.headers,
           body: this.jobDialog.data.body,
           schedule: this.jobDialog.data.schedule,
@@ -521,7 +516,6 @@
           console.log("[index] sendJobFormData: update job data")
           console.log(data)
           console.log('[index] sendJobFormData: headers: ', JSON.stringify(data.headers))
-         //  this.updateJob(this.jobDialog.data)
          this.updateJob(data)
         } else {
           console.log("[index] sendJobFormData: create new job entry")
