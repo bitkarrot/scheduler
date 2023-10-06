@@ -259,7 +259,7 @@ async def delete_log_entries(job_id: str) -> bool:
         delete all log entries from data base for particular job
     '''
     try:
-        await db.execute("DELETE FROM scheduler.logs WHERE job_id = ?", (job_id,))
+        await db.execute("DELETE * FROM scheduler.logs WHERE job_id = ?", (job_id,))
         return True
     except Exception as e:
         # raise e
