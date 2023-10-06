@@ -17,7 +17,6 @@ formatter = logging.Formatter('[{asctime}] [{levelname}] {name}: {message}', dt_
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-http_verbs = ['get', 'post', 'put', 'delete', 'head', 'options']
 LNBITS_BASE_URL = os.environ.get('LNBITS_BASE_URL') or 'http://localhost:5000'
 
 async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
@@ -36,7 +35,7 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
             url = f'{LNBITS_BASE_URL}/scheduler/api/v1/logentry'
 
             # we have some difficulty saving response.text to db, unicode?
-            data = { 'job_id': jobID, 
+            data = {'job_id': jobID, 
                     'status': str(response.status_code), 
                     'response': 'sample text', # str(response.text),  
                     'timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S') }
@@ -50,7 +49,7 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
                 json=data
             )
             logger.info(f'pushdb status: {pushdb_response.status_code}')
-            logger.info(f'pushdb text: {pushdb_response.text}')
+            # logger.info(f'pushdb text: {pushdb_response.text}')
 
             if pushdb_response.status_code == 200:
                 logger.info(f'success: saved results to db for jobID: {jobID}')
@@ -64,9 +63,11 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
 def call_api(method_name, url, headers, body):
     # assume body, headers is a string from the db
     # this method called from run_cron_job.py for job execution
+    http_verbs = ['get', 'post', 'put', 'delete']
+
     print(f'body: {body} , type: {type(body)}')
     try:
-        body_json = None
+        body_json = {}
         if body is not None:
             body_json = json.loads(body)
         print(f'body json: {body_json}')
@@ -74,14 +75,15 @@ def call_api(method_name, url, headers, body):
         if method_name.lower() in http_verbs:
             method_to_call = getattr(httpx, method_name.lower())
             print(f'method_to_call: {method_to_call}')
-            
-            if body_json is not None:
+
+            if method_name.lower() in ['get', 'delete'] and body_json is not None:
+                response = method_to_call(url, headers=headers, params=body_json)
+            elif method_name.lower() in ['post', 'put']:
                 response = method_to_call(url, headers=headers, json=body_json)
-            else:
-                response = method_to_call(url, headers=headers, params=body)
+
             print("response from httpx call: ")
             print(response.status_code)
-            print(response.text)
+            # print(response.text)
             return response
         else:
             print(f'Invalid method name: {method_name}')
@@ -160,9 +162,9 @@ async def main() -> None:
         response = call_api(method_name, url, json_headers, body)
 
         print(f'response status from api call: {response.status_code}')
-        print(f'response text from api call: {response.text}')        
-        logger.info(f'response status from api call: {response.status_code}')
-        logger.info(f'response text from api call: {response.text}')
+        # print(f'response text from api call: {response.text}')        
+        #logger.info(f'response status from api call: {response.status_code}')
+        #logger.info(f'response text from api call: {response.text}')
 
         # save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
 
