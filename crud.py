@@ -275,7 +275,8 @@ async def read_last_n_lines(file_path, n):
 async def get_complete_log() -> str:
     '''
         return entire text log from disk, including other errors
-        only fetch the last 1000 lines, so that response does not get too large
+        for now, only fetch the last 1000 lines, 
+        so that response does not get too large
     '''
     if os.path.exists(log_path):  
         content = ''

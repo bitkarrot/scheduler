@@ -33,14 +33,12 @@ def call_api(method_name, url, headers, body):
         raise e
 
 
-def get_example_test():
+def get_example_test(headers):
     ''' 
     simple GET example, get lnurlp
     '''
     method_name = "GET"
     url = "http://localhost:5000/lnurlp/api/v1/links"
-    headers = {"X-Api-Key": "70a745c683034ca2b22287d8d1538dee", 
-                "content": "application/text"}
     body = None  # if there is no body pass None.
     response = call_api(method_name, url, headers, body)
     return response
@@ -62,9 +60,18 @@ def post_example_test():
 
 if __name__ == "__main__":
 
-    get_example_test()
+    data_list = [{"key":"X-Api-Key","value":"70a745c683034ca2b22287d8d1538dee"},{"key":"Content-type","value":"application/json"}]
+    json_data = json.dumps(data_list, indent=4)
+    data = {}
+    for e in data_list:
+        print(f'key: {e["key"]}, value: {e["value"]}')
+        data.update({e['key']: e['value']})
 
-#    post_example_test()
+    print(json.dumps(data))
+
+    get_example_test(headers=data)
+
+    # post_example_test()
 
     print('Continue with method_name calling response ')   
     # procced with await save_job_execution(response=response, jobID=jobID, adminkey=adminkey)

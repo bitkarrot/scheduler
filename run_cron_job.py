@@ -60,6 +60,37 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
         logger.error(e)
         return False
 
+
+def call_api(method_name, url, headers, body):
+    # assume body, headers is a string from the db
+    # this method called from run_cron_job.py for job execution
+    print(f'body: {body} , type: {type(body)}')
+    try:
+        body_json = None
+        if body is not None:
+            body_json = json.loads(body)
+        print(f'body json: {body_json}')
+
+        if method_name.lower() in http_verbs:
+            method_to_call = getattr(httpx, method_name.lower())
+            print(f'method_to_call: {method_to_call}')
+            
+            if body_json is not None:
+                response = method_to_call(url, headers=headers, json=body_json)
+            else:
+                response = method_to_call(url, headers=headers, params=body)
+            print("response from httpx call: ")
+            print(response.status_code)
+            print(response.text)
+            return response
+        else:
+            print(f'Invalid method name: {method_name}')
+
+    except json.JSONDecodeError as e:
+        print(f'body json decode error: {e}')
+        raise e
+
+
 async def get_job_by_id(jobID: str, adminkey: str):
     '''
         Gets job by jobID from API, as this script run by cron
@@ -74,13 +105,9 @@ async def get_job_by_id(jobID: str, adminkey: str):
             url=url,
             headers={"X-Api-Key": adminkey}
         )
+        print(f"response items in get_job_by_id: {response.text}\n")
         items = json.loads(response.text)
-        print("response items in get_job_by_id: \n")
-        print({items['id']}, {items['name']}, {items['status']}, 
-              {items['selectedverb']}, {items['url']}, {items['headers']}, 
-              {items['body']}, {items['extra']})
-    
-        return response.text
+        return items
     except Exception as e:
         print(f'exception thrown: {e}')
         logger.error(f'Error trying to fetch data from db, check is LNBITS server running?: {e}')
@@ -105,6 +132,9 @@ async def main() -> None:
         for the http verb, url, headers, and data. Then it will execute 
         the API call and log the result. 
     '''
+    # headers = [],  default value
+    # body = None,  default value
+    # example:[{"key":"X-Api-Key","value":"0b2569190e2f4b"},{"key":"Content-type","value":"application/json"}]
     try:
         jobID = os.environ.get('ID')
         adminkey = os.environ.get('adminkey')
@@ -112,31 +142,29 @@ async def main() -> None:
         print(varinfo)
         logger.info(varinfo)
 
-        job_response = await get_job_by_id(jobID, adminkey)
-        job = json.loads(job_response)
-
+        job = await get_job_by_id(jobID, adminkey)
         method_name = job['selectedverb']
         url = job['url']
-        headers = {}
-        body = {}
+        headers = job['headers']
+        body = job['body']
 
-        if job['headers'] is not None:
-           headers = json.loads(job['headers'])
-        if job['body'] is not None:
-           body = json.loads(job['body'])
-
+        # print(f'type headers: {type(headers)}') 
         dbinfo = f'Database info jobID: {jobID}, method_name: {method_name}, url: {url}, headers: {headers}, body: {body}'    
         print(dbinfo)
         logger.info(dbinfo)
 
-        # Check if the method_name is valid for httpx
-        if method_name.lower() in http_verbs:
-            method_to_call = getattr(httpx, method_name.lower())
-            response = method_to_call(url, headers=headers, params=body) # json=body?
-            print('method_name calling response ')       
-            await save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
-        else:
-            logger.error(f'Invalid method name: {method_name}')
+        json_headers = {}
+        for h in headers: 
+            json_headers.update({h['key']: h['value']})
+
+        response = call_api(method_name, url, json_headers, body)
+
+        print(f'response status from api call: {response.status_code}')
+        print(f'response text from api call: {response.text}')        
+        logger.info(f'response status from api call: {response.status_code}')
+        logger.info(f'response text from api call: {response.text}')
+
+        # save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
 
     except Exception as e:
         print(f'exception thrown in main() run_cron_job: {e}')
