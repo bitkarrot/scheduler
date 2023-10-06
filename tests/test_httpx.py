@@ -17,10 +17,12 @@ def call_api(method_name, url, headers, body):
             method_to_call = getattr(httpx, method_name.lower())
             print(f'method_to_call: {method_to_call}')
             
-            if body_json is not None:
+            if method_name.lower() in ['get', 'delete'] and body_json is not None:
+                response = method_to_call(url, headers=headers, params=body_json)
+            elif method_name.lower() in ['post', 'put']:
                 response = method_to_call(url, headers=headers, json=body_json)
-            else:
-                response = method_to_call(url, headers=headers, params=body)
+
+
             print("response from httpx call: ")
             print(response.status_code)
             print(response.text)
@@ -39,7 +41,7 @@ def get_example_test(headers):
     '''
     method_name = "GET"
     url = "http://localhost:5000/lnurlp/api/v1/links"
-    body = None  # if there is no body pass None.
+    body = json.dumps({"out": "true"}) # if there is no body pass None.
     response = call_api(method_name, url, headers, body)
     return response
 
@@ -51,11 +53,10 @@ def post_example_test():
     method_name = 'POST'
     url = "http://localhost:5000/lnurlp/api/v1/links"
     headers = {"X-Api-Key": "70a745c683034ca2b22287d8d1538dee"}
-    body_dict = {"description": "testlnurlp", "amount": 1000, "max": 1000, "min": 1000, "comment_chars": 0, "username": "foobarbaz"}
+    body_dict = {"description": "testlnurlp", "amount": 1000, "max": 1000, "min": 1000, "comment_chars": 0, "username": "foobar3"}
     body = json.dumps(body_dict)
     response = call_api(method_name, url, headers, body)
     return response
-
 
 
 if __name__ == "__main__":
@@ -71,8 +72,8 @@ if __name__ == "__main__":
 
     get_example_test(headers=data)
 
-    # post_example_test()
+    post_example_test()
 
-    print('Continue with method_name calling response ')   
+    print('Continue here with method_name calling response ')   
     # procced with await save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
 
