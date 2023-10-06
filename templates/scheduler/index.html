@@ -7,6 +7,9 @@
         <q-btn unelevated color="primary" @click="jobDialog.show = true"
           >New Scheduled Job</q-btn
         >
+        <q-btn unelevated color="primary" @click="logDialog.show = true">
+          View All Logs
+        </q-btn>
       </q-card-section>
     </q-card>
 
@@ -42,7 +45,7 @@
           <template v-slot:body="props">
             <q-tr :props="props">
               <q-td v-for="col in props.cols" :key="col.name" :props="props">
-                {{ col.value }}
+                {{ col.value }} 
               </q-td>
               <q-td auto-width>
 
@@ -51,12 +54,23 @@
                   flat
                   dense
                   size="s"
-                  @click="pauseJob(props.row.id, false)"
-                  icon="stop"
-                  color="red"
+                  @click="toggleButton(props.row.id)"
+                  :icon="getButtonIcon(props.row.id)"
+                  :color="getButtonColor(props.row.id)"
                 >
-                  <q-tooltip>Stop Job</q-tooltip>
+                  <q-tooltip>{{ getButtonText(props.row.id) }}</q-tooltip>
                 </q-btn>
+                </q-btn>
+
+              <q-btn
+                  flat
+                  dense
+                  size="xs"
+                  @click="openLogDialog(props.row.id)"
+                  icon="info"
+                  color="light-blue"
+                >
+                  <q-tooltip>Log Details for this Job</q-tooltip>
                 </q-btn>
 
               <q-btn
@@ -102,6 +116,69 @@
     </q-card>
   </div>
 
+
+
+<q-dialog v-model="logDialog.show" position="top">
+  <q-card class="q-pa-lg q-pt-xl" style="width: 800px; height: 600px">
+   <q-card>
+      <h5 class="text-subtitle1 q-my-none">Logfile</h5>
+    </q-card>
+  <q-card class="q-pa-md">
+    <q-btn unelevated color="primary" @click="displayFileData">
+      Fetch data
+    </q-btn>
+    <q-btn @click="clearLogDialog" v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
+  </q-card>
+
+  <q-card>
+      <q-input
+      filled
+      v-model.trim="fileData"
+      label='logfile content'
+      type="textarea"
+      rows="20" 
+    />
+  </q-card>
+  <q-card class="q-pa-md">
+  <q-btn unelevated color="red" @click="deleteLog" class="q-ml-auto">
+    Delete Log
+  </q-btn>
+</q-card>
+</q-card>
+</q-dialog>
+
+
+<q-dialog v-model="jobLogDialog.show" position="top">
+  <q-card class="q-pa-lg q-pt-xl" style="width: 800px; height: 600px">
+   <q-card>
+      <h5 class="text-subtitle1 q-my-none">Logfile</h5>
+    </q-card>
+  <q-card class="q-pa-md">
+    <q-btn unelevated color="primary" @click="fetchJobLogDialog">
+      Fetch data
+    </q-btn>
+    <q-btn @click="clearJobLogDialog" v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
+  </q-card>
+
+  <q-card>
+      <q-input
+      filled
+      v-model.trim="output"
+      label='logfile content'
+      type="textarea"
+      rows="20" 
+    />
+  </q-card>
+  <q-card class="q-pa-md">
+  <!-- <q-btn unelevated color="red" @click="deleteJobLog" class="q-ml-auto">
+    Delete Log
+  </q-btn> -->
+</q-card>
+</q-card>
+</q-dialog>
+
+
+
   <q-dialog v-model="jobDialog.show" position="top">
     <q-card class="q-pa-lg q-pt-xl" style="width: 800px">
       <q-form @submit="sendJobFormData" class="q-gutter-md">
@@ -111,20 +188,93 @@
           v-model.trim="jobDialog.data.name"
           label="Job Name"
         ></q-input>
-        <q-input
+
+        <q-card>
+          <h5 class="text-subtitle1 q-my-none">Action</h5>
+          <q-tr>
+            <q-td>
+            <q-select
+            v-model.trim="jobDialog.data.selectedverb"
+            :options="httpVerbs"
+            dense
+            filled
+          />
+          </q-td>
+          <q-td style="width:100%">
+            <q-input filled dense v-model.trim="jobDialog.data.url" label="URL" />
+          </q-td>
+        </q-tr>
+        </q-card>
+
+        <q-card>
+          <h5 class="text-subtitle1 q-my-none">Headers</h5>
+          <p style="color:#bcb7b7"> Example: 
+            "X-Api-Key: 0b2569190e2f4bfc90a7ae25aa194518" <br/>
+          </p>
+
+          <q-list bordered separator>
+            <q-item
+              clickable
+              v-ripple
+              v-for="(item, index) in jobDialog.headers"
+              :key="index"
+            >
+          <q-item-section>
+            <q-input
+              filled
+              dense
+              label="Key"
+              placeholder="Content-type"
+              v-model="jobDialog.headers[index].key"
+            ></q-input>
+          </q-item-section>
+          <q-item-section>
+            <q-input
+              filled
+              dense
+              label="Value"
+              placeholder="application/json"
+              v-model="jobDialog.headers[index].value"
+            ></q-input>
+          </q-item-section>
+          <q-item-section side>
+            <q-btn
+              unelevated
+              dense
+              size="xs"
+              icon="delete"
+              :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
+              @click="jobDialog.headers.splice(index, 1)"
+            ></q-btn>
+          </q-item-section>
+        </q-item>
+        <q-item clickable v-ripple>
+          <q-btn flat icon="add" @click="jobDialog.headers.push({})">
+            Add Header Entry
+          </q-btn>
+        </q-item>
+      </q-list>
+
+        </q-card>
+  
+        <q-card>
+          <h5 class="text-subtitle1 q-my-none">Body</h5>
+          <q-input
           filled
-          dense
-          v-model.trim="jobDialog.data.command"
-          label="Command"
-        ></q-input>
+          v-model.trim="jobDialog.data.body"
+          label='Example: {"out": true, "bolt11": <string>}'
+          type="textarea"
+          rows="4" 
+        />
+        </q-card>
 
         <q-card>
           <h5 class="text-subtitle1 q-my-none">Schedule</h5>
-          <p> todo: add shortcut buttons here: daily, hourly, etc.</p>
+          <!-- <p> todo: add shortcut buttons here: daily, hourly, etc.</p> -->
           <q-tr>
-            <q-th v-for="slot in slots" :key="slot" class="text-center">
+            <q-td v-for="slot in slots" :key="slot" class="text-center">
               <q-input v-model="cron[slot]" :label="slot" dense filled />
-            </q-th>
+            </q-td>
           </q-tr>
         </q-card>
 
@@ -135,6 +285,18 @@
           v-model.trim="jobDialog.data.schedule"
           label="schedule"          
         ></q-input>
+
+        <div class="row q-col-gutter-sm">
+          <div class="col">
+            <label> Job Status: Is Running?</label>
+            <q-input 
+              disable
+              dense
+              filled
+              v-model.trim="jobDialog.data.status">
+            </q-input> 
+          </div>
+        </div>
 
         <q-btn
           unelevated
@@ -165,8 +327,17 @@
     mixins: [windowMixin],
     data: function () {
       return {
+        fileData: "All Logfile content", // for log file data
+        output: "Individual Job Logs",
+        job_name: '', // for the create job dialog
+        httpVerbs: ['GET', 'PUT', 'POST', 'DELETE'],
+        selectedverb: 'GET',
+        url: '',
+        body: '',
+        status: '',
         wallets: [],
         jobs: [],
+        shortcuts: ['@reboot','@hourly','@daily','@weekly','@monthly','@yearly'],
         slots: ['minute', 'hour', 'day', 'month', 'weekday'],
         cron: {
           minute: '*',
@@ -179,21 +350,29 @@
           columns: [
             {name: 'id', align: 'left', label: 'ID', field: 'id'},
             {name: 'name', align: 'left', label: 'Job Name', field: 'name'},
-            {name: 'command', align: 'left', label: 'Command', field: 'command'},
-            {
-              name: 'schedule',
-              align: 'left',
-              label: 'Schedule',
-              field: 'schedule'
-            },
+            {name: 'status', align: 'left', label: 'Is Running?', field: 'status'},
+            {name: 'schedule', align: 'left',label: 'Schedule',field: 'schedule'},
           ],
           pagination: {
             rowsPerPage: 10
           }
         },
+        logDialog: { 
+          show: false, 
+        },
+        jobLogDialog: { 
+          show: false, 
+          output: '',
+          id: ''
+        },
         jobDialog: {
           show: false,
-          data: {}
+          data: {
+            selectedverb: 'GET',
+            //schedule: '* * * * *',
+            status: 'false',
+          },
+          headers:[]
         },
         jobStatus: { 
           show:false,
@@ -204,7 +383,7 @@
     computed: {
       userOptions: function () {
         return this.jobs.map(function (obj) {
-          console.log(obj.id)
+          //console.log(obj.id)
           return {
             value: String(obj.id),
             label: String(obj.id)
@@ -222,12 +401,10 @@
         this.jobDialog.data.schedule = newValue.trim();
       }
     },
-    methods: {      
+    methods: {
       ///////////////Jobs////////////////////////////
-
       getJobs: function () {
         var self = this
-
         LNbits.api
           .request(
             'GET',
@@ -238,35 +415,169 @@
             self.jobs = response.data.map(function (obj) {
               return mapcrontabs(obj)
             })
+            // console.log("[index] getjobs: ", JSON.stringify(self.jobs))
           })
       },
+      openLogDialog: function(linkId) { 
+        this.jobLogDialog.show = true
+        var link = _.findWhere(this.jobs, {id: linkId})
+        this.jobLogDialog.id = _.clone(link._data.id)
+        this.output = 'output for job ID: ' + this.jobLogDialog.id
 
+      },
+      fetchJobLogDialog: function(id){
+        var self = this
+        var id = self.jobLogDialog.id
+        console.log("this.jobLogDialog.id ", self.jobLogDialog.id)
+        console.log("fetch job Log Dialog: ", id)
+        LNbits.api
+          .request(
+            'GET',
+            '/scheduler/api/v1/logentry/' + id,
+            this.g.user.wallets[0].adminkey
+          )
+          .then(function (response) {
+            console.log("fetch job Log Dialog: ")
+            console.log(JSON.stringify(response))
+            console.log(response.status)
+            self.output = response.data
+          })
+          .catch(function (error) {
+            LNbits.utils.notifyApiError(error)
+          })
+      },
+      clearJobLogDialog: function() { 
+        var self = this
+        this.jobLogDialog.show = false
+        self.output =''
+      },
+      /*      deleteJobLog: function(id) {
+        // api call to delete log entries in database here
+        var self = this
+        var id = self.jobLogDialog.id
+        console.log("this.jobLogDialog.id ", self.jobLogDialog.id)
+        console.log("delete Job log: ", id)
+      
+        LNbits.api
+          .request(
+            'POST',
+            '/scheduler/api/v1/deletelog',
+            this.g.user.wallets[0].adminkey,
+            id.toString()
+          )
+          .then(function (response) {
+            console.log(response.status)
+            // this.jobLogDialog.show = True
+            self.output = 'log has been deleted from db'
+          })
+          .catch(function (error) {
+            LNbits.utils.notifyApiError(error)
+          })
+      },
+      */
       openJobUpdateDialog: function (linkId) {
         var link = _.findWhere(this.jobs, {id: linkId})
-
         this.jobDialog.data = _.clone(link._data)
+        if (link._data.headers === null || link._data.headers === undefined) {
+          console.log("[index] open Job Update Dialog: headers is null or undefined") 
+          this.jobDialog.headers = []
+        } else {
+          this.jobDialog.headers = _.clone(link._data.headers)
+        }
         this.jobDialog.show = true
+
+        console.log("[index] open Job Update Dialog: name ", this.jobDialog.data.name)
+        console.log("[index] open Job Update Dialog: id ", this.jobDialog.data.id)
+//        console.log("[index] open Job Update Dialog: status: ", this.jobDialog.data.status)
+//        console.log("[index] open Job Update Dialog: httpverb ", this.jobDialog.data.selectedverb)
+ //       console.log("[index] open Job Update Dialog: url: ", this.jobDialog.data.url)
+ //       console.log("[index] open Job Update Dialog: schedule ", this.jobDialog.data.schedule)
+ //       console.log("[index] open Job Update Dialog: body ", this.jobDialog.data.body)
+        console.log("[index] open Job Update Dialog: headers: ",  JSON.stringify(this.jobDialog.headers))
+
       },
       sendJobFormData: function () {
+       console.log('[index] sendJobFormData headers: ', JSON.stringify(this.jobDialog.headers, null, 2))
+       // console.log('sendJobFormData headers: ', this.jobDialog.headers)
+      
+        var data = {
+          id: this.jobDialog.data.id,
+          name: this.jobDialog.data.name,
+          status: this.jobDialog.data.status,
+          selectedverb: this.jobDialog.data.selectedverb,
+          url: this.jobDialog.data.url,
+          headers: this.jobDialog.headers,
+          body: this.jobDialog.data.body,
+          schedule: this.jobDialog.data.schedule,
+          extra: {},
+        }
+
         if (this.jobDialog.data.id) {
-          this.updateJob(this.jobDialog.data)
-          console.log("update job data")
+          console.log("[index] sendJobFormData: update job data")
+          console.log(data)
+          console.log('[index] sendJobFormData: headers: ', JSON.stringify(data.headers))
+         this.updateJob(data)
         } else {
-          var data = {
-            user_name: this.jobDialog.data.name,
-            command: this.jobDialog.data.command,
-            schedule: this.jobDialog.data.schedule
-          }
+          console.log("[index] sendJobFormData: create new job entry")
+          console.log(data)
           this.createJob(data)
         }
       },
+      displayFileData() { // for complete log data
+        var self = this
+        LNbits.api
+          .request(
+            'GET',
+            '/scheduler/api/v1/complete_log',
+            this.g.user.wallets[0].adminkey
+          )
+          .then(function (response) {
+            self.fileData = response.data
+          })
+          .catch(function (error) {
+            LNbits.utils.notifyApiError(error)
+          })
+      },
+      clearLogDialog: function() { 
+        // for complete log data
+        this.logDialog.show = false
+        // this.fileData = ''
+      },
+      deleteLog: function() {
+        // for complete log data
+          var self = this
+          LNbits.api
+            .request(
+              'POST',
+              '/scheduler/api/v1/delete_log',
+              this.g.user.wallets[0].adminkey
+            )
+            .then(function (response) {
+              if (response.status == 200) {
+                self.fileData = ''                
+              }
+            })
+            .catch(function (error) {
+              LNbits.utils.notifyApiError(error)
+            })
+      },
       cancelEdit: function() { 
         this.jobDialog.show = false
-        this.jobDialog.data = {}
-        data = {}
+        this.jobDialog.headers = []
+        default_data = {
+          selectedverb: 'GET',
+          schedule: '* * * * *',
+          status: 'false',
+          name: '',
+          url: '',
+          body: '',
+        }
+        this.jobDialog.data = default_data
       },
       updateJob: function (data) { 
         var self = this
+        console.log("[index] update job data.id ", data.id )
+        console.log("[index] update job", data)
         LNbits.api
           .request(
             'PUT',
@@ -274,12 +585,14 @@
             this.g.user.wallets[0].adminkey,
             data
           )
-          .then(function (response) {
-            self.jobs.push(mapcrontabs(response.data))
+          .then(function (response) {            
+           // self.jobs.push(mapcrontabs(response.data))
             self.jobDialog.show = false
             self.jobDialog.data = {}
+            self.jobDialog.headers = []
             data = {}
-            window.location.reload();
+
+            self.getJobs()
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)
@@ -295,11 +608,16 @@
             this.g.user.wallets[0].adminkey,
             data
           )
-          .then(function (response) {
+          .then(function (response) {            
+            console.log("[index] createJob response: ", response.text)
+
             self.jobs.push(mapcrontabs(response.data))
+            console.log("[index] createJob: self.jobs ", JSON.stringify(self.jobs))
+  
             self.jobDialog.show = false
             self.jobDialog.data = {}
-            data = {}
+            self.jobDialog.headers = []
+            // data = {}
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)
@@ -307,8 +625,6 @@
       },
       deleteJob: function (jobId) {
         var self = this
-
-        console.log(jobId)
         LNbits.utils
           .confirmDialog('Are you sure you want to delete this Job?')
           .onOk(function () {
@@ -328,12 +644,59 @@
               })
           })
       },
+      toggleJobsStatus(id) {
+        var self = this
+        for (let i = 0; i < self.jobs.length; i++) {
+          if (self.jobs[i].id === id) {
+            var newstatus = self.jobs[i].status;
+            if (newstatus === true){
+                self.jobs[i].status = false;
+            } else { 
+                self.jobs[i].status = true;
+            }
+            console.log("jobs id: ", self.jobs[i].id, "status:", self.jobs[i].status)
+            //break; // Stop the loop once the target object is found
+            return self.jobs[i].status
+          }
+        }
+      },
+      lookupJobsStatus(id) {
+        var self = this 
+        for (let i =0; i < self.jobs.length; i++ ) {
+          if (self.jobs[i].id === id) {
+            return self.jobs[i].status
+          }
+        }
+      },
+      toggleButton(id) {
+      var lookup_state = this.lookupJobsStatus(id)
+      //console.log("lookup: ", lookup_state)
+      //console.log("opposite: ", !lookup_state)
 
+      var result =  this.pauseJob(id, !lookup_state);
+      //console.log("result: ", result)
+
+      },
+      getButtonIcon(id) {
+        var lookup_state = this.lookupJobsStatus(id)
+        return lookup_state ?  'stop' : 'play_arrow'; 
+      },
+      getButtonText(id) {
+        var lookup_state = this.lookupJobsStatus(id)
+        return lookup_state ?  'Stop' : 'Play';
+      },
+      getButtonColor(id) {
+        var lookup_state = this.lookupJobsStatus(id)
+        return lookup_state ? 'red': 'green';
+      },
       pauseJob: function (jobId, status) {
         var self = this
-        console.log(jobId)
+        let confirm_msg = 'Stopping, Are you sure?' // stop
+        if (status) { 
+          confirm_msg = 'Are you sure you want to Start?'
+        }
         LNbits.utils
-          .confirmDialog('Are you sure you want to stop this Job?')
+          .confirmDialog(confirm_msg)
           .onOk(function () {
             LNbits.api
               .request(
@@ -342,30 +705,34 @@
                 self.g.user.wallets[0].adminkey
               )
               .then(function (response) {
-                // update response status with true/false for success/failure
-                // in jobStatus.data.id
-                //self.jobs = _.reject(self.jobs, function (obj) {
-                //  return obj.id == jobId
-                //})
+                //console.log("Pause Response status", response.status);
+                //console.log(response.data)
+                //console.log("response id:", response.data.id)
+                //console.log("response status:", response.data.status)
+                //console.log(" job id : ", jobId)
+                
+                var toggle_state = self.toggleJobsStatus(jobId)
+
+                //console.log('toggle states: ', toggle_state)
               })
               .catch(function (error) {
                 LNbits.utils.notifyApiError(error)
               })
           })
       },
-
-      // add start job method here
-
-
       exportJobsCSV: function () {
         LNbits.utils.exportCSV(this.jobsTable.columns, this.jobs)
       },
-
+    },
+    props: {
+      row: {
+        type: Object,
+        default: () => ({ id: null }) // Define a default row object if none is provided
+      }
     },
     created: function () {
       if (this.g.user.wallets.length) {
         this.getJobs()
-        //  this.getWallets()
       }
     }
   })

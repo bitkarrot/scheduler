@@ -3,11 +3,12 @@ import asyncio
 import datetime as dt
 import sys
 sys.path.insert(0,'..')
+
 from cron_handler import CronHandler
 from utils import get_env_data_as_dict
+import os
 
 ## TODO make this a legit pytest
-## UNIT TEST ALL THE THINGS!!
 
 async def main(): 
     vars = get_env_data_as_dict('../.env')
@@ -16,12 +17,13 @@ async def main():
     print(f'Scheduler Username: {username}')
 
     print("testing CronHandler")
-    # username = 'bitcarrot'
     env_vars = {'SHELL': '/usr/bin/bash', 'API_URL': 'http://localhost:8000'}
+    id_vars = { 'ID': '23487923847298347928987'}
+    id_vars_2 = { 'ID': 'adf098werlkj987'}
     
     # unique job id number to be placed in comment
-    comment = "cron now ls"
-    echo_comment = "cron now echo"
+    comment = "cron python script"
+    # echo_comment = "cron now echo"
 
     now = dt.datetime.now()
     print(f'current datetime: {now}')
@@ -29,16 +31,19 @@ async def main():
     ch = CronHandler(username)
 
     # regular cron job with comment
-    response = await ch.new_job("ls", "* * * * *", comment=comment)
+    response = await ch.new_job("ls", "15 * * * *", comment=comment, env={})
     print(response)
 
-    # regular cron job with aliase
-    response = await ch.new_job("ls", "@hourly", comment=comment)
+    # regular cron job with log handler
+    py_path = sys.executable
+    dir_path = os.path.dirname(os.path.realpath(__name__))
+    command = py_path + f" {dir_path}/cron-job.py"
+
+    response = await ch.new_job(command, "* * * * *", comment=id_vars['ID'], env=id_vars)
     print(response)
 
-
-    # cron job with env vars
-    response = await ch.new_job_with_env("echo", "* * * * *", comment=echo_comment, env=env_vars)
+    # cron job with env vars with errors redirected to text file
+    response = await ch.new_job(f"/Users/bitcarrot/.pyenv/shims/python3 {dir_path}/../log_handler.py >> /tmp/output.txt 2>&1", "* * * * *", comment=id_vars_2['ID'], env=id_vars_2)
     print(response)
 
     # enable job
@@ -50,6 +55,11 @@ async def main():
     print("Disable Job by Comment")
     disable_status = await ch.enable_job_by_comment(comment=comment, bool=False)
     print(f'enabled status: {disable_status}')
+
+    # job status
+    jobid = id_vars['ID']
+    status = await ch.get_job_status(jobid)
+    print(f'ID: {jobid}, Job Status: {status}')
 
     # pretty print jobs
     print("\npretty print jobs")
@@ -71,16 +81,19 @@ async def main():
     # validate cron string is valid
     cron_string = '@reboot'
     is_valid = await ch.validate_cron_string(cron_string)
-    print(f'cron string {cron_string} is valid: {is_valid}')    
+    print(f'cron string {cron_string} is valid: {is_valid}')
 
-
-    # set env vars
-    print("set env vars")
-    await ch.set_env_vars(env_vars)
+    # set global env vars
+    print("set global env vars")
+    await ch.set_global_env_vars(env_vars)
 
     # print environment variables
     print("get env vars")
-    output = await ch.get_env_vars()
+    output = await ch.get_global_env_vars()
+    print(output)
+
+    print("clear global env vars")
+    output = await ch.clear_global_env_vars()
     print(output)
 
     # remove all jobs

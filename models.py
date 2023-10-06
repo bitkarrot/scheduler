@@ -1,12 +1,12 @@
 from enum import Enum
 from sqlite3 import Row
-from typing import Optional
+from typing import Optional, List
 
 from fastapi.param_functions import Query
 from pydantic import BaseModel
 
 from lnbits.db import FilterModel
-
+import json
 
 class Operator(Enum):
     GT = "gt"
@@ -34,17 +34,36 @@ class Operator(Enum):
             raise ValueError('Unknown')
 
 
+class HeaderItems(BaseModel):
+    key: str
+    value: str
+    def to_dict(self):
+        return {
+        'key': self.key,
+        'value': self.value
+    }
+
+
 class CreateJobData(BaseModel):
-    user_name: str = Query(..., description="Name of the Job")
-    command: str = Query("")
-    schedule: str = Query("")
+    name: Optional[str] = Query(default=None, description="Name of the Job")
+    status: bool = Query(False) # true is active, false if paused
+    selectedverb: Optional[str] = Query(default=None)
+    url: Optional[str] = Query(default=None)
+    headers: Optional[List[HeaderItems]] #= Query(default=None)
+    body: Optional[str] = Query(default=None)
+    schedule: str = Query(default=None)
     extra: Optional[dict[str, str]] = Query(default=None)
 
 
 class UpdateJobData(BaseModel):
-    job_name: Optional[str] = Query(default=None, description="Name of the Job")
-    command: Optional[str] = Query(default=None, description='Command to run')
-    schedule: Optional[str] = Query(default=None, description='Schedule to run')
+    id: str
+    name: Optional[str] = Query(default=None, description="Name of the Job")
+    status: bool  # true is active, false if paused
+    selectedverb: Optional[str] = None
+    url: Optional[str] = None
+    headers: Optional[List[HeaderItems]] # = Query(default=None)
+    body: Optional[str] = None
+    schedule: str = Query(default=None, description='Schedule to run')
     extra: Optional[dict[str, str]] = Query(default=None, description='Partial update for extra field')
 
 
@@ -52,19 +71,55 @@ class Job(BaseModel):
     id: str
     name: str
     admin: str
-    command: Optional[str] = None
-    schedule: Optional[str] = None
+    status: bool  # true is active, false if paused
+    schedule: str
+    selectedverb: Optional[str] = None
+    url: Optional[str] = None
+    headers: Optional[List[HeaderItems]]
+    body: Optional[str] = None
     extra: Optional[dict[str, str]]
+
+    @classmethod
+    def from_db_row(cls, row):
+        # Convert the 'headers' column from a string to a list of dictionaries
+        if row['headers']:
+            headers = json.loads(row['headers'])
+            headers = [HeaderItems(**header) for header in headers]
+        else:
+            headers = []
+
+        return cls(
+            id=row['id'],
+            name=row['name'],
+            admin=row['admin'],
+            status=row['status'],
+            schedule=row['schedule'],
+            selectedverb=row['selectedverb'],
+            url=row['url'],
+            headers=headers,
+            body=row['body'],
+            extra=row['extra']
+        )
 
 
 class JobFilters(FilterModel):
     id: str
     name: str
-    command: Optional[str] = None
     schedule: Optional[str] = None
+    selectedverb: Optional[str] = None
+    url: Optional[str] = None
+    body: Optional[str] = None
     extra: Optional[dict[str, str]]
+    # headers: Optional[List[HeaderItems]] = None
 
 
 class JobDetailed(Job):
     pass
     #wallets: list[Wallet]
+
+
+class LogEntry(BaseModel):
+    job_id: str
+    status: Optional[str] = None
+    response: Optional[str] = None
+    timestamp: Optional[str] = None

@@ -1,4 +1,5 @@
 from crontab import CronTab, CronSlices
+import json
 
 '''
 CronHanlder class contains methods for handling cron jobs, create, edit, delete
@@ -6,8 +7,6 @@ CronHanlder class contains methods for handling cron jobs, create, edit, delete
 see originaldocs for python-crontab package
 https://pypi.org/project/python-crontab/
 '''
-
-import json
 
 class CronHandler():
     def __init__(self, user:str):
@@ -38,15 +37,19 @@ class CronHandler():
         for i in jobs:
             print(i)
 
-    async def new_job(self, command:str, frequency:str, comment:str):
-        job = self._cron.new(command=command, comment=comment)        
+    async def new_job(self, command:str, frequency:str, comment:str, env:json):
+        job = self._cron.new(command=command, comment=comment)
+        if len(env) > 0:
+            for key in env:
+                job.env[key] = env[key]
         job.setall(frequency)
-        if job.is_valid():
+        if job.is_valid(): 
             self._cron.write_to_user(user=self._user)
             return f"job created: {command}, {self._user}, {frequency}"
         else: 
             return f"Error creating job: {command}, {self._user}, {frequency}"
 
+    # TODO: add means to edit env variables in the job
     async def edit_job(self, command:str, frequency:str, comment:str): 
         iter = self._cron.find_comment(comment)
         for job in iter:
@@ -59,17 +62,6 @@ class CronHandler():
             else:
                 return f"Error editing job: {command}, {self._user}, {frequency}"
 
-    async def new_job_with_env(self, command:str, frequency:str, comment:str, env:json):
-        job = self._cron.new(command=command, comment=comment)
-        for key in env:
-            job.env[key] = env[key]
-        job.setall(frequency)
-        if job.is_valid(): 
-            self._cron.write_to_user(user=self._user)
-            return f"job created: {command}, {self._user}, {frequency}"
-        else: 
-            return f"Error creating job: {command}, {self._user}, {frequency}"
-
     async def enable_job_by_comment(self, comment:str, bool:bool):
         print(f'enable_job_by_comment: {comment}, bool: {bool}')
         iter = self._cron.find_comment(comment)
@@ -79,11 +71,14 @@ class CronHandler():
             self._cron.write_to_user(user=self._user)
             return job.is_enabled()
 
+    async def get_job_status(self, job_id: str) -> bool:
+        iter = self._cron.find_comment(job_id)
+        for job in iter:
+            return job.is_enabled()
 
     async def remove_job(self, command=str):
         self._cron.remove_all(command=command)
         self._cron.write_to_user(user=self._user)
-
 
     async def clear_all_jobs(self):
         self._cron.remove_all()
@@ -98,16 +93,20 @@ class CronHandler():
         self._cron.write_to_user(user=self._user)
 
 
-    async def set_env_vars(self, env:dict):
+    async def set_global_env_vars(self, env:dict):
         for (name, value) in env.items():
             self._cron.env[name] = value
         self._cron.write_to_user(user=self._user)
 
-    async def get_env_vars(self): 
+    async def get_global_env_vars(self):
         output = ''    
         for (name, value) in self._cron.env.items():
-            output += f'name: {name}, value: {value}'
+            output += f'name: {name}, value: {value}\n'
         return output
+
+    async def clear_global_env_vars(self):
+        self._cron.env.clear()
+        self._cron.write_to_user(user=self._user)
 
     async def validate_cron_string(self, timestring: str):
         is_valid = CronSlices.is_valid(timestring)
