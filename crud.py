@@ -154,7 +154,7 @@ async def pause_scheduler(job_id: str, state: str) -> bool:
         return f"Error pausing job: {e}"
 
 
-async def delete_scheduler_jobs(job_id: str) -> None: # , delete_core: bool = True) -> None:
+async def delete_scheduler_jobs(job_id: str) -> None:
     try:
         deleted = await delete_cron(job_id)
         # print(f'Deletion status for {job_id} : {deleted}')
@@ -249,21 +249,19 @@ async def get_log_entries(job_id: str) -> str:
     '''
     print(f'inside get_log_entries with job_id: {job_id}')
     rows = await db.fetchall("SELECT * FROM scheduler.logs WHERE job_id = ?", (job_id,))
-    allentries = [LogEntry(**row) for row in rows]
+    allentries = [LogEntry(**row) for row in rows]    
     print(f'all entries: {allentries}') # turn this into a string delimited by new line
     return "foobarbaz"
 
 
-async def delete_log_entries(job_id: str) -> bool:
+async def delete_log_entries(job_id: str) -> None:
     '''
         delete all log entries from data base for particular job
     '''
     try:
         await db.execute("DELETE FROM scheduler.logs WHERE job_id = ?", (job_id,))
-        return True
     except Exception as e:
-        # raise e
-        return False
+        raise e
 
 
 async def read_last_n_lines(file_path, n):

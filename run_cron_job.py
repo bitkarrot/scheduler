@@ -48,8 +48,8 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
                 headers={"X-Api-Key": adminkey},
                 json=data
             )
-            logger.info(f'pushdb status: {pushdb_response.status_code}')
-            # logger.info(f'pushdb text: {pushdb_response.text}')
+            logger.info(f'SaveJobExecution: pushdb status: {pushdb_response.status_code}')
+            logger.info(f'SaveJobExecution: pushdb text: {pushdb_response.text}')
 
             if pushdb_response.status_code == 200:
                 logger.info(f'success: saved results to db for jobID: {jobID}')
@@ -84,6 +84,8 @@ def call_api(method_name, url, headers, body):
             print("response from httpx call: ")
             print(response.status_code)
             # print(response.text)
+            logger.info(f'response from api call: {response.status_code}')
+            logger.info(f'response text from api call : {response.text}')
             return response
         else:
             print(f'Invalid method name: {method_name}')
@@ -163,10 +165,10 @@ async def main() -> None:
 
         print(f'response status from api call: {response.status_code}')
         # print(f'response text from api call: {response.text}')        
-        #logger.info(f'response status from api call: {response.status_code}')
-        #logger.info(f'response text from api call: {response.text}')
+        logger.info(f'response status from api call: {response.status_code}')
+        logger.info(f'response text from api call: {response.text}')
 
-        # save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
+        save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
 
     except Exception as e:
         print(f'exception thrown in main() run_cron_job: {e}')

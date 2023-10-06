@@ -66,7 +66,7 @@ async def api_job_log_delete(
     id: str,
     info: WalletTypeInfo = Depends(require_admin_key)
 ) -> bool:
-    print(f'inside api_job_log_delete: {id}')    
+    print(f'inside api_job_log_delete: {id}')
     return True
     #return await delete_log_entries(id)
 
@@ -212,7 +212,9 @@ async def api_scheduler_jobs_delete(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Jobs does not exist."
         )
+    # delete both the job and the log entries
     await delete_scheduler_jobs(jobs_id)
+    await delete_log_entries(jobs_id)
 
 
 @scheduler_ext.post(
