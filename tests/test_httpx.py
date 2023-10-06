@@ -74,6 +74,4 @@ if __name__ == "__main__":
 
     post_example_test()
 
-    print('Continue here with method_name calling response ')   
-    # procced with await save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
-
+    print('Continue here with method_name calling response ')
