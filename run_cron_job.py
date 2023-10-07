@@ -30,7 +30,7 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
         print(f' inside save_job_execution now ')
         if response.status_code == 200:
             logger.info(f"jobID: {jobID}, status_code: {response.status_code}")
-            logger.info(f'jobID: {jobID}, response text: {response.text}')
+            # logger.info(f'jobID: {jobID}, response text: {response.text}')
 
             url = f'{LNBITS_BASE_URL}/scheduler/api/v1/logentry'
 
@@ -49,7 +49,7 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
                 json=data
             )
             logger.info(f'SaveJobExecution: pushdb status: {pushdb_response.status_code}')
-            logger.info(f'SaveJobExecution: pushdb text: {pushdb_response.text}')
+            # logger.info(f'SaveJobExecution: pushdb text: {pushdb_response.text}')
 
             if pushdb_response.status_code == 200:
                 logger.info(f'success: saved results to db for jobID: {jobID}')
@@ -166,9 +166,9 @@ async def main() -> None:
         print(f'response status from api call: {response.status_code}')
         # print(f'response text from api call: {response.text}')        
         logger.info(f'response status from api call: {response.status_code}')
-        logger.info(f'response text from api call: {response.text}')
+        # logger.info(f'response text from api call: {response.text}')
 
-        save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
+        await save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
 
     except Exception as e:
         print(f'exception thrown in main() run_cron_job: {e}')

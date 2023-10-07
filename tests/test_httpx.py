@@ -53,7 +53,7 @@ def post_example_test():
     method_name = 'POST'
     url = "http://localhost:5000/lnurlp/api/v1/links"
     headers = {"X-Api-Key": "70a745c683034ca2b22287d8d1538dee"}
-    body_dict = {"description": "testlnurlp", "amount": 1000, "max": 1000, "min": 1000, "comment_chars": 0, "username": "foobar3"}
+    body_dict = {"description": "testlnurlp", "amount": 1000, "max": 1000, "min": 1000, "comment_chars": 0} # , "username": "foobar3"}
     body = json.dumps(body_dict)
     response = call_api(method_name, url, headers, body)
     return response

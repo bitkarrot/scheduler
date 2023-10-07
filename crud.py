@@ -249,9 +249,12 @@ async def get_log_entries(job_id: str) -> str:
     '''
     print(f'inside get_log_entries with job_id: {job_id}')
     rows = await db.fetchall("SELECT * FROM scheduler.logs WHERE job_id = ?", (job_id,))
-    allentries = [LogEntry(**row) for row in rows]    
-    print(f'all entries: {allentries}') # turn this into a string delimited by new line
-    return "foobarbaz"
+    all_entries = ""
+    for row in rows: 
+        all_entries = (all_entries + "[" + LogEntry(**row).timestamp + "]: JobID:" +
+                        LogEntry(**row).job_id + " Status: "+  LogEntry(**row).status +
+                        " Response: " + LogEntry(**row).response + "\n\n")
+    return all_entries
 
 
 async def delete_log_entries(job_id: str) -> None:

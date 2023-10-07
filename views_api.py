@@ -71,7 +71,6 @@ async def api_job_log_delete(
     #return await delete_log_entries(id)
 
 
-
 @scheduler_ext.post(
     "/api/v1/logentry",
     name="Log Entry Create",
@@ -84,8 +83,6 @@ async def api_job_entry_create(
     data: LogEntry,
     info: WalletTypeInfo = Depends(require_admin_key)
 ) -> bool:
-    # print(f'data inside api_job_entry_create: {data}')
-    # print(f'info of api_job_entry_create: {info.wallet.adminkey}')
     return await create_log_entry(data)
 
 
@@ -144,8 +141,6 @@ async def api_scheduler_jobs(
 
     Filters are AND-combined
     """
-    #admin_id = wallet.wallet.user
-    #return await get_scheduler_jobs(admin_id, filters)
     return await get_scheduler_jobs(wallet.wallet.adminkey, filters)
 
 @scheduler_ext.get(

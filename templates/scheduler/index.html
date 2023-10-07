@@ -422,14 +422,14 @@
         this.jobLogDialog.show = true
         var link = _.findWhere(this.jobs, {id: linkId})
         this.jobLogDialog.id = _.clone(link._data.id)
-        this.output = 'output for job ID: ' + this.jobLogDialog.id
+        // this.output = 'output for job ID: ' + this.jobLogDialog.id
 
       },
       fetchJobLogDialog: function(id){
         var self = this
         var id = self.jobLogDialog.id
-        console.log("this.jobLogDialog.id ", self.jobLogDialog.id)
-        console.log("fetch job Log Dialog: ", id)
+        //console.log("this.jobLogDialog.id ", self.jobLogDialog.id)
+        //console.log("fetch job Log Dialog: ", id)
         LNbits.api
           .request(
             'GET',
@@ -437,9 +437,9 @@
             this.g.user.wallets[0].adminkey
           )
           .then(function (response) {
-            console.log("fetch job Log Dialog: ")
-            console.log(JSON.stringify(response))
-            console.log(response.status)
+            //console.log("fetch job Log Dialog: ")
+            //console.log(JSON.stringify(response))
+            //console.log(response.status)
             self.output = response.data
           })
           .catch(function (error) {
@@ -451,30 +451,6 @@
         this.jobLogDialog.show = false
         self.output =''
       },
-      /*      deleteJobLog: function(id) {
-        // api call to delete log entries in database here
-        var self = this
-        var id = self.jobLogDialog.id
-        console.log("this.jobLogDialog.id ", self.jobLogDialog.id)
-        console.log("delete Job log: ", id)
-      
-        LNbits.api
-          .request(
-            'POST',
-            '/scheduler/api/v1/deletelog',
-            this.g.user.wallets[0].adminkey,
-            id.toString()
-          )
-          .then(function (response) {
-            console.log(response.status)
-            // this.jobLogDialog.show = True
-            self.output = 'log has been deleted from db'
-          })
-          .catch(function (error) {
-            LNbits.utils.notifyApiError(error)
-          })
-      },
-      */
       openJobUpdateDialog: function (linkId) {
         var link = _.findWhere(this.jobs, {id: linkId})
         this.jobDialog.data = _.clone(link._data)
