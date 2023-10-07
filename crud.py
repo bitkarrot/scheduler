@@ -77,7 +77,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
     ch = CronHandler(username)
     is_valid = await ch.validate_cron_string(data.schedule)
     if not is_valid:
-        assert is_valid, "Invalid cron string, please check the format."
+        assert is_valid, "Invalid cron schedule, please check the format."
         return f"Error in cron string syntax {data.schedule}"
     response = await create_cron(link_id, command, data.schedule, env_vars)
 

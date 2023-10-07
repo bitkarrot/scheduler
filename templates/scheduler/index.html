@@ -355,10 +355,17 @@
         },
         jobDialog: {
           show: false,
+          cron: { 
+            minute: '*',
+            hour: '*',
+            day: '*',
+            month: '*',
+            weekday: '*'
+          },
           data: {
             selectedverb: 'GET',
-            //schedule: '* * * * *',
-            status: 'false',
+            schedule: '* * * * *',
+            status: 'false',    
           },
           headers:[]
         },
@@ -443,22 +450,22 @@
         var link = _.findWhere(this.jobs, {id: linkId})
         this.jobDialog.data = _.clone(link._data)
         if (link._data.headers === null || link._data.headers === undefined) {
-          console.log("[index] open Job Update Dialog: headers is null or undefined") 
+         // console.log("[index] open Job Update Dialog: headers is null or undefined") 
           this.jobDialog.headers = []
         } else {
           this.jobDialog.headers = _.clone(link._data.headers)
         }
+        if (link._data.schedule) { 
+          let [minute, hour, day, month, weekday] = this.jobDialog.data.schedule.split(' ');
+          this.cron.minute = minute
+          this.cron.hour = hour
+          this.cron.day = day
+          this.cron.month = month
+          this.cron.weekday = weekday
+          //console.log("this.cron.minute", this.cron.minute)  
+        }
+        
         this.jobDialog.show = true
-
-        console.log("[index] open Job Update Dialog: name ", this.jobDialog.data.name)
-        console.log("[index] open Job Update Dialog: id ", this.jobDialog.data.id)
-//        console.log("[index] open Job Update Dialog: status: ", this.jobDialog.data.status)
-//        console.log("[index] open Job Update Dialog: httpverb ", this.jobDialog.data.selectedverb)
- //       console.log("[index] open Job Update Dialog: url: ", this.jobDialog.data.url)
- //       console.log("[index] open Job Update Dialog: schedule ", this.jobDialog.data.schedule)
- //       console.log("[index] open Job Update Dialog: body ", this.jobDialog.data.body)
-        console.log("[index] open Job Update Dialog: headers: ",  JSON.stringify(this.jobDialog.headers))
-
       },
       sendJobFormData: function () {
        console.log('[index] sendJobFormData headers: ', JSON.stringify(this.jobDialog.headers, null, 2))
@@ -537,6 +544,13 @@
           body: '',
         }
         this.jobDialog.data = default_data
+        this.cron = {
+          minute: '*',
+          hour: '*',
+          day: '*',
+          month: '*',
+          weekday: '*',
+        }
       },
       updateJob: function (data) { 
         var self = this
@@ -554,8 +568,19 @@
             self.jobDialog.show = false
             self.jobDialog.data = {}
             self.jobDialog.headers = []
-            data = {}
-
+            data = {
+              selectedverb: 'GET',
+              schedule: '* * * * *',
+              status: 'false',    
+            }
+            self.cron = {
+              minute: '*',
+              hour: '*',
+              day: '*',
+              month: '*',
+              weekday: '*',
+            }
+    
             self.getJobs()
           })
           .catch(function (error) {
@@ -572,16 +597,27 @@
             this.g.user.wallets[0].adminkey,
             data
           )
-          .then(function (response) {            
-            console.log("[index] createJob response: ", response.text)
-
+          .then(function (response) {                      
             self.jobs.push(mapcrontabs(response.data))
-            console.log("[index] createJob: self.jobs ", JSON.stringify(self.jobs))
+            //console.log("[index] createJob response: ", response.text)
+            // console.log("[index] createJob: self.jobs ", JSON.stringify(self.jobs))
   
             self.jobDialog.show = false
             self.jobDialog.data = {}
             self.jobDialog.headers = []
-            // data = {}
+            data = {
+              selectedverb: 'GET',
+              schedule: '* * * * *',
+              status: 'false',    
+            }
+            self.cron = {
+              minute: '*',
+              hour: '*',
+              day: '*',
+              month: '*',
+              weekday: '*',
+            }
+
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)
@@ -636,7 +672,6 @@
       var lookup_state = this.lookupJobsStatus(id)
       //console.log("lookup: ", lookup_state)
       //console.log("opposite: ", !lookup_state)
-
       var result =  this.pauseJob(id, !lookup_state);
       //console.log("result: ", result)
 
@@ -669,15 +704,8 @@
                 self.g.user.wallets[0].adminkey
               )
               .then(function (response) {
-                //console.log("Pause Response status", response.status);
-                //console.log(response.data)
-                //console.log("response id:", response.data.id)
-                //console.log("response status:", response.data.status)
-                //console.log(" job id : ", jobId)
-                
+                //console.log("Pause Response status", response.status);                
                 var toggle_state = self.toggleJobsStatus(jobId)
-
-                //console.log('toggle states: ', toggle_state)
               })
               .catch(function (error) {
                 LNbits.utils.notifyApiError(error)
