@@ -121,7 +121,7 @@
 <q-dialog v-model="logDialog.show" position="top">
   <q-card class="q-pa-lg q-pt-xl" style="width: 800px; height: 600px">
    <q-card>
-      <h5 class="text-subtitle1 q-my-none">Logfile</h5>
+      <h5 class="text-subtitle1 q-my-none">Logfile (last 1000 lines)</h5>
     </q-card>
   <q-card class="q-pa-md">
     <q-btn unelevated color="primary" @click="displayFileData">
@@ -151,7 +151,7 @@
 <q-dialog v-model="jobLogDialog.show" position="top">
   <q-card class="q-pa-lg q-pt-xl" style="width: 800px; height: 600px">
    <q-card>
-      <h5 class="text-subtitle1 q-my-none">Logfile</h5>
+      <h5 class="text-subtitle1 q-my-none">Individual Job Log</h5>
     </q-card>
   <q-card class="q-pa-md">
     <q-btn unelevated color="primary" @click="fetchJobLogDialog">
@@ -285,18 +285,6 @@
           v-model.trim="jobDialog.data.schedule"
           label="schedule"          
         ></q-input>
-
-        <div class="row q-col-gutter-sm">
-          <div class="col">
-            <label> Job Status: Is Running?</label>
-            <q-input 
-              disable
-              dense
-              filled
-              v-model.trim="jobDialog.data.status">
-            </q-input> 
-          </div>
-        </div>
 
         <q-btn
           unelevated
