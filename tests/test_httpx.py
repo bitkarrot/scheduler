@@ -22,7 +22,6 @@ def call_api(method_name, url, headers, body):
             elif method_name.lower() in ['post', 'put']:
                 response = method_to_call(url, headers=headers, json=body_json)
 
-
             print("response from httpx call: ")
             print(response.status_code)
             print(response.text)

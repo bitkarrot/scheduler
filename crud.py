@@ -10,7 +10,7 @@ from lnbits.db import POSTGRES, Filters
 from . import db
 from .models import (
     CreateJobData,
-    HeaderItems,
+    # HeaderItems,
     UpdateJobData,
     Job,
     JobDetailed,
@@ -83,11 +83,6 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
         assert is_valid, "Invalid cron string, please check the format."
         return f"Error in cron string syntax {data.schedule}"
     response = await create_cron(link_id, command, data.schedule, env_vars)
-
-    # print(f'cron command: {command}')
-    # print(f'create_scheduler_jobs: {response}')
-    # print(f'admin_id: {admin_id}')
-    # this admin_id actually is the api key of the admin user
 
     if response.startswith("Error"):
         assert response.startswith("Error"), "Error creating Cron job"
@@ -229,7 +224,7 @@ async def create_log_entry(data: LogEntry) -> LogEntry:
         """,
         (id, job_id, status, response, timestamp)
     )
-    print(f'Creating Log Entry in DB: {job_id}, {status}, {response}, {timestamp}')
+    # print(f'Creating Log Entry in DB: {job_id}, {status}, {response}, {timestamp}')
     log_created = await get_log_entry(id)
     assert log_created, "Newly created Log Entry couldn't be retrieved"
     return log_created
@@ -247,7 +242,7 @@ async def get_log_entries(job_id: str) -> str:
     '''
         get all log entries from data base for particular job
     '''
-    print(f'inside get_log_entries with job_id: {job_id}')
+    # print(f'inside get_log_entries with job_id: {job_id}')
     rows = await db.fetchall("SELECT * FROM scheduler.logs WHERE job_id = ?", (job_id,))
     all_entries = ""
     for row in rows: 

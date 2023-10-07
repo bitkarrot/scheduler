@@ -34,10 +34,13 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
 
             url = f'{LNBITS_BASE_URL}/scheduler/api/v1/logentry'
 
+            logger.info(f'pushdb response.status type: {type(response.status_code)}')
+            logger.info(f'pushdb response.text type: {type(response.text)}')
             # we have some difficulty saving response.text to db, unicode?
             data = {'job_id': jobID, 
                     'status': str(response.status_code), 
-                    'response': 'sample text', # str(response.text),  
+                    # 'response': 'sample text', # str(response.text),  
+                    'response': response.text,
                     'timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S') }
 
             logger.info(f' now pushing execution data to the database for jobID: {jobID}')
@@ -83,7 +86,7 @@ def call_api(method_name, url, headers, body):
 
             print("response from httpx call: ")
             print(response.status_code)
-            # print(response.text)
+            print(response.text)
             logger.info(f'response from api call: {response.status_code}')
             logger.info(f'response text from api call : {response.text}')
             return response
