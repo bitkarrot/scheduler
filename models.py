@@ -49,7 +49,7 @@ class CreateJobData(BaseModel):
     status: bool = Query(False) # true is active, false if paused
     selectedverb: Optional[str] = Query(default=None)
     url: Optional[str] = Query(default=None)
-    headers: Optional[List[HeaderItems]] #= Query(default=None)
+    headers: Optional[List[HeaderItems]]
     body: Optional[str] = Query(default=None)
     schedule: str = Query(default=None)
     extra: Optional[dict[str, str]] = Query(default=None)
@@ -58,10 +58,10 @@ class CreateJobData(BaseModel):
 class UpdateJobData(BaseModel):
     id: str
     name: Optional[str] = Query(default=None, description="Name of the Job")
-    status: bool  # true is active, false if paused
+    status: bool
     selectedverb: Optional[str] = None
     url: Optional[str] = None
-    headers: Optional[List[HeaderItems]] # = Query(default=None)
+    headers: Optional[List[HeaderItems]]
     body: Optional[str] = None
     schedule: str = Query(default=None, description='Schedule to run')
     extra: Optional[dict[str, str]] = Query(default=None, description='Partial update for extra field')
@@ -71,7 +71,7 @@ class Job(BaseModel):
     id: str
     name: str
     admin: str
-    status: bool  # true is active, false if paused
+    status: bool
     schedule: str
     selectedverb: Optional[str] = None
     url: Optional[str] = None
@@ -112,11 +112,8 @@ class JobFilters(FilterModel):
     extra: Optional[dict[str, str]]
     # headers: Optional[List[HeaderItems]] = None
 
-
 class JobDetailed(Job):
     pass
-    #wallets: list[Wallet]
-
 
 class LogEntry(BaseModel):
     job_id: str

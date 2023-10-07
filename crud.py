@@ -10,7 +10,6 @@ from lnbits.db import POSTGRES, Filters
 from . import db
 from .models import (
     CreateJobData,
-    # HeaderItems,
     UpdateJobData,
     Job,
     JobDetailed,
@@ -71,8 +70,6 @@ async def convert_headers(headers: list):
 
 async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetailed:
     link_id = uuid4().hex 
-
-    # temporary blank env_vars held here, left here for future customization
     env_vars = {"ID": link_id, "adminkey": admin_id}
     # print(f'env_vars: {env_vars}')
     headers_string = await convert_headers(data.headers)
@@ -105,7 +102,6 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
 
 
 async def get_scheduler_job(job_id: str) -> Optional[JobDetailed]:
-    # add admin key, as job info might store api keys
     row = await db.fetchone("SELECT * FROM scheduler.jobs WHERE id = ?", (job_id,))
     if row:
         return Job.from_db_row(row)
@@ -113,7 +109,6 @@ async def get_scheduler_job(job_id: str) -> Optional[JobDetailed]:
 
 async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> list[Job]:
     # check that job id match crontab list
-
     rows = await db.fetchall(
         f"""
         SELECT * FROM scheduler.jobs
@@ -236,8 +231,6 @@ async def get_log_entry(id: str) -> LogEntry:
     row = await db.fetchone("SELECT * FROM scheduler.logs WHERE id = ?", (id,))
     return LogEntry(**row)
 
-
-#async def get_log_entries(job_id: str) -> list[LogEntry]:
 async def get_log_entries(job_id: str) -> str:
     '''
         get all log entries from data base for particular job

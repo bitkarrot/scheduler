@@ -24,7 +24,6 @@ from .crud import (
     update_scheduler_job,
     pause_scheduler,
     create_log_entry,
-    # get_log_entry,
     get_log_entries,
     delete_log_entries,
     get_complete_log,
@@ -45,6 +44,7 @@ from .models import (
     name="Log entries for a specific job id from DB",
     summary="get log entires for job from DB",
     response_description="log entries for a job from DB",
+    dependencies=[Depends(require_admin_key)],
     response_model=str,
 )
 async def api_get_log_entries(log_id: str) -> str:
@@ -57,19 +57,15 @@ async def api_get_log_entries(log_id: str) -> str:
     name="Job Log Delete",
     summary="Delete a Job's Log from DB",
     description="Delete Job Log from DB",
+    dependencies=[Depends(require_admin_key)],
     response_model=bool,
-    # dependencies=[Depends(require_admin_key)],
-    # responses={404: {"description": "Jobs does not exist."}},
-    # status_code=HTTPStatus.OK,
 )
 async def api_job_log_delete(
     id: str,
     info: WalletTypeInfo = Depends(require_admin_key)
-) -> bool:
+) -> None:
     print(f'inside api_job_log_delete: {id}')
-    return True
-    #return await delete_log_entries(id)
-
+    await delete_log_entries(id)
 
 @scheduler_ext.post(
     "/api/v1/logentry",
@@ -78,6 +74,7 @@ async def api_job_log_delete(
     description="Create a new log entry in DB",
     response_description="New Log Entry",
     response_model=LogEntry,
+    dependencies=[Depends(require_admin_key)],
 )
 async def api_job_entry_create(
     data: LogEntry,
@@ -93,6 +90,7 @@ async def api_job_entry_create(
     name="Complete Log",
     summary="get log of all the jobs plus extra logs",
     response_description="complete log from scheduler.log",
+    dependencies=[Depends(require_admin_key)],
     response_model=str,
 )
 async def api_get_complete_log() -> str:
@@ -106,6 +104,7 @@ async def api_get_complete_log() -> str:
     name="delete Log",
     summary="clear all log messages",
     response_description="delete complete log from scheduler.log",
+    dependencies=[Depends(require_admin_key)],
     response_model=bool,
 )
 async def api_delete_complete_log() -> bool:
@@ -120,6 +119,7 @@ async def api_delete_complete_log() -> bool:
     summary="get list of jobs",
     response_description="list of jobs",
     response_model=List[Job],
+    dependencies=[Depends(require_admin_key)],
     openapi_extra=generate_filter_params_openapi(JobFilters),
 )
 async def api_scheduler_jobs(
@@ -165,6 +165,7 @@ async def api_scheduler_user(job_id: str) -> JobDetailed:
     summary="Create a new job",
     description="Create a new job",
     response_description="New Job",
+    dependencies=[Depends(require_admin_key)],
     response_model=Job,
 )
 async def api_scheduler_jobs_create(
@@ -180,6 +181,7 @@ async def api_scheduler_jobs_create(
     summary="Update a jobs",
     description="Update a jobs",
     response_description="Updated jobs",
+    dependencies=[Depends(require_admin_key)],
     response_model=JobDetailed,
 )
 async def api_scheduler_jobs_create(
@@ -226,7 +228,6 @@ async def api_scheduler_pause(
     job_id, status
 ) -> JobDetailed:
     return await pause_scheduler(job_id, status)
-
 
 
 # Activate Extension
