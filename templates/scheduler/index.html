@@ -141,7 +141,7 @@
   </q-card>
   <q-card class="q-pa-md">
   <q-btn unelevated color="red" @click="deleteLog" class="q-ml-auto">
-    Delete Log
+    Delete File Log
   </q-btn>
 </q-card>
 </q-card>
@@ -157,7 +157,8 @@
     <q-btn unelevated color="primary" @click="fetchJobLogDialog">
       Fetch data
     </q-btn>
-    <q-btn @click="clearJobLogDialog" v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
+    <q-btn @click="clearJobLogDialog" unelevated color="secondary" class="q-ml-auto">Clear</q-btn>
+    <q-btn @click="closeJobLogDialog" v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
   </q-card>
 
   <q-card>
@@ -443,8 +444,11 @@
       },
       clearJobLogDialog: function() { 
         var self = this
-        this.jobLogDialog.show = false
+        // this.jobLogDialog.show = false
         self.output =''
+      },
+      closeJobLogDialog: function() { 
+        this.jobLogDialog.show = false
       },
       openJobUpdateDialog: function (linkId) {
         var link = _.findWhere(this.jobs, {id: linkId})
