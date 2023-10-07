@@ -186,7 +186,7 @@
           filled
           dense
           v-model.trim="jobDialog.data.name"
-          label="Job Name"
+          label="Job Name *"
         ></q-input>
 
         <q-card>
@@ -201,7 +201,7 @@
           />
           </q-td>
           <q-td style="width:100%">
-            <q-input filled dense v-model.trim="jobDialog.data.url" label="URL" />
+            <q-input filled dense v-model.trim="jobDialog.data.url" label="URL *" />
           </q-td>
         </q-tr>
         </q-card>
@@ -269,7 +269,7 @@
         </q-card>
 
         <q-card>
-          <h5 class="text-subtitle1 q-my-none">Schedule</h5>
+          <h5 class="text-subtitle1 q-my-none">Schedule *</h5>
           <!-- <p> todo: add shortcut buttons here: daily, hourly, etc.</p> -->
           <q-tr>
             <q-td v-for="slot in slots" :key="slot" class="text-center">
