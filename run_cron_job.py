@@ -27,15 +27,15 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
         individual rows in db.
     '''
     try:
-        print(f' inside save_job_execution now ')
+        # print(f' inside save_job_execution now ')
         if response.status_code == 200:
             logger.info(f"jobID: {jobID}, status_code: {response.status_code}")
             # logger.info(f'jobID: {jobID}, response text: {response.text}')
 
             url = f'{LNBITS_BASE_URL}/scheduler/api/v1/logentry'
 
-            logger.info(f'pushdb response.status type: {type(response.status_code)}')
-            logger.info(f'pushdb response.text type: {type(response.text)}')
+            logger.info(f'pushdb: response.status type: {type(response.status_code)}')
+            logger.info(f'pushdb: response.text type: {type(response.text)}')
             # we have some difficulty saving response.text to db, unicode?
             data = {'job_id': jobID, 
                     'status': str(response.status_code), 
@@ -43,8 +43,8 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
                     'response': response.text,
                     'timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S') }
 
-            logger.info(f' now pushing execution data to the database for jobID: {jobID}')
-            logger.info(f'push db calling api : {url} with params: {data}')
+            logger.info(f'pushdb: now pushing execution data to the database for jobID: {jobID}')
+            logger.info(f'pushdb: calling api : {url} with params: {data}')
            
             pushdb_response = httpx.post(
                 url=url,
@@ -64,37 +64,34 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
 
 
 def call_api(method_name, url, headers, body):
-    # assume body, headers is a string from the db
-    # this method called from run_cron_job.py for job execution
+    '''
+        Call API with parameters from database, 
+        assume body, headers is a string from the db
+        this method called from run_cron_job.py for job execution    
+    '''
     http_verbs = ['get', 'post', 'put', 'delete']
 
-    print(f'body: {body} , type: {type(body)}')
     try:
         body_json = {}
         if body is not None:
             body_json = json.loads(body)
-        print(f'body json: {body_json}')
 
         if method_name.lower() in http_verbs:
             method_to_call = getattr(httpx, method_name.lower())
-            print(f'method_to_call: {method_to_call}')
 
             if method_name.lower() in ['get', 'delete'] and body_json is not None:
                 response = method_to_call(url, headers=headers, params=body_json)
             elif method_name.lower() in ['post', 'put']:
                 response = method_to_call(url, headers=headers, json=body_json)
 
-            print("response from httpx call: ")
-            print(response.status_code)
-            print(response.text)
-            logger.info(f'response from api call: {response.status_code}')
-            logger.info(f'response text from api call : {response.text}')
+            logger.info(f'[run_cron_job]: call_api response status: {response.status_code}')
+            logger.info(f'[run_cron_job]: call_api response text: {response.text}')
             return response
         else:
-            print(f'Invalid method name: {method_name}')
+            logger.info(f'Invalid method name: {method_name}')
 
     except json.JSONDecodeError as e:
-        print(f'body json decode error: {e}')
+        logger.info(f'body json decode error: {e}')
         raise e
 
 
@@ -104,20 +101,18 @@ async def get_job_by_id(jobID: str, adminkey: str):
         doesn't have access to entire lnbits environment
     '''
     try:
-
-        print("get_job_by_id: \n")
         url = f'{LNBITS_BASE_URL}/scheduler/api/v1/jobs/{jobID}'
 
         response = httpx.get(
             url=url,
             headers={"X-Api-Key": adminkey}
         )
-        print(f"response items in get_job_by_id: {response.text}\n")
+        logger.info(f"[get_job_by_id]: response items in get_job_by_id: {response.text}\n")
         items = json.loads(response.text)
         return items
     except Exception as e:
-        print(f'exception thrown: {e}')
-        logger.error(f'Error trying to fetch data from db, check is LNBITS server running?: {e}')
+        logger.error(f'[get_job_by_id]: exception thrown: {e}')
+        logger.error(f'[get_job_by_id]: Error trying to fetch data from db, check is LNBITS server running?: {e}')
 
 async def clear_log_file(logname: str) -> bool: 
     '''
@@ -132,22 +127,35 @@ async def clear_log_file(logname: str) -> bool:
         status = False
         return status
 
+
+async def check_logfile(logfile: str) -> None:
+    # Check if the file exists
+    if os.path.exists(logfile):
+        logger.info(f"[check_logfile]: The file {logfile} exists.")
+    else:
+        # Create the file
+        with open(logfile, 'w') as file:
+            now = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            file.write(f"[{now}][check_logfile]: This is a new scheduler logfile.")
+
+
 async def main() -> None:
     '''
         The main method that is run when the run_cron_job.py is executed
         It will get jobID from the environment and query the DB 
         for the http verb, url, headers, and data. Then it will execute 
         the API call and log the result. 
+        
+        example data:
+        headers = [],  default value
+        body = None,  default value
+        [{"key":"X-Api-Key","value":"0b2569190e2f4b"}]
     '''
-    # headers = [],  default value
-    # body = None,  default value
-    # example:[{"key":"X-Api-Key","value":"0b2569190e2f4b"},{"key":"Content-type","value":"application/json"}]
     try:
+        await check_logfile(logname)
+
         jobID = os.environ.get('ID')
         adminkey = os.environ.get('adminkey')
-        varinfo = f'run_cron_job jobID: {jobID}, adminkey: {adminkey}'
-        print(varinfo)
-        logger.info(varinfo)
 
         job = await get_job_by_id(jobID, adminkey)
         method_name = job['selectedverb']
@@ -155,26 +163,17 @@ async def main() -> None:
         headers = job['headers']
         body = job['body']
 
-        # print(f'type headers: {type(headers)}') 
-        dbinfo = f'Database info jobID: {jobID}, method_name: {method_name}, url: {url}, headers: {headers}, body: {body}'    
-        print(dbinfo)
-        logger.info(dbinfo)
-
         json_headers = {}
         for h in headers: 
             json_headers.update({h['key']: h['value']})
 
         response = call_api(method_name, url, json_headers, body)
-
-        print(f'response status from api call: {response.status_code}')
-        # print(f'response text from api call: {response.text}')        
-        logger.info(f'response status from api call: {response.status_code}')
+        logger.info(f'[run_cron_job]: response status from api call: {response.status_code}')
         # logger.info(f'response text from api call: {response.text}')
 
         await save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
 
     except Exception as e:
-        print(f'exception thrown in main() run_cron_job: {e}')
         logger.error(f'exception thrown in main() run_cron_job: {e}')
 
 
