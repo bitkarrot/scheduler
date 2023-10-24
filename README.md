@@ -1,16 +1,20 @@
 # Scheduler extension
 
-lnbits scheduler extension [previously name crontabs]
+lnbits scheduler extension [previously: crontabs]
 
 Notes: 
 
-- IMPORTANT: .env file set your system username that is running the LNBits instance.
-
-  Example: if the user that is running the server is 'lnbits', you need to set SCHEDULER_USER=lnbits in the .env file
-
-- Additional Requirements: python-crontab==3.0.0
 - This is a Draft: running on OSX only at the moment. 
-- crontab needs access crontab -e permissions in order to work or else cannot read/write to crontab file. 
-- .env points at the user that has read/write crontab access at the system level 
+- the user that runs LNBits needs access crontab -e permissions in order to read/write to crontab file.
 
-- TODO list: clean up API, Docs, unit tests, other code cleanup, front end validation checks
+- TODO: Docs, code cleanup, front end validation checks
+
+## Usage
+
+- Overview: Add, Edit, Delete and Monitor your scheduled Jobs from the main panel
+  
+<img width="908" alt="imgone" src="https://github.com/bitkarrot/scheduler/assets/73979971/75ebc47c-07be-444d-a167-31ae63c6e087">
+
+- Create a job Dialog Box. Schedule a specific http call with a specific timed interval. 
+
+<img width="605" alt="imgtwo" src="https://github.com/bitkarrot/scheduler/assets/73979971/77f55660-52b6-459c-9ce2-d81e6fa7d1b5">
