@@ -22,12 +22,12 @@ Schedule a specific http call with a specific timed interval.
 
 1. Create a new job by clicking "New Scheduled Job"
 2. Fill the options for your new SCHEDULED JOB
-  - Enter a Name for your Job
-  - Select an action (GET/PUT/POST/DEL)
-  - Enter the URL
-  - Add any headers if required
-  - Add body data if required
-  - enter the scheduled time/day you want to run your job
+    - Enter a Name for your Job
+    - Select an action (GET/PUT/POST/DEL)
+    - Enter the URL
+    - Add any headers if required
+    - Add body data if required
+    - enter the scheduled time/day you want to run your job
 3. Save your scheduled job and return to the main page to start the job (Green arrow)
 4. All methods for controlling your job are on the main panel [Start/Stop, Edit, Delete, View Logs]
 
