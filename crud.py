@@ -24,7 +24,7 @@ import os
 # exception throw might need to be handled higher up in the stack 
 cwd = os.getcwd()
 vars = get_env_data_as_dict(cwd + '/lnbits/extensions/scheduler/.env')
-username = vars['SCHEDULER_USER']
+username = True
 
 # python path 
 py_path = sys.executable
@@ -37,7 +37,7 @@ log_path = f"{dir_path}/lnbits/extensions/scheduler/scheduler.log"
 # crontab-specific methods, direct to system cron
 async def create_cron(comment:str, command:str, schedule:str, env_vars:dict):    
     try:
-        ch = CronHandler(username)
+        ch = CronHandler(user=username)
         response = await ch.new_job(command, schedule, comment=comment, env=env_vars)
         # make sure job is not running on creation by default
         status = await ch.enable_job_by_comment(comment=comment, bool=False)
@@ -53,7 +53,7 @@ async def create_cron(comment:str, command:str, schedule:str, env_vars:dict):
 async def delete_cron(link_id: str):
     # the comment in actual crontab is the job ID in LNBits
     try:
-        ch = CronHandler(username)
+        ch = CronHandler(user=username)
         response = await ch.remove_by_comment(link_id)
         return response
     except Exception as e: 
@@ -74,7 +74,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
     # print(f'env_vars: {env_vars}')
     headers_string = await convert_headers(data.headers)
 
-    ch = CronHandler(username)
+    ch = CronHandler(user=username)
     is_valid = await ch.validate_cron_string(data.schedule)
     if not is_valid:
         assert is_valid, "Invalid cron schedule, please check the format."
@@ -124,7 +124,7 @@ async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> list[J
 async def pause_scheduler(job_id: str, state: str) -> bool:
     try: 
         print(f'Pausing job in pause_scheduler: {job_id}, State: {state}') 
-        ch = CronHandler(username)
+        ch = CronHandler(user=username)
         b = True
         if state.lower() == "false":
             b = False
@@ -196,7 +196,7 @@ async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) 
     )
     # check to make sure DB was updated
     # write update to cron tab
-    ch = CronHandler(username)
+    ch = CronHandler(user=username)
     await ch.enable_job_by_comment(comment=job_id, bool=data.status)
     await ch.edit_job(command, data.schedule, comment=job_id)
 
