@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from fastapi.staticfiles import StaticFiles
 
 from lnbits.db import Database
 from lnbits.helpers import template_renderer
@@ -11,14 +10,13 @@ scheduler_ext: APIRouter = APIRouter(prefix="/scheduler", tags=["scheduler"])
 scheduler_static_files = [
     {
         "path": "/scheduler/static",
-        "app": StaticFiles(directory="lnbits/extensions/scheduler/static"),
         "name": "scheduler_static",
     }
 ]
 
 
 def scheduler_renderer():
-    return template_renderer(["lnbits/extensions/scheduler/templates"])
+    return template_renderer(["scheduler/templates"])
 
 
 from .views import *  # noqa
