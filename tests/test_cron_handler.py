@@ -13,7 +13,7 @@ import os
 async def main(): 
     vars = get_env_data_as_dict('../.env')
     print(vars)
-    username = vars['SCHEDULER_USER']
+    username = True # vars['SCHEDULER_USER']
     print(f'Scheduler Username: {username}')
 
     print("testing CronHandler")
@@ -28,7 +28,7 @@ async def main():
     now = dt.datetime.now()
     print(f'current datetime: {now}')
     
-    ch = CronHandler(username)
+    ch = CronHandler(user=username)
 
     # regular cron job with comment
     response = await ch.new_job("ls", "15 * * * *", comment=comment, env={})
