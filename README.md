@@ -3,11 +3,8 @@
 lnbits scheduler extension [previously: crontabs]
 
 Notes: 
-
-- This is a Draft: running on OSX only at the moment. 
 - the user that runs LNBits needs access crontab -e permissions in order to read/write to crontab file.
-
-- TODO: Docs, code cleanup, front end validation checks
+- TODO: Code cleanup, front end validation checks. 
 
 ## Usage
 
