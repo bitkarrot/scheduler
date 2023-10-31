@@ -22,9 +22,6 @@ from .utils import get_env_data_as_dict
 from lnbits.settings import settings
 import os
 
-# exception throw might need to be handled higher up in the stack 
-cwd = os.getcwd()
-vars = get_env_data_as_dict(cwd + '/lnbits/extensions/scheduler/.env')
 username = True
 
 # python path 
