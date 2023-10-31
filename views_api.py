@@ -64,7 +64,7 @@ async def api_job_log_delete(
     id: str,
     info: WalletTypeInfo = Depends(require_admin_key)
 ) -> None:
-    print(f'inside api_job_log_delete: {id}')
+    # print(f'inside api_job_log_delete: {id}')
     await delete_log_entries(id)
 
 @scheduler_ext.post(

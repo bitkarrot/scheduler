@@ -17,10 +17,7 @@ formatter = logging.Formatter('[{asctime}] [{levelname}] {name}: {message}', dt_
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-# LNBITS_BASE_URL = os.environ.get('LNBITS_BASE_URL') or 'http://localhost:5000'
-host = os.environ.get('HOST')
-port = os.environ.get('PORT')
-LNBITS_BASE_URL = f"http://{host}:{port}"
+LNBITS_BASE_URL = os.environ.get('BASE_URL') or 'http://localhost:5000'
 
 async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
     '''

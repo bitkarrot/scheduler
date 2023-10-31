@@ -19,6 +19,7 @@ from .models import (
 
 from .cron_handler import CronHandler
 from .utils import get_env_data_as_dict
+from lnbits.settings import settings
 import os
 
 # exception throw might need to be handled higher up in the stack 
@@ -70,8 +71,9 @@ async def convert_headers(headers: list):
 
 async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetailed:
     link_id = uuid4().hex 
-    env_vars = {"ID": link_id, "adminkey": admin_id}
-    # print(f'env_vars: {env_vars}')
+    base_url=f"http://{settings.host}:{settings.port}"
+    env_vars = {"ID": link_id, "adminkey": admin_id, "BASE_URL": base_url}
+    #print(f'env_vars: {env_vars}')
     headers_string = await convert_headers(data.headers)
 
     ch = CronHandler(user=username)
@@ -123,14 +125,14 @@ async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> list[J
 
 async def pause_scheduler(job_id: str, state: str) -> bool:
     try: 
-        print(f'Pausing job in pause_scheduler: {job_id}, State: {state}') 
+        # print(f'Pausing job in pause_scheduler: {job_id}, State: {state}') 
         ch = CronHandler(user=username)
         b = True
         if state.lower() == "false":
             b = False
         status = await ch.enable_job_by_comment(comment=job_id, bool=b)
         now =  datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        print(f' Time: {now}, Is Running?: {status}')
+        # print(f' Time: {now}, Is Running?: {status}')
         await db.execute(
             f"""
             UPDATE scheduler.jobs SET status = ? WHERE id = ?
