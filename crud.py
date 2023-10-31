@@ -18,7 +18,6 @@ from .models import (
 )
 
 from .cron_handler import CronHandler
-from .utils import get_env_data_as_dict
 from lnbits.settings import settings
 import os
 
