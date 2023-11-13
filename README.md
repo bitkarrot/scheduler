@@ -3,7 +3,7 @@
 lnbits scheduler extension [previously: crontabs]
 
 Notes: 
-- the user that runs LNBits needs access crontab -e permissions in order to read/write to crontab file.
+- **The user that runs LNBits server MUST have crontab -e permissions in order to read/write to crontab file.** 
 
 ## Usage
 
