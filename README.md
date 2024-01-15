@@ -23,7 +23,7 @@ Schedule a specific http call with a specific timed interval.
     - Enter the URL
     - Add any headers if required
     - Add body data if required
-    - enter the scheduled time/day you want to run your job
+    - enter the scheduled time/day you want to run your job. You can use [crontab.guru](https://crontab.guru) to help validate your cron schedules.
 3. Save your scheduled job and return to the main page to start the job (Green arrow)
 4. All methods for controlling your job are on the main panel [Start/Stop, Edit, Delete, View Logs]
 
