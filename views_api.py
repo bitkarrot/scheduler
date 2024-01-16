@@ -184,7 +184,7 @@ async def api_scheduler_jobs_create(
     dependencies=[Depends(require_admin_key)],
     response_model=JobDetailed,
 )
-async def api_scheduler_jobs_create(
+async def api_scheduler_jobs_update(
     job_id: str,
     data: UpdateJobData,
     info: WalletTypeInfo = Depends(require_admin_key)

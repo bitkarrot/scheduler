@@ -125,7 +125,8 @@
 <q-dialog v-model="logDialog.show" position="top">
   <q-card class="q-pa-lg q-pt-xl" style="width: 800px; height: 600px">
    <q-card>
-      <h5 class="text-subtitle1 q-my-none">Logfile (last 1000 lines)</h5>
+      <h5 class="text-subtitle1 q-my-none">Scheduler.log (last 1000 lines)</h5>
+      <p>This file can also be found at ~/lnbits/lnbits/extensions/scheduler/scheduler.log</p>
     </q-card>
   <q-card class="q-pa-md">
     <q-btn unelevated color="primary" @click="displayFileData">
@@ -154,8 +155,8 @@
 
 <q-dialog v-model="jobLogDialog.show" position="top">
   <q-card class="q-pa-lg q-pt-xl" style="width: 800px; height: 600px">
-   <q-card>
-      <h5 class="text-subtitle1 q-my-none">Individual Job Log</h5>
+   <q-card>    
+      <h5 class="text-subtitle1 q-my-none">Individual Job Log: {% raw %} {{id_code}}{% endraw %} </h5>
     </q-card>
   <q-card class="q-pa-md">
     <q-btn unelevated color="primary" @click="fetchJobLogDialog">
@@ -181,8 +182,6 @@
 </q-card>
 </q-card>
 </q-dialog>
-
-
 
   <q-dialog v-model="jobDialog.show" position="top">
     <q-card class="q-pa-lg q-pt-xl" style="width: 800px">
@@ -350,10 +349,11 @@
         logDialog: { 
           show: false, 
         },
+        id_code: '',
         jobLogDialog: { 
           show: false, 
           output: '',
-          id: ''
+          id: '',
         },
         jobDialog: {
           show: false,
@@ -419,7 +419,7 @@
         this.jobLogDialog.show = true
         var link = _.findWhere(this.jobs, {id: linkId})
         this.jobLogDialog.id = _.clone(link._data.id)
-        // this.output = 'output for job ID: ' + this.jobLogDialog.id
+        this.id_code = this.jobLogDialog.id
 
       },
       fetchJobLogDialog: function(id){
@@ -434,10 +434,11 @@
             this.g.user.wallets[0].adminkey
           )
           .then(function (response) {
-            //console.log("fetch job Log Dialog: ")
+            //console.log("fetch job Log Dialog: ", id)
             //console.log(JSON.stringify(response))
             //console.log(response.status)
             self.output = response.data
+            self.id_code = id
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)
@@ -445,10 +446,11 @@
       },
       clearJobLogDialog: function() { 
         var self = this
-        // this.jobLogDialog.show = false
         self.output =''
       },
       closeJobLogDialog: function() { 
+        var self = this
+        self.output = '' // clears the dialog content on close
         this.jobLogDialog.show = false
       },
       openJobUpdateDialog: function (linkId) {
