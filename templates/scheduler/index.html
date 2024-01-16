@@ -48,9 +48,8 @@
                 <q-td auto-width>
                   <q-btn
                   v-if="jobStatus.show === false"
-                  flat
                   dense
-                  size="s"
+                  size="xs"
                   @click="toggleButton(props.row.id)"
                   :icon="getButtonIcon(props.row.id)"
                   :color="getButtonColor(props.row.id)"
@@ -59,19 +58,17 @@
                 </q-btn>
 
                 <q-btn
-                  flat
                   dense
                   size="xs"
                   @click="openJobUpdateDialog(props.row.id)"
                   icon="edit"
-                  color="light-blue"
+                  color="blue"
                 >
                   <q-tooltip>Edit</q-tooltip>
                 </q-btn>
 
-                <q-btn
-                  flat
-                  dense
+                <q-btn                  
+                  dense                 
                   size="xs"
                   @click="openLogDialog(props.row.id)"
                   icon="info"
@@ -176,9 +173,6 @@
     />
   </q-card>
   <q-card class="q-pa-md">
-  <!-- <q-btn unelevated color="red" @click="deleteJobLog" class="q-ml-auto">
-    Delete Log
-  </q-btn> -->
 </q-card>
 </q-card>
 </q-dialog>
