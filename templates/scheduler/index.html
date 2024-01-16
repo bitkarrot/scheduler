@@ -189,30 +189,26 @@
           v-model.trim="jobDialog.data.name"
           label="Job Name *"
         ></q-input>
-
-        <q-card>
-          <h5 class="text-subtitle1 q-my-none">Action</h5>
-          <q-tr>
-            <q-td>
+        <div class="row">
+          <div style="width:20%">
             <q-select
             v-model.trim="jobDialog.data.selectedverb"
             :options="httpVerbs"
             dense
             filled
           />
-          </q-td>
-          <q-td style="width:100%">
+          </div>
+          <div style="width:80%">
             <q-input filled dense v-model.trim="jobDialog.data.url" label="URL *" />
-          </q-td>
-        </q-tr>
-        </q-card>
+            </q-input>
+          </div>
+        </div>
 
-        <q-card>
-          <h5 class="text-subtitle1 q-my-none">Headers</h5>
-          <p style="color:#bcb7b7"> Example: 
-            "X-Api-Key: 0b2569190e2f4bfc90a7ae25aa194518" <br/>
-          </p>
-
+          <q-card class="q-pa-md">
+            <h5 class="text-subtitle1 q-my-none">Headers</h5>
+            <p style="color:#bcb7b7"> Example: 
+                         "X-Api-Key: 0b2569190e2f4bfc90a7ae25aa194518" <br/>
+            </p>
           <q-list bordered separator>
             <q-item
               clickable
@@ -238,40 +234,41 @@
               v-model="jobDialog.headers[index].value"
             ></q-input>
           </q-item-section>
-          <q-item-section side>
-            <q-btn
-              unelevated
-              dense
-              size="xs"
-              icon="delete"
-              :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
-              @click="jobDialog.headers.splice(index, 1)"
-            ></q-btn>
-          </q-item-section>
-        </q-item>
-        <q-item clickable v-ripple>
-          <q-btn flat icon="add" @click="jobDialog.headers.push({})">
-            Add Header Entry
-          </q-btn>
-        </q-item>
-      </q-list>
-
+            <q-item-section side>
+              <q-btn
+                unelevated
+                dense
+                size="xs"
+                icon="delete"
+                :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
+                @click="jobDialog.headers.splice(index, 1)"
+              ></q-btn>
+            </q-item-section>
+          </q-item>
+          <q-item clickable v-ripple>
+            <q-btn flat icon="add" @click="jobDialog.headers.push({})">
+              Add Header Entry
+            </q-btn>
+          </q-item>
+         </q-list>
         </q-card>
-  
-        <q-card>
+
+        <q-card class="q-pa-md">
           <h5 class="text-subtitle1 q-my-none">Body</h5>
           <q-input
           filled
+          dense
+          style="width:100%"
           v-model.trim="jobDialog.data.body"
           label='Example: {"out": true, "bolt11": <string>}'
           type="textarea"
-          rows="4" 
-        />
-        </q-card>
+          rows="6" 
+          />
+          </q-card>
 
-        <q-card>
+        <q-card class="q-pa-md">
           <h5 class="text-subtitle1 q-my-none">Schedule *</h5>
-          <!-- <p> todo: add shortcut buttons here: daily, hourly, etc.</p> -->
+          <p> Visit <a class="text-secondary" href="https://crontab.guru" target="_blank">https://crontab.guru</a> for expression help.</p>
           <q-tr>
             <q-td v-for="slot in slots" :key="slot" class="text-center">
               <q-input v-model="cron[slot]" :label="slot" dense filled />
