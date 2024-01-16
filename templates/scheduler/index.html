@@ -34,8 +34,9 @@
           :pagination.sync="jobsTable.pagination"
         >
           {% raw %}
-          <template v-slot:header="props">
+          <template v-slot:header="props">            
             <q-tr :props="props">
+              <q-th auto-width></q-th>
               <q-th v-for="col in props.cols" :key="col.name" :props="props">
                 {{ col.label }}
               </q-th>
@@ -44,12 +45,8 @@
           </template>
           <template v-slot:body="props">
             <q-tr :props="props">
-              <q-td v-for="col in props.cols" :key="col.name" :props="props">
-                {{ col.value }} 
-              </q-td>
-              <q-td auto-width>
-
-                <q-btn
+                <q-td auto-width>
+                  <q-btn
                   v-if="jobStatus.show === false"
                   flat
                   dense
@@ -60,20 +57,8 @@
                 >
                   <q-tooltip>{{ getButtonText(props.row.id) }}</q-tooltip>
                 </q-btn>
-                </q-btn>
 
-              <q-btn
-                  flat
-                  dense
-                  size="xs"
-                  @click="openLogDialog(props.row.id)"
-                  icon="info"
-                  color="light-blue"
-                >
-                  <q-tooltip>Log Details for this Job</q-tooltip>
-                </q-btn>
-
-              <q-btn
+                <q-btn
                   flat
                   dense
                   size="xs"
@@ -83,6 +68,24 @@
                 >
                   <q-tooltip>Edit</q-tooltip>
                 </q-btn>
+
+                <q-btn
+                  flat
+                  dense
+                  size="xs"
+                  @click="openLogDialog(props.row.id)"
+                  icon="info"
+                  color="grey"
+                >
+                  <q-tooltip>Log Details for this Job</q-tooltip>
+                </q-btn>
+
+                </q-td>
+
+              <q-td v-for="col in props.cols" :key="col.name" :props="props">
+                {{ col.value }} 
+              </q-td>
+              <q-td auto-width>
                 <q-btn
                   flat
                   dense
@@ -90,7 +93,8 @@
                   @click="deleteJob(props.row.id)"
                   icon="cancel"
                   color="pink"
-                ></q-btn>
+                ><q-tooltip>Delete</q-tooltip>
+                </q-btn>
               </q-td>
             </q-tr>
           </template>
