@@ -715,7 +715,6 @@
       },
       flattenExportCSV: function (columns, data, fileName) {
         var flattenNestedData = function (data, field) {
-          console.log("field: ", field)
           if (typeof field === 'function') {
             return field(data);
           } else if (field === 'headers') {
