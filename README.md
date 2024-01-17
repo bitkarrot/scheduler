@@ -3,15 +3,16 @@
 lnbits scheduler extension [previously: crontabs]
 
 IMPORTANT: 
-- **The user that runs LNBits server MUST have crontab -e permissions in order to read/write to crontab file.** 
+- **The user that runs LNBits server MUST have crontab -e permissions in order to read/write to crontab file.**
+- This extension should be limited to admin account(s).
 
 ## Usage
 
 ### Overview: 
 Add, Edit, Delete and Monitor your scheduled Jobs from the Main Panel. 
-  
-<img width="908" alt="imgone" src="https://github.com/bitkarrot/scheduler/assets/73979971/75ebc47c-07be-444d-a167-31ae63c6e087">
 
+<img width="978" alt="Screenshot 2024-01-17 at 12 26 46 AM" src="https://github.com/bitkarrot/scheduler/assets/73979971/ea643280-6498-4d23-9f39-1428f73947d0">
+  
 ### Create a job Dialog Box. 
 
 Schedule a specific http call with a specific timed interval.
