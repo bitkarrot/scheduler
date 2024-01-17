@@ -713,8 +713,86 @@
               })
           })
       },
+      flattenExportCSV: function (columns, data, fileName) {
+        var flattenNestedData = function (data, field) {
+          console.log("field: ", field)
+          if (typeof field === 'function') {
+            return field(data);
+          } else if (field === 'headers') {
+            return JSON.stringify(data['headers'])
+          } else if (field === 'body') {
+            return JSON.stringify(data['body']) 
+          } else if (typeof field === 'object') {
+            return Object.keys(field).map(key => `${key}: ${field[key]}`).join(', ');
+          } else {
+            return field.split('.').reduce((obj, key) => obj[key], data);
+          }
+        };
+      
+        var wrapCsvValue = function (val, formatFn) {
+          var formatted = formatFn !== void 0 ? formatFn(val) : val;
+      
+          formatted =
+            formatted === void 0 || formatted === null ? '' : String(formatted);
+      
+          formatted = formatted.split('"').join('""');
+      
+          return `"${formatted}"`;
+        };
+      
+        var content = [
+          columns.map(function (col) {
+            return wrapCsvValue(col.label);
+          }),
+        ]
+          .concat(
+            data.map(function (row) {
+              return columns
+                .map(function (col) {
+                  var fieldValue = flattenNestedData(row, col.field);
+                  return wrapCsvValue(fieldValue, col.format);
+                })
+                .join(',');
+            })
+          )
+          .join('\r\n');
+      
+        var status = Quasar.utils.exportFile(
+          `${fileName || 'table-export'}.csv`,
+          content,
+          'text/csv'
+        );
+      
+        if (status !== true) {
+          Quasar.plugins.Notify.create({
+            message: 'Browser denied file download...',
+            color: 'negative',
+            icon: null,
+          });
+        }
+      },      
       exportJobsCSV: function () {
-        LNbits.utils.exportCSV(this.jobsTable.columns, this.jobs)
+        //LNbits.utils.exportCSV(this.jobsTable.columns, this.jobs)
+        var self = this
+        LNbits.api
+          .request(
+            'GET',
+            '/scheduler/api/v1/jobs',
+            self.g.user.wallets[0].adminkey
+          )
+          .then(function (response) {
+            if (response.status == 200) {
+              let data = response.data
+              // Dynamically generate columns based on keys in the data
+              let columns = Object.keys(data[0]).map(key => ({ label: key.charAt(0).toUpperCase() + key.slice(1), field: key }));
+              //console.log("columns", columns)
+              //console.log('data', data)
+              self.flattenExportCSV(columns, data, "scheduler-export")           
+            }
+          })
+          .catch(function (error) {
+            LNbits.utils.notifyApiError(error)
+          })
       },
     },
     props: {
