@@ -785,8 +785,6 @@
               let data = response.data
               // Dynamically generate columns based on keys in the data
               let columns = Object.keys(data[0]).map(key => ({ label: key.charAt(0).toUpperCase() + key.slice(1), field: key }));
-              //console.log("columns", columns)
-              //console.log('data', data)
               self.flattenExportCSV(columns, data, "scheduler-export")           
             }
           })
