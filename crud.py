@@ -21,6 +21,21 @@ from .cron_handler import CronHandler
 from lnbits.settings import settings
 import os
 
+import logging
+import logging.handlers
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+logname = os.path.join(dir_path, 'scheduler.log')
+
+logger = logging.getLogger('scheduler')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename=logname, encoding='utf-8', mode='a')
+dt_fmt = '%Y-%m-%d %H:%M:%S'
+formatter = logging.Formatter('[{asctime}] [{levelname}] {name}: {message}', dt_fmt, style='{')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+
 username = True
 
 # python path 
@@ -96,6 +111,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> JobDetail
 
     job_created = await get_scheduler_job(link_id)
     assert job_created, "Newly created Job couldn't be retrieved"
+    logger.info('Scheduler job created: %s', job_created)
     return job_created
 
 
@@ -135,7 +151,8 @@ async def pause_scheduler(job_id: str, state: str) -> bool:
             """,
             (status, job_id)
         )
-        # print("Updated database with current status ")
+        # print("Updated database with current status ")logger.info('Start/Stop scheduler job: %s for job_id: %s', status, job_id)
+        logger.info('Scheduled Job Run Status: %s for job_id: %s', status, job_id)
         return await get_scheduler_job(job_id)
 
     except Exception as e: 
@@ -147,10 +164,12 @@ async def delete_scheduler_jobs(job_id: str) -> None:
         deleted = await delete_cron(job_id)
         # print(f'Deletion status for {job_id} : {deleted}')
         await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (job_id,))
+        logger.info(f"Deleted scheduler job: {job_id}")
     except Exception as e:
         raise e
 
 async def update_scheduler_job(job_id: str, admin_id: str, data: UpdateJobData) -> JobDetailed:
+    logger.info(f'UpdateSchedulerJob: job_id: {job_id}, data: {data}')
     cols = []
     values = []
     if data.name:

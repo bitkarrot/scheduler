@@ -70,6 +70,16 @@
                 <q-btn                  
                   dense                 
                   size="xs"
+                  @click="openTestlogDialog(props.row.id)"
+                  icon="check"
+                  color="orange"
+                >
+                  <q-tooltip>Test the Job Setting</q-tooltip>
+                </q-btn>
+
+                <q-btn                  
+                  dense                 
+                  size="xs"
                   @click="openLogDialog(props.row.id)"
                   icon="info"
                   color="grey"
@@ -77,7 +87,7 @@
                   <q-tooltip>Log Details for this Job</q-tooltip>
                 </q-btn>
 
-                </q-td>
+              </q-td>
 
               <q-td v-for="col in props.cols" :key="col.name" :props="props">
                 {{ col.value }} 
@@ -117,7 +127,36 @@
     </q-card>
   </div>
 
-
+  <q-dialog v-model="testlogDialog.show" position="top">
+    <q-card class="q-pa-lg q-pt-xl" style="width: 800px; height: 600px">
+     <q-card>
+        <h5 class="text-subtitle1 q-my-none">Check your details are right with a test run</h5>
+         <b> Current Job ID: {% raw %} {{id_code}}{% endraw %}</b>
+      </q-card>
+    <q-card class="q-pa-md">
+      <q-btn unelevated color="secondary" @click="displayTestJobData(id_code)">
+        Test Run
+      </q-btn>
+      <q-btn @click="clearTestDialog" v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
+    </q-card>
+    <q-card>
+        <q-input
+        filled
+        v-model.trim="testlogData"
+        label='test log content'
+        type="textarea"
+        rows="5" 
+      />
+    </q-card>
+    <q-card class="q-pa-md">
+    <q-card class="q-pa-md">
+      <p> If you need more detail on error conditions, visit "View All Logs".
+      This file can also be found at ~/lnbits/lnbits/extensions/scheduler/test_run_job.log
+      </p>
+    </q-card>
+  </q-card>
+  </q-card>
+  </q-dialog>
 
 <q-dialog v-model="logDialog.show" position="top">
   <q-card class="q-pa-lg q-pt-xl" style="width: 800px; height: 600px">
@@ -310,6 +349,7 @@
     mixins: [windowMixin],
     data: function () {
       return {
+        testlogData: 'All test log content',
         fileData: "All Logfile content", // for log file data
         output: "Individual Job Logs",
         job_name: '', // for the create job dialog
@@ -342,6 +382,11 @@
         },
         logDialog: { 
           show: false, 
+        },
+        testlogDialog: { 
+          show: false, 
+          output: '',
+          id: '',
         },
         id_code: '',
         jobLogDialog: { 
@@ -415,6 +460,12 @@
         this.jobLogDialog.id = _.clone(link._data.id)
         this.id_code = this.jobLogDialog.id
 
+      },
+      openTestlogDialog: function(linkId) { 
+        this.testlogDialog.show = true
+        var link = _.findWhere(this.jobs, {id: linkId})
+        this.testlogDialog.id = _.clone(link._data.id)
+        this.id_code = this.testlogDialog.id
       },
       fetchJobLogDialog: function(id){
         var self = this
@@ -495,6 +546,29 @@
           this.createJob(data)
         }
       },
+      displayTestJobData(job_id) { 
+        // for test log data
+        console.log("job id: ", job_id)
+        console.log("this.g.user.wallets[0].adminkey: ", this.g.user.wallets[0].adminkey)
+        var self = this
+        LNbits.api
+          .request(
+            'GET',
+            '/scheduler/api/v1/test_log/' + job_id,
+            this.g.user.wallets[0].adminkey
+          )
+          .then(function (response) {
+            self.testlogData = response.data
+          })
+          .catch(function (error) {
+            LNbits.utils.notifyApiError(error)
+          })
+      },
+      clearTestDialog: function() { 
+        // for test log data
+        this.testlogDialog.show = false
+        this.testlogData = ''
+      },
       displayFileData() { // for complete log data
         var self = this
         LNbits.api
@@ -555,8 +629,8 @@
       },
       updateJob: function (data) { 
         var self = this
-        console.log("[index] update job data.id ", data.id )
-        console.log("[index] update job", data)
+       // console.log("[index] update job data.id ", data.id )
+       // console.log("[index] update job", data)
         LNbits.api
           .request(
             'PUT',

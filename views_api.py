@@ -37,6 +37,22 @@ from .models import (
     JobFilters,
     LogEntry
 )
+from .test_run_job import test_job
+
+
+@scheduler_ext.get(
+    "/api/v1/test_log/{job_id}",
+    status_code=HTTPStatus.OK,
+    name="Test Log",
+    summary="When testing your saved job entry, this log saves the result",
+    response_description="complete test_run_job.log",
+    dependencies=[Depends(require_admin_key)],
+    response_model=str,
+)
+async def api_get_test_log(job_id: str) -> str:
+    info: WalletTypeInfo = Depends(require_admin_key)
+    return await test_job(job_id, info)
+
 
 @scheduler_ext.get(
     "/api/v1/logentry/{log_id}",
@@ -83,7 +99,6 @@ async def api_job_entry_create(
     return await create_log_entry(data)
 
 
-# entries are written to file log by run_cron_job.py
 @scheduler_ext.get(
     "/api/v1/complete_log",
     status_code=HTTPStatus.OK,
