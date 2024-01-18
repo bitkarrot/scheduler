@@ -38,23 +38,26 @@ from .models import (
     LogEntry
 )
 
-# from .test_run_job import test_job
-
+from .test_run_job import test_job
 
 @scheduler_ext.get(
     "/api/v1/test_log/{job_id}",
-    status_code=HTTPStatus.OK,
-    name="Test Log",
-    summary="When testing your saved job entry, this log saves the result",
-    response_description="complete test_run_job.log",
+    name="testlog",
+    summary="his log saves the testlogs",
+    description="testlog",
+    response_description="testlog",
     dependencies=[Depends(require_admin_key)],
     response_model=str,
 )
-async def api_get_test_log(job_id: str) -> str:
-     return "Test log sample response"
-#    info: WalletTypeInfo = Depends(require_admin_key)
-#    return await test_job(job_id, info)
+async def api_get_testlog(
+    job_id: str,
+    info: WalletTypeInfo = Depends(require_admin_key)
+) -> JobDetailed:
+    print(f'inside api_get_test_log, job_id: {job_id}')
+    print(f'inside api_get_test_log, adminkey : {info.wallet.adminkey}')
+    return await test_job(job_id, info.wallet.adminkey)
 
+#await update_scheduler_job(job_id, info.wallet.adminkey, data)
 
 @scheduler_ext.get(
     "/api/v1/logentry/{log_id}",
