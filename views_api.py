@@ -37,7 +37,8 @@ from .models import (
     JobFilters,
     LogEntry
 )
-from .test_run_job import test_job
+
+# from .test_run_job import test_job
 
 
 @scheduler_ext.get(
@@ -50,8 +51,9 @@ from .test_run_job import test_job
     response_model=str,
 )
 async def api_get_test_log(job_id: str) -> str:
-    info: WalletTypeInfo = Depends(require_admin_key)
-    return await test_job(job_id, info)
+     return "Test log sample response"
+#    info: WalletTypeInfo = Depends(require_admin_key)
+#    return await test_job(job_id, info)
 
 
 @scheduler_ext.get(
