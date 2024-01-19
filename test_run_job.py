@@ -22,10 +22,9 @@ async def test_job(job_id: str, adminkey: str) -> str:
         This is used to execute the API call and log the result. 
     '''
     try:
-        print("inside test cron")
-        print(f'jobid: {job_id} adminkey: {adminkey}')
+        # print(f'[test_run_job]: jobid: {job_id} adminkey: {adminkey}')
         jobinfo = await get_scheduler_job(job_id)
-        print(f'Scheduler job created: {jobinfo}')
+        # print(f'[test_run_job]: get scheduler job created: {jobinfo}')
 
         body_json = {}
         json_headers = {}
@@ -34,12 +33,6 @@ async def test_job(job_id: str, adminkey: str) -> str:
         url = jobinfo.url
         body = jobinfo.body
         headers = jobinfo.headers
-
-        # print(f'method_name: {method_name}')
-        # print(f'url: {url}')
-        # print(f'body: {body_json}')
-        # print(f'header: {headers}')
-        # print("\n\n\n\n")
 
         if body is None:
             body_json = {}
@@ -51,40 +44,37 @@ async def test_job(job_id: str, adminkey: str) -> str:
         for h in headers:
             key = h.key
             value = h.value
-            print(f'key: {key} value: {value}')
             json_headers.update({key: value})
+            # print(f'key: {key} value: {value}')
 
-        print(f'body_json: {body_json}')
-        print(f'headers_json: {json_headers}')
+        # print(f'body_json: {body_json}')
+        # print(f'headers_json: {json_headers}')
 
+        logger.info('[test_run_job]: url: %s headers: %s body: %s', url, json_headers, body_json)
         # GET response
         if method_name == 'GET':
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, headers=json_headers, params=body_json)
-                print(f'response: {response}')
-                logger.info('[run_cron_job]: response status from api call: %s', response.status_code)
-                logger.info('response text from api call: %s', response.text)
+                logger.info('[test_run_job]: response status from api call: %s', response.status_code)
+                logger.info('[test_run_job]: response text from api call: %s', response.text)
         # POST response
         elif method_name == 'POST':
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, headers=json_headers, data=body_json)
-                print(f'response: {response}')
-                print(f'response status from api call: {response.status_code}')
-                print(f'response text from api call: {response.text}')
+                logger.info(f'[test_run_job]: response status from api call: {response.status_code}')
+                logger.info(f'[test_run_job]: response text from api call: {response.text}')
         # PUT response
         elif method_name == 'PUT':
             async with httpx.AsyncClient() as client:
                 response = await client.put(url, headers=json_headers, data=body_json)
-                print(f'response: {response}')
-                print(f'response status from api call: {response.status_code}')
-                print(f'response text from api call: {response.text}')
+                logger.info(f'[test_run_job]: response status from api call: {response.status_code}')
+                logger.info(f'[test_run_job]: response text from api call: {response.text}')
         # DELETE response
         elif method_name == 'DELETE':
             async with httpx.AsyncClient() as client:
-                response = await client.delete(url, headers=json_headers, data=body_json)
-                print(f'response: {response}')
-                print(f'response status from api call: {response.status_code}')
-                print(f'response text from api call: {response.text}')
+                response = await client.delete(url, headers=json_headers)
+                logger.info(f'[test_run_job]: response status from api call: {response.status_code}')
+                logger.info(f'[test_run_job]: response text from api call: {response.text}')
 
         # return "testjob 1234"
         return response.text

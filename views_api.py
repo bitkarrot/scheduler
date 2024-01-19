@@ -53,11 +53,9 @@ async def api_get_testlog(
     job_id: str,
     info: WalletTypeInfo = Depends(require_admin_key)
 ) -> JobDetailed:
-    print(f'inside api_get_test_log, job_id: {job_id}')
-    print(f'inside api_get_test_log, adminkey : {info.wallet.adminkey}')
+    # print(f'inside api_get_test_log, job_id: {job_id}')
+    # print(f'inside api_get_test_log, adminkey : {info.wallet.adminkey}')
     return await test_job(job_id, info.wallet.adminkey)
-
-#await update_scheduler_job(job_id, info.wallet.adminkey, data)
 
 @scheduler_ext.get(
     "/api/v1/logentry/{log_id}",
