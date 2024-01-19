@@ -86,7 +86,9 @@ async def call_api(method_name, url, headers, body):
 
     try:
         body_json = {}
-        if len(body) > 0:
+        if body is None:
+            body_json = {}
+        elif len(body) > 0:
             body_json = await process_json_body(body)
 
         if method_name.lower() in http_verbs:
