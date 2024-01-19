@@ -33,7 +33,7 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
             # logger.info(f'jobID: {jobID}, response text: {response.text}')
 
             url = f'{LNBITS_BASE_URL}/scheduler/api/v1/logentry'
-
+                        
             logger.info(f'pushdb: response.status type: {type(response.status_code)}')
             logger.info(f'pushdb: response.text type: {type(response.text)}')
             # we have some difficulty saving response.text to db, unicode?
@@ -63,7 +63,20 @@ async def save_job_execution(response: str, jobID: str, adminkey: str) -> None:
         return False
 
 
-def call_api(method_name, url, headers, body):
+async def process_json_body(request_body):
+    try:
+        json_data = json.loads(request_body)
+        # Code to process the JSON data
+        logger.info("Successfully parsed JSON:", json_data)
+        return json_data
+    except json.JSONDecodeError as e:
+        # Code to handle the case where the body is not JSON
+        logger.info("Error decoding JSON:", str(e))
+        logger.info("The provided body is not in JSON format")
+        return {}
+
+
+async def call_api(method_name, url, headers, body):
     '''
         Call API with parameters from database, 
         assume body, headers is a string from the db
@@ -73,8 +86,8 @@ def call_api(method_name, url, headers, body):
 
     try:
         body_json = {}
-        if body is not None:
-            body_json = json.loads(body)
+        if len(body) > 0:
+            body_json = await process_json_body(body)
 
         if method_name.lower() in http_verbs:
             method_to_call = getattr(httpx, method_name.lower())
@@ -138,7 +151,6 @@ async def check_logfile(logfile: str) -> None:
             now = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             file.write(f"[{now}][check_logfile]: This is a new scheduler logfile.")
 
-
 async def main() -> None:
     '''
         The main method that is run when the run_cron_job.py is executed
@@ -154,8 +166,10 @@ async def main() -> None:
     try:
         await check_logfile(logname)
 
+        logger.info('[run_cron_job]: LNBITS_BASE_URL = %s', LNBITS_BASE_URL)
         jobID = os.environ.get('ID')
         adminkey = os.environ.get('adminkey')
+        logger.info('[run_cron_job]: jobID: %s adminkey: %s', jobID, adminkey) 
 
         job = await get_job_by_id(jobID, adminkey)
         method_name = job['selectedverb']
@@ -167,9 +181,9 @@ async def main() -> None:
         for h in headers: 
             json_headers.update({h['key']: h['value']})
 
-        response = call_api(method_name, url, json_headers, body)
+        response = await call_api(method_name, url, json_headers, body)
         logger.info(f'[run_cron_job]: response status from api call: {response.status_code}')
-        # logger.info(f'response text from api call: {response.text}')
+        logger.info(f'response text from api call: {response.text}')
 
         await save_job_execution(response=response, jobID=jobID, adminkey=adminkey)
 
@@ -178,5 +192,3 @@ async def main() -> None:
 
 
 asyncio.run(main())
-
-
