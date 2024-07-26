@@ -249,22 +249,22 @@ async def api_scheduler_pause(
 
 
 # Activate Extension
-@scheduler_ext.post(
-    "/api/v1/extensions",
-    name="Extension Toggle",
-    summary="Extension Toggle",
-    description="Extension Toggle",
-    response_model=dict[str, str],
-    responses={404: {"description": "Jobs does not exist."}},
-)
-async def api_scheduler_activate_extension(
-    extension: str = Query(...), jobsid: str = Query(...), active: bool = Query(...)
-) -> dict:
-    job = await get_user(jobsid)
-    if not job:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Job does not exist."
-        )
-    await update_user_extension(job_id=jobsid, extension=extension, active=active)
-    return {"extension": "updated"}
+# @scheduler_ext.post(
+#     "/api/v1/extensions",
+#     name="Extension Toggle",
+#     summary="Extension Toggle",
+#     description="Extension Toggle",
+#     response_model=dict[str, str],
+#     responses={404: {"description": "Jobs does not exist."}},
+# )
+# async def api_scheduler_activate_extension(
+#     extension: str = Query(...), jobsid: str = Query(...), active: bool = Query(...)
+# ) -> dict:
+#     job = await get_user(jobsid)
+#     if not job:
+#         raise HTTPException(
+#             status_code=HTTPStatus.NOT_FOUND, detail="Job does not exist."
+#         )
+#     await update_user_extension(job_id=jobsid, extension=extension, active=active)
+#     return {"extension": "updated"}
 
