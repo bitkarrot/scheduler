@@ -4,7 +4,6 @@ from typing import List
 from fastapi import Depends, Query
 from starlette.exceptions import HTTPException
 
-# from lnbits.core import update_user_extension
 from lnbits.core.crud import get_user
 from lnbits.db import Filters
 from lnbits.decorators import (
@@ -247,24 +246,4 @@ async def api_scheduler_pause(
 ) -> JobDetailed:
     return await pause_scheduler(job_id, status)
 
-
-# Activate Extension
-# @scheduler_ext.post(
-#     "/api/v1/extensions",
-#     name="Extension Toggle",
-#     summary="Extension Toggle",
-#     description="Extension Toggle",
-#     response_model=dict[str, str],
-#     responses={404: {"description": "Jobs does not exist."}},
-# )
-# async def api_scheduler_activate_extension(
-#     extension: str = Query(...), jobsid: str = Query(...), active: bool = Query(...)
-# ) -> dict:
-#     job = await get_user(jobsid)
-#     if not job:
-#         raise HTTPException(
-#             status_code=HTTPStatus.NOT_FOUND, detail="Job does not exist."
-#         )
-#     await update_user_extension(job_id=jobsid, extension=extension, active=active)
-#     return {"extension": "updated"}
 
