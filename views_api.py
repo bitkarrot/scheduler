@@ -4,7 +4,7 @@ from typing import List
 from fastapi import Depends, Query
 from starlette.exceptions import HTTPException
 
-from lnbits.core import update_user_extension
+# from lnbits.core import update_user_extension
 from lnbits.core.crud import get_user
 from lnbits.db import Filters
 from lnbits.decorators import (
