@@ -1,7 +1,7 @@
 {
-    "name": "Scheduler",
-    "short_description": "Generate Scheduled tasks via crontabs for lnbits",
-	"tile": "/scheduler/static/image/scheduler.png",
-    "contributors": ["bitkarrot"],
-    "min_lnbits_version": "0.12.10"
+  "name": "Scheduler",
+  "short_description": "Generate Scheduled tasks via crontabs for lnbits",
+  "tile": "/scheduler/static/image/scheduler.png",
+  "contributors": ["bitkarrot"],
+  "min_lnbits_version": "1.0.0"
 }

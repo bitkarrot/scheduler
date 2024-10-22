@@ -1,14 +1,18 @@
-from fastapi import Depends, Request
-from starlette.responses import HTMLResponse
-
+from fastapi import APIRouter, Depends, Request
 from lnbits.core.models import User
 from lnbits.decorators import check_user_exists
+from lnbits.helpers import template_renderer
+from starlette.responses import HTMLResponse
 
-from . import scheduler_ext, scheduler_renderer
+scheduler_generic_router = APIRouter()
 
 
-@scheduler_ext.get("/", response_class=HTMLResponse)
+def scheduler_renderer():
+    return template_renderer(["scheduler/templates"])
+
+
+@scheduler_generic_router.get("/", response_class=HTMLResponse)
 async def index(request: Request, user: User = Depends(check_user_exists)):
     return scheduler_renderer().TemplateResponse(
-        "scheduler/index.html", {"request": request, "user": user.dict()}
+        "scheduler/index.html", {"request": request, "user": user.json()}
     )

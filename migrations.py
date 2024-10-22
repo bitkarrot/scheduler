@@ -15,6 +15,7 @@ async def m001_initial(db):
     """
     )
 
+
 async def m002_add_jobs_attrs_column(db):
     """
     Initial jobs table.
@@ -24,6 +25,7 @@ async def m002_add_jobs_attrs_column(db):
         ALTER TABLE scheduler.jobs ADD COLUMN extra JSON
     """
     )
+
 
 async def m003_update_columns_for_api(db):
     """
@@ -35,6 +37,7 @@ async def m003_update_columns_for_api(db):
     await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN url TEXT;")
     await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN headers TEXT;")
     await db.execute("ALTER TABLE scheduler.jobs ADD COLUMN body TEXT;")
+
 
 async def m004_add_logging_db(db):
     """
@@ -50,6 +53,7 @@ async def m004_add_logging_db(db):
         )
         """
     )
+
 
 async def m005_add_job_id_to_log_entry(db):
     await db.execute(
