@@ -123,33 +123,32 @@ window.app = Vue.createApp({
   },
   methods: {
     ///////////////Jobs////////////////////////////
-    getJobs() {
+    getJobs: () => {
       LNbits.api
         .request(
           'GET',
           '/scheduler/api/v1/jobs',
-          this.g.user.wallets[0].adminkey
+          user.wallets[0].adminkey
         )
         .then(response => {
-          this.jobs = response.data.map(function (obj) {
+          this.jobs = response.data.data.map(function (obj) {
             return mapcrontabs(obj)
           })
-          // console.log("[index] getjobs: ", JSON.stringify(this.jobs))
         })
     },
-    openLogDialog: function (linkId) {
+    openLogDialog(linkId) {
       this.jobLogDialog.show = true
       const link = _.findWhere(this.jobs, {id: linkId})
       this.jobLogDialog.id = _.clone(link._data.id)
       this.id_code = this.jobLogDialog.id
     },
-    openTestlogDialog: function (linkId) {
+    openTestlogDialog(linkId) {
       this.testlogDialog.show = true
       const link = _.findWhere(this.jobs, {id: linkId})
       this.testlogDialog.id = _.clone(link._data.id)
       this.id_code = this.testlogDialog.id
     },
-    fetchJobLogDialog: function (id) {
+    fetchJobLogDialog() {
       const id = this.jobLogDialog.id
       //console.log("this.jobLogDialog.id ", this.jobLogDialog.id)
       //console.log("fetch job Log Dialog: ", id)
@@ -170,10 +169,10 @@ window.app = Vue.createApp({
           LNbits.utils.notifyApiError(error)
         })
     },
-    clearJobLogDialog: function () {
+    clearJobLogDialog() {
       this.output = ''
     },
-    closeJobLogDialog: function () {
+    closeJobLogDialog() {
       this.output = '' // clears the dialog content on close
       this.jobLogDialog.show = false
     },
