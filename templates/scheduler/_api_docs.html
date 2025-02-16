@@ -10,23 +10,21 @@
         Scheduler Extension: Make and manage scheduled events on LNBits
       </h5>
       <p>
-        Call any REST API on a schedule you decide. This extension allows
-        the creation and management of timed processes via cron tabs.
-        Need help making a schedule? visit 
-        <a class="text-secondary" href="https://crontab.guru">https://crontab.guru</a>.
-        <br /> <br />
-        Note: The scheduler.log file is saved in the extension data folder and contains
-        extra messages for debugging purposes. You can also watch it by running on the cli:
-        `tail -f ~/lnbits/lnbits/extensions/scheduler/scheduler.log`. 
-        The individual job logging data displayed by the
-        <q-btn
-          flat
-          dense
-          size="xs"
-          icon="info"
-          color="grey"></q-btn>
-                
-        icon is saved into the database. 
+        Call any REST API on a schedule you decide. This extension allows the
+        creation and management of timed processes via cron tabs. Need help
+        making a schedule? visit
+        <a class="text-secondary" href="https://crontab.guru"
+          >https://crontab.guru</a
+        >. <br />
+        <br />
+        Note: The scheduler.log file is saved in the extension data folder and
+        contains extra messages for debugging purposes. You can also watch it by
+        running on the cli: `tail -f
+        ~/lnbits/lnbits/extensions/scheduler/scheduler.log`. The individual job
+        logging data displayed by the
+        <q-btn flat dense size="xs" icon="info" color="grey"></q-btn>
+
+        icon is saved into the database.
 
         <small>
           Created by,
@@ -45,10 +43,4 @@
   :content-inset-level="0.5"
 >
   <q-btn flat label="Swagger API" type="a" href="../docs#/scheduler"></q-btn>
-
-  <q-card>
-    &nbsp;
-  </q-card>
-  
-  </q-expansion-item>
 </q-expansion-item>

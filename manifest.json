@@ -1,9 +1,9 @@
 {
-    "repos": [
-        {
-            "id": "scheduler",
-            "organisation": "bitkarrot",
-            "repository": "scheduler"
-        }
-    ]
+  "repos": [
+    {
+      "id": "scheduler",
+      "organisation": "bitkarrot",
+      "repository": "scheduler"
+    }
+  ]
 }
