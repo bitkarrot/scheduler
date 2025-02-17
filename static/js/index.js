@@ -1,7 +1,5 @@
 const mapcrontabs = function (obj) {
-  obj.date = Quasar.date.formatDate(new Date(obj.time), 'YYYY-MM-DD HH:mm')
-  obj.fsat = new Intl.NumberFormat(LOCALE).format(obj.amount)
-  obj.walllink = ['../wallet?usr=', obj.user, '&wal=', obj.id].join('')
+  // Only clone the object, don't try to format non-existent properties
   obj._data = _.clone(obj)
   return obj
 }
@@ -123,13 +121,14 @@ window.app = Vue.createApp({
   },
   methods: {
     ///////////////Jobs////////////////////////////
-    getJobs: () => {
+    getJobs() {  // Changed to regular function for proper 'this' binding
       LNbits.api
         .request('GET', '/scheduler/api/v1/jobs', user.wallets[0].adminkey)
         .then(response => {
-          this.jobs = response.data.data.map(function (obj) {
-            return mapcrontabs(obj)
-          })
+          this.jobs = response.data.map(mapcrontabs)  // Removed extra .data since the API response structure is response.data
+        })
+        .catch(error => {
+          LNbits.utils.notifyApiError(error)
         })
     },
     openLogDialog(linkId) {
