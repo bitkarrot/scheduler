@@ -461,8 +461,9 @@ window.app = Vue.createApp({
             this.g.user.wallets[0].adminkey
           )
           .then(response => {
-            //console.log("Pause Response status", response.status);
+            console.log("Pause Response status", response.status);
             const toggle_state = this.toggleJobsStatus(jobId)
+            console.log("toggle state", toggle_state)
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)
