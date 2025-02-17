@@ -125,11 +125,7 @@ window.app = Vue.createApp({
     ///////////////Jobs////////////////////////////
     getJobs: () => {
       LNbits.api
-        .request(
-          'GET',
-          '/scheduler/api/v1/jobs',
-          user.wallets[0].adminkey
-        )
+        .request('GET', '/scheduler/api/v1/jobs', user.wallets[0].adminkey)
         .then(response => {
           this.jobs = response.data.data.map(function (obj) {
             return mapcrontabs(obj)
