@@ -228,8 +228,6 @@ window.app = Vue.createApp({
       }
     },
     displayTestJobData(job_id) {
-      // for test log data
-      // console.log("job id: ", job_id)
       LNbits.api
         .request(
           'GET',
@@ -237,8 +235,15 @@ window.app = Vue.createApp({
           this.g.user.wallets[0].adminkey
         )
         .then(response => {
-          //console.log("response.data: ", response.data)
-          this.testlogData = response.data
+          const job = response.data;
+          this.testlogData = `Job Details:
+            Name: ${job.name}
+            Status: ${job.status ? 'Active' : 'Paused'}
+            Schedule: ${job.schedule}
+            URL: ${job.url || 'N/A'}
+            Method: ${job.selectedverb || 'N/A'}
+            Headers: ${job.headers ? JSON.stringify(job.headers, null, 2) : 'None'}
+            Body: ${job.body || 'None'}`;
         })
         .catch(function (error) {
           LNbits.utils.notifyApiError(error)
