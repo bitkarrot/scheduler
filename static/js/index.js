@@ -390,19 +390,20 @@ window.app = Vue.createApp({
     deleteJob(jobId) {
       LNbits.utils
         .confirmDialog('Are you sure you want to delete this Job?')
-        .onOk(function () {
+        .onOk(() => {
           LNbits.api
             .request(
               'DELETE',
               '/scheduler/api/v1/jobs/' + jobId,
-              this.g.user.wallets[0].adminkey
+              user.wallets[0].adminkey
             )
             .then(response => {
-              this.jobs = _.reject(this.jobs, function (obj) {
-                return obj.id == jobId
-              })
+              // Refresh the jobs list from the server
+              this.getJobs()
+              // Show success notification
+              LNbits.utils.notifySuccess('Job deleted successfully')
             })
-            .catch(function (error) {
+            .catch(error => {
               LNbits.utils.notifyApiError(error)
             })
         })
