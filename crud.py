@@ -1,6 +1,6 @@
+import json
 from typing import Optional
 from uuid import uuid4
-import json
 
 from lnbits.db import Database, Filters, Page
 
@@ -12,7 +12,9 @@ db = Database("ext_scheduler")
 
 async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
     # Convert headers to JSON string if present
-    headers_json = json.dumps([h.dict() for h in data.headers]) if data.headers else "[]"
+    headers_json = (
+        json.dumps([h.dict() for h in data.headers]) if data.headers else "[]"
+    )
     # Convert extra to JSON string if present
     extra_json = json.dumps(data.extra) if data.extra else "{}"
 
@@ -28,13 +30,14 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
         body=data.body or "{}",
         extra=extra_json,  # Store as JSON string
     )
-    
+
     await db.execute(
         """
         INSERT INTO scheduler.jobs (
             id, name, admin, status, schedule, selectedverb, url, headers, body, extra
         ) VALUES (
-            :id, :name, :admin, :status, :schedule, :selectedverb, :url, :headers, :body, :extra
+            :id, :name, :admin, :status, :schedule, :selectedverb,
+            :url, :headers, :body, :extra
         )
         """,
         {
@@ -50,7 +53,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
             "extra": extra_json,
         },
     )
-    
+
     logger.info(f"Scheduler job created: {job.id}")
     return job
 
@@ -62,11 +65,11 @@ async def get_scheduler_job(job_id: str) -> Optional[Job]:
     )
     if not row:
         return None
-        
+
     # Parse JSON strings back to Python objects
     headers = json.loads(row.headers) if row.headers else []
     extra = json.loads(row.extra) if row.extra else {}
-    
+
     return Job(
         id=row.id,
         name=row.name,
@@ -88,26 +91,28 @@ async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> Page[J
         {"admin": admin},
         filters,
     )
-    
+
     jobs = []
     for row in rows.data:
         # Parse JSON strings back to Python objects
         headers = json.loads(row.headers) if row.headers else []
         extra = json.loads(row.extra) if row.extra else {}
-        
-        jobs.append(Job(
-            id=row.id,
-            name=row.name,
-            admin=row.admin,
-            status=row.status,
-            schedule=row.schedule,
-            selectedverb=row.selectedverb,
-            url=row.url,
-            headers=headers,
-            body=row.body,
-            extra=extra,
-        ))
-    
+
+        jobs.append(
+            Job(
+                id=row.id,
+                name=row.name,
+                admin=row.admin,
+                status=row.status,
+                schedule=row.schedule,
+                selectedverb=row.selectedverb,
+                url=row.url,
+                headers=headers,
+                body=row.body,
+                extra=extra,
+            )
+        )
+
     return Page(data=jobs, total=rows.total)
 
 
@@ -120,10 +125,10 @@ async def update_scheduler_job(job: Job) -> Job:
     # Convert headers and extra to JSON strings
     headers_json = json.dumps([h.dict() for h in job.headers]) if job.headers else "[]"
     extra_json = json.dumps(job.extra) if job.extra else "{}"
-    
+
     await db.execute(
         """
-        UPDATE scheduler.jobs 
+        UPDATE scheduler.jobs
         SET name = :name,
             status = :status,
             schedule = :schedule,
