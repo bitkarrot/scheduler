@@ -242,10 +242,10 @@ window.app = Vue.createApp({
         .then(response => {
           // Handle both string and object responses
           if (typeof response.data === 'string') {
-            this.testlogData = response.data;
+            this.testlogData = response.data
           } else {
             // If we still get an object, format it nicely
-            const job = response.data;
+            const job = response.data
             this.testlogData = `Test Results:
               Job Name: ${job.name}
               Status: ${job.status ? 'Active' : 'Paused'}
@@ -253,7 +253,7 @@ window.app = Vue.createApp({
               URL: ${job.url || 'N/A'}
               Method: ${job.selectedverb || 'N/A'}
               Headers: ${JSON.stringify(job.headers, null, 2)}
-              Body: ${job.body || 'None'}`;
+              Body: ${job.body || 'None'}`
           }
         })
         .catch(function (error) {
@@ -470,9 +470,9 @@ window.app = Vue.createApp({
             this.g.user.wallets[0].adminkey
           )
           .then(response => {
-            console.log("Pause Response status", response.status);
+            console.log('Pause Response status', response.status)
             const toggle_state = this.toggleJobsStatus(jobId)
-            console.log("toggle state", toggle_state)
+            console.log('toggle state', toggle_state)
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)

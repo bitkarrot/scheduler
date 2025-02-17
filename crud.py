@@ -5,7 +5,7 @@ from uuid import uuid4
 from lnbits.db import Database, Filters, Page
 
 from .logger import logger
-from .models import CreateJobData, Job, JobFilters, LogEntry, HeaderItems
+from .models import CreateJobData, HeaderItems, Job, JobFilters, LogEntry
 
 db = Database("ext_scheduler")
 
@@ -19,7 +19,11 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
     extra_json = json.dumps(data.extra) if data.extra else "{}"
 
     # Parse headers from JSON string to list of HeaderItems
-    headers_list = [HeaderItems(**h) for h in json.loads(headers_json)] if headers_json != "[]" else None
+    headers_list = (
+        [HeaderItems(**h) for h in json.loads(headers_json)]
+        if headers_json != "[]"
+        else None
+    )
 
     job = Job(
         id=uuid4().hex,
@@ -31,7 +35,9 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
         url=data.url,
         headers=headers_list,  # Pass the parsed list of HeaderItems
         body=data.body or "{}",
-        extra=json.loads(extra_json) if extra_json != "{}" else None,  # Parse extra as well
+        extra=(
+            json.loads(extra_json) if extra_json != "{}" else None
+        ),  # Parse extra as well
     )
 
     await db.execute(
@@ -98,7 +104,9 @@ async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> Page[J
     jobs = []
     for row in rows.data:
         # Parse JSON strings back to Python objects
-        headers = [HeaderItems(**h) for h in json.loads(row.headers)] if row.headers else []
+        headers = (
+            [HeaderItems(**h) for h in json.loads(row.headers)] if row.headers else []
+        )
         extra = json.loads(row.extra) if row.extra else {}
 
         jobs.append(
@@ -126,7 +134,11 @@ async def delete_scheduler_jobs(job_id: str) -> None:
 
 async def update_scheduler_job(job: Job) -> Job:
     # Convert headers and extra to JSON strings
-    headers_json = json.dumps([h.dict() if hasattr(h, 'dict') else h for h in job.headers]) if job.headers else "[]"
+    headers_json = (
+        json.dumps([h.dict() if hasattr(h, "dict") else h for h in job.headers])
+        if job.headers
+        else "[]"
+    )
     extra_json = json.dumps(job.extra) if job.extra else "{}"
 
     await db.execute(
@@ -164,9 +176,13 @@ async def update_scheduler_job(job: Job) -> Job:
         schedule=job.schedule,
         selectedverb=job.selectedverb,
         url=job.url,
-        headers=[HeaderItems(**h) for h in json.loads(headers_json)] if headers_json != "[]" else None,
+        headers=(
+            [HeaderItems(**h) for h in json.loads(headers_json)]
+            if headers_json != "[]"
+            else None
+        ),
         body=job.body,
-        extra=json.loads(extra_json) if extra_json != "{}" else None
+        extra=json.loads(extra_json) if extra_json != "{}" else None,
     )
 
 
