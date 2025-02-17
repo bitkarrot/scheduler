@@ -5,7 +5,7 @@ from uuid import uuid4
 from lnbits.db import Database, Filters, Page
 
 from .logger import logger
-from .models import CreateJobData, Job, JobFilters, LogEntry
+from .models import CreateJobData, Job, JobFilters, LogEntry, HeaderItems
 
 db = Database("ext_scheduler")
 
@@ -18,6 +18,9 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
     # Convert extra to JSON string if present
     extra_json = json.dumps(data.extra) if data.extra else "{}"
 
+    # Parse headers from JSON string to list of HeaderItems
+    headers_list = [HeaderItems(**h) for h in json.loads(headers_json)] if headers_json != "[]" else None
+
     job = Job(
         id=uuid4().hex,
         name=data.name or f"Job-{uuid4().hex}",
@@ -26,9 +29,9 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
         schedule=data.schedule,
         selectedverb=data.selectedverb,
         url=data.url,
-        headers=headers_json,  # Store as JSON string
+        headers=headers_list,  # Pass the parsed list of HeaderItems
         body=data.body or "{}",
-        extra=extra_json,  # Store as JSON string
+        extra=json.loads(extra_json) if extra_json != "{}" else None,  # Parse extra as well
     )
 
     await db.execute(
@@ -67,7 +70,7 @@ async def get_scheduler_job(job_id: str) -> Optional[Job]:
         return None
 
     # Parse JSON strings back to Python objects
-    headers = json.loads(row.headers) if row.headers else []
+    headers = [HeaderItems(**h) for h in json.loads(row.headers)] if row.headers else []
     extra = json.loads(row.extra) if row.extra else {}
 
     return Job(
@@ -95,7 +98,7 @@ async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> Page[J
     jobs = []
     for row in rows.data:
         # Parse JSON strings back to Python objects
-        headers = json.loads(row.headers) if row.headers else []
+        headers = [HeaderItems(**h) for h in json.loads(row.headers)] if row.headers else []
         extra = json.loads(row.extra) if row.extra else {}
 
         jobs.append(
