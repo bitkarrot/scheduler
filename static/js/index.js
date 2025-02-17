@@ -235,15 +235,21 @@ window.app = Vue.createApp({
           this.g.user.wallets[0].adminkey
         )
         .then(response => {
-          const job = response.data;
-          this.testlogData = `Job Details:
-            Name: ${job.name}
-            Status: ${job.status ? 'Active' : 'Paused'}
-            Schedule: ${job.schedule}
-            URL: ${job.url || 'N/A'}
-            Method: ${job.selectedverb || 'N/A'}
-            Headers: ${job.headers ? JSON.stringify(job.headers, null, 2) : 'None'}
-            Body: ${job.body || 'None'}`;
+          // Handle both string and object responses
+          if (typeof response.data === 'string') {
+            this.testlogData = response.data;
+          } else {
+            // If we still get an object, format it nicely
+            const job = response.data;
+            this.testlogData = `Test Results:
+              Job Name: ${job.name}
+              Status: ${job.status ? 'Active' : 'Paused'}
+              Schedule: ${job.schedule}
+              URL: ${job.url || 'N/A'}
+              Method: ${job.selectedverb || 'N/A'}
+              Headers: ${JSON.stringify(job.headers, null, 2)}
+              Body: ${job.body || 'None'}`;
+          }
         })
         .catch(function (error) {
           LNbits.utils.notifyApiError(error)

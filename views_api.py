@@ -30,22 +30,20 @@ scheduler_api_router = APIRouter()
 @scheduler_api_router.get(
     "/api/v1/test_log/{job_id}",
     name="testlog",
-    summary="his log saves the testlogs",
-    description="testlog",
-    response_description="testlog",
+    summary="Test run a job and return the results",
+    description="Execute the job and return the test results",
+    response_description="Test execution results",
     dependencies=[Depends(require_admin_key)],
-    response_model=Job,
+    response_model=str,
 )
-async def api_get_testlog(job_id: str) -> Job:
+async def api_get_testlog(job_id: str) -> str:
     job = await get_scheduler_job(job_id)
     if not job:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Job does not exist."
         )
-    # print(f'inside api_get_test_log, job_id: {job_id}')
-    # print(f'inside api_get_test_log, adminkey : {info.wallet.adminkey}')
-    await test_job(job_id)
-    return job
+    result = await test_job(job_id)
+    return result or "No test results available"
 
 
 @scheduler_api_router.get(
