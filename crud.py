@@ -154,7 +154,20 @@ async def update_scheduler_job(job: Job) -> Job:
             "extra": extra_json,
         },
     )
-    return job
+
+    # Return a new Job instance with the updated data
+    return Job(
+        id=job.id,
+        name=job.name,
+        admin=job.admin,
+        status=job.status,
+        schedule=job.schedule,
+        selectedverb=job.selectedverb,
+        url=job.url,
+        headers=[HeaderItems(**h) for h in json.loads(headers_json)] if headers_json != "[]" else None,
+        body=job.body,
+        extra=json.loads(extra_json) if extra_json != "{}" else None
+    )
 
 
 async def create_log_entry(data: LogEntry) -> LogEntry:
