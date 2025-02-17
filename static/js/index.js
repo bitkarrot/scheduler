@@ -400,8 +400,11 @@ window.app = Vue.createApp({
             .then(response => {
               // Refresh the jobs list from the server
               this.getJobs()
-              // Show success notification
-              LNbits.utils.notifySuccess('Job deleted successfully')
+              // Use Quasar's notification system instead
+              this.$q.notify({
+                type: 'positive',
+                message: 'Job deleted successfully'
+              })
             })
             .catch(error => {
               LNbits.utils.notifyApiError(error)
