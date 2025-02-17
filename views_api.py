@@ -34,7 +34,7 @@ scheduler_api_router = APIRouter()
     description="testlog",
     response_description="testlog",
     dependencies=[Depends(require_admin_key)],
-    response_model=str,
+    response_model=Job,
 )
 async def api_get_testlog(job_id: str) -> Job:
     job = await get_scheduler_job(job_id)
@@ -176,7 +176,7 @@ async def api_scheduler_jobs_create(
     name="Jobs Update",
     summary="Update a jobs",
     description="Update a jobs",
-    response_description="Updated jobs",
+    response_model=Job,
     dependencies=[Depends(require_admin_key)],
 )
 async def api_scheduler_jobs_update(job_id: str, data: UpdateJobData) -> Job:
