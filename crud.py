@@ -126,7 +126,7 @@ async def delete_scheduler_jobs(job_id: str) -> None:
 
 async def update_scheduler_job(job: Job) -> Job:
     # Convert headers and extra to JSON strings
-    headers_json = json.dumps([h.dict() for h in job.headers]) if job.headers else "[]"
+    headers_json = json.dumps([h.dict() if hasattr(h, 'dict') else h for h in job.headers]) if job.headers else "[]"
     extra_json = json.dumps(job.extra) if job.extra else "{}"
 
     await db.execute(
