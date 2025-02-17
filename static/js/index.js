@@ -121,14 +121,20 @@ window.app = Vue.createApp({
   },
   methods: {
     ///////////////Jobs////////////////////////////
-    getJobs() {  // Changed to regular function for proper 'this' binding
+    getJobs() {
       LNbits.api
         .request('GET', '/scheduler/api/v1/jobs', user.wallets[0].adminkey)
         .then(response => {
-          this.jobs = response.data.map(mapcrontabs)  // Removed extra .data since the API response structure is response.data
+          if (response.data && Array.isArray(response.data.data)) {
+            this.jobs = response.data.data.map(mapcrontabs)
+          } else {
+            console.error('Unexpected API response structure:', response)
+            this.jobs = []
+          }
         })
         .catch(error => {
           LNbits.utils.notifyApiError(error)
+          this.jobs = []
         })
     },
     openLogDialog(linkId) {
