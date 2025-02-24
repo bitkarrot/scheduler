@@ -22,6 +22,17 @@ command = f"{python_path} {os.path.join(dir_path, 'run_cron_job.py')}"
 logger.info(f"Using Python interpreter: {python_path}")
 logger.info(f"Using command: {command}")
 
+
+def get_safe_path():
+    """Get PATH from virtualenv or fall back to standard path"""
+    standard_path = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    if poetry_env and os.path.exists(poetry_env):
+        bin_dir = os.path.join(poetry_env, "bin")
+        if os.path.exists(bin_dir):
+            return f"{bin_dir}:{standard_path}"
+    return standard_path
+
+
 async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
     try:
         # Generate unique ID
@@ -40,7 +51,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
             "adminkey": admin_id,
             "BASE_URL": base_url,
             "PYTHONPATH": root_path,  # Ensure Python can find the LNbits package
-            "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",  # Standard PATH
+            "PATH": get_safe_path(),
             "VIRTUAL_ENV": poetry_env if os.path.exists(poetry_env) else "",
         }
 
@@ -173,7 +184,7 @@ async def delete_scheduler_jobs(job_id: str) -> None:
     try:
         # Remove from crontab first
         ch = CronHandler()
-        await ch.remove_by_comment(job_id)
+        await ch.remove_job(job_id)
 
         # Then remove from database
         await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (job_id,))
@@ -207,7 +218,7 @@ async def update_scheduler_job(job: Job) -> Job:
             "adminkey": job.admin,
             "BASE_URL": base_url,
             "PYTHONPATH": root_path,  # Ensure Python can find the LNbits package
-            "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",  # Standard PATH
+            "PATH": get_safe_path(),
             "VIRTUAL_ENV": poetry_env if os.path.exists(poetry_env) else "",
         }
 
