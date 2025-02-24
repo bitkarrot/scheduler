@@ -49,7 +49,7 @@ async def create_cron(comment: str, command: str, schedule: str, env_vars: dict)
         response = await ch.new_job(command, schedule, comment=comment, env=env_vars)
         # make sure job is not running on creation by default
         status = await ch.enable_job_by_comment(comment=comment, active=False)
-        # print(f'create_cron: {response}, {status}')
+        print(f'create_cron: {response}, {status}')
         if status is False:
             return response
         else:  # error setting job to 'Not Running' and creating job

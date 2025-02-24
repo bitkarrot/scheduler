@@ -6,7 +6,12 @@ IMPORTANT:
 
 - **The user that runs LNBits server MUST have crontab -e permissions in order to read/write to crontab file.**
 - This extension should be limited to admin account(s).
-- min version 0.12.10
+- min version v.10
+- The following file must be executable:
+
+```sh
+chmod +x run_cron_job.py
+```
 
 ## Video Demo
 
@@ -17,7 +22,7 @@ https://github.com/bitkarrot/scheduler/assets/73979971/888d9e77-4edf-4573-85ee-8
 Add, Edit, Delete and Monitor your scheduled Jobs from the Main Panel.
 
 <img width="992" alt="Screenshot 2024-01-19 at 2 39 23 PM" src="https://github.com/bitkarrot/scheduler/assets/73979971/01656f95-bdde-4015-99c5-415ce9483ddb">
-  
+
 ### Create a job Dialog Box.
 
 Schedule a specific http call with a specific timed interval.
