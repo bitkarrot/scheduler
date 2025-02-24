@@ -48,25 +48,50 @@ class CronHandler:
             print(i)
 
     async def new_job(self, command: str, frequency: str, comment: str, env: dict):
-        logger.info(f"Creating new cron job: command={command}, frequency={frequency}, comment={comment}, env={env}")
-        job = self._cron.new(command=command, comment=comment)
-        if len(env) > 0:
-            for key in env:
-                job.env[key] = env[key]
-        job.setall(frequency)
-        if job.is_valid():
-            logger.info("Job is valid, writing to crontab")
+        logger.info(f"Creating new cron job:")
+        logger.info(f"Command: {command!r}")
+        logger.info(f"Frequency: {frequency!r}")
+        logger.info(f"Comment: {comment!r}")
+        logger.info(f"Environment: {env}")
+        
+        try:
+            # First normalize the frequency
+            normalized_freq = await self.normalize_cron_string(frequency)
+            logger.info(f"Normalized frequency: {normalized_freq!r}")
+            
+            # Create the job
+            job = self._cron.new(command=command, comment=comment)
+            
+            # Set environment variables
+            if len(env) > 0:
+                for key in env:
+                    job.env[key] = env[key]
+                    
+            # Set the schedule
+            job.setall(normalized_freq)
+            
+            # Validate and log the job details
+            logger.info(f"Job valid: {job.is_valid()}")
+            logger.info(f"Job slices: {job.slices}")
+            logger.info(f"Job render: {job.render()}")
+            
+            # Validate
+            if not job.is_valid():
+                logger.error(f"Invalid job: frequency={normalized_freq!r}")
+                return f"Error creating job: Invalid frequency {normalized_freq}"
+                
+            # Write to crontab
             try:
                 self._cron.write_to_user(user=self._user)
-                jobs = await self.list_jobs()
-                logger.info(f"Current crontab jobs after write: {jobs}")
-                return f"job created: {command}, {self._user}, {frequency}"
+                jobs = self._cron.render()
+                logger.info(f"Crontab after write:\n{jobs}")
+                return f"job created: {command}, {self._user}, {normalized_freq}"
             except Exception as e:
                 logger.error(f"Failed to write to crontab: {str(e)}")
                 return f"Error writing to crontab: {str(e)}"
-        else:
-            logger.error(f"Invalid job: command={command}, frequency={frequency}")
-            return f"Error creating job: {command}, {self._user}, {frequency}"
+        except Exception as e:
+            logger.error(f"Error in new_job: {str(e)}")
+            return f"Error creating job: {str(e)}"
 
     # TODO: add means to edit env variables in the job
     async def edit_job(self, command: str, frequency: str, comment: str):
@@ -147,7 +172,30 @@ class CronHandler:
             self._cron.env.clear()
         self._cron.write_to_user(user=self._user)
 
-    async def validate_cron_string(self, timestring: str):
-        logger.info(f"Validating cron string: timestring={timestring}")
-        is_valid = CronSlices.is_valid(timestring)
-        return is_valid
+    async def validate_cron_string(self, timestring: str) -> bool:
+        """Validate and normalize cron string format"""
+        logger.info(f"Validating cron string: {timestring!r}")  # Show raw string
+        try:
+            # Try to parse the cron string
+            entry = CronTab(timestring)
+            # Convert back to string to normalize format
+            normalized = str(entry)
+            logger.info(f"Normalized cron string: {normalized!r}")
+            # Double check with CronSlices
+            is_valid = CronSlices.is_valid(timestring)
+            logger.info(f"CronSlices validation result: {is_valid}")
+            if not is_valid:
+                logger.error(f"CronSlices rejected the string: {timestring!r}")
+                return False
+            return True
+        except Exception as e:
+            logger.error(f"Invalid cron string: {timestring!r}, error: {str(e)}")
+            return False
+
+    async def normalize_cron_string(self, timestring: str) -> str:
+        """Convert cron string to standard format"""
+        try:
+            entry = CronTab(timestring)
+            return str(entry)
+        except Exception:
+            return timestring

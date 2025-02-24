@@ -23,6 +23,9 @@ from .crud import (
 from .helpers import delete_complete_log, get_complete_log, pause_scheduler
 from .models import CreateJobData, Job, JobFilters, LogEntry, UpdateJobData
 from .test_run_job import test_job
+import logging
+
+logger = logging.getLogger(__name__)
 
 scheduler_api_router = APIRouter()
 
@@ -162,11 +165,29 @@ async def api_scheduler_user(job_id: str) -> Job:
     response_description="New Job",
     dependencies=[Depends(require_admin_key)],
     response_model=Job,
+    status_code=HTTPStatus.CREATED,
 )
 async def api_scheduler_jobs_create(
     data: CreateJobData, info: WalletTypeInfo = Depends(require_admin_key)
 ) -> Job:
-    return await create_scheduler_jobs(info.wallet.adminkey, data)
+    logger.info("Creating new job with data:")
+    logger.info(f"Name: {data.name}")
+    logger.info(f"Status: {data.status}")
+    logger.info(f"Schedule: {data.schedule!r}")  # !r shows raw string
+    logger.info(f"Verb: {data.selectedverb}")
+    logger.info(f"URL: {data.url}")
+    logger.info(f"Headers: {data.headers}")
+    logger.info(f"Body: {data.body}")
+    logger.info(f"Extra: {data.extra}")
+    
+    try:
+        return await create_scheduler_jobs(info.wallet.adminkey, data)
+    except Exception as e:
+        logger.error(f"Failed to create job: {str(e)}")
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @scheduler_api_router.put(
