@@ -1,5 +1,7 @@
 from typing import Union
 import logging
+import os
+import getpass
 from crontab import CronSlices, CronTab
 
 logger = logging.getLogger("scheduler")
@@ -14,11 +16,19 @@ https://pypi.org/project/python-crontab/
 
 class CronHandler:
     def __init__(self, user: Union[str, bool] = None):
-        # Default to current user if none specified
-        self._user = user if user is not None else True
+        """Initialize CronHandler
+
+        Args:
+            user: If None, uses current user's crontab
+                 If True, tries to use current user with -u flag (requires root)
+                 If string, tries to use that username (requires root)
+        """
         try:
+            # Default to None to use current user's crontab without -u flag
+            self._user = None
+            self._username = getpass.getuser()  # Get actual username
             self._cron = CronTab(user=self._user)
-            logger.info(f"CronHandler initialized with user: {self._user}")
+            logger.info(f"CronHandler initialized for user: {self._username}")
         except Exception as e:
             logger.error(f"Failed to initialize CronTab: {str(e)}")
             raise
@@ -53,39 +63,34 @@ class CronHandler:
         logger.info(f"Frequency: {frequency!r}")
         logger.info(f"Comment: {comment!r}")
         logger.info(f"Environment: {env}")
-        
+
         try:
-            # First normalize the frequency
-            normalized_freq = await self.normalize_cron_string(frequency)
-            logger.info(f"Normalized frequency: {normalized_freq!r}")
-            
+            # Validate the frequency first
+            if not await self.validate_cron_string(frequency):
+                return f"Error creating job: Invalid frequency {frequency!r}"
+
             # Create the job
             job = self._cron.new(command=command, comment=comment)
-            
+
             # Set environment variables
             if len(env) > 0:
                 for key in env:
                     job.env[key] = env[key]
-                    
+
             # Set the schedule
-            job.setall(normalized_freq)
-            
+            job.setall(frequency)
+
             # Validate and log the job details
             logger.info(f"Job valid: {job.is_valid()}")
             logger.info(f"Job slices: {job.slices}")
             logger.info(f"Job render: {job.render()}")
-            
-            # Validate
-            if not job.is_valid():
-                logger.error(f"Invalid job: frequency={normalized_freq!r}")
-                return f"Error creating job: Invalid frequency {normalized_freq}"
-                
+
             # Write to crontab
             try:
-                self._cron.write_to_user(user=self._user)
+                self._cron.write()  # Don't use write_to_user since we're using current user
                 jobs = self._cron.render()
                 logger.info(f"Crontab after write:\n{jobs}")
-                return f"job created: {command}, {self._user}, {normalized_freq}"
+                return f"job created: {command}, {self._username}, {frequency}"
             except Exception as e:
                 logger.error(f"Failed to write to crontab: {str(e)}")
                 return f"Error writing to crontab: {str(e)}"
@@ -174,14 +179,9 @@ class CronHandler:
 
     async def validate_cron_string(self, timestring: str) -> bool:
         """Validate and normalize cron string format"""
-        logger.info(f"Validating cron string: {timestring!r}")  # Show raw string
+        logger.info(f"Validating cron string: {timestring!r}")
         try:
-            # Try to parse the cron string
-            entry = CronTab(timestring)
-            # Convert back to string to normalize format
-            normalized = str(entry)
-            logger.info(f"Normalized cron string: {normalized!r}")
-            # Double check with CronSlices
+            # Use CronSlices for validation as it's more reliable
             is_valid = CronSlices.is_valid(timestring)
             logger.info(f"CronSlices validation result: {is_valid}")
             if not is_valid:
