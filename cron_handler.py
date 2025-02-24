@@ -24,10 +24,9 @@ class CronHandler:
                  If string, tries to use that username (requires root)
         """
         try:
-            # Default to None to use current user's crontab without -u flag
-            self._user = None
             self._username = getpass.getuser()  # Get actual username
-            self._cron = CronTab(user=self._user)
+            # Initialize crontab for current user
+            self._cron = CronTab(user=self._username)
             logger.info(f"CronHandler initialized for user: {self._username}")
         except Exception as e:
             logger.error(f"Failed to initialize CronTab: {str(e)}")
@@ -40,10 +39,10 @@ class CronHandler:
         self._cron = cron
 
     def get_user(self):
-        return self._user
+        return self._username
 
     def set_user(self, user):
-        self._user = user
+        self._username = user
 
     async def list_jobs(self) -> list:
         jobs = []
@@ -87,7 +86,7 @@ class CronHandler:
 
             # Write to crontab
             try:
-                self._cron.write()  # Don't use write_to_user since we're using current user
+                self._cron.write(user=self._username)  # Write to current user's crontab
                 jobs = self._cron.render()
                 logger.info(f"Crontab after write:\n{jobs}")
                 return f"job created: {command}, {self._username}, {frequency}"
@@ -109,16 +108,16 @@ class CronHandler:
             if job.is_valid():
                 logger.info("Job is valid, writing to crontab")
                 try:
-                    self._cron.write_to_user(user=self._user)
+                    self._cron.write(user=self._username)  # Write to current user's crontab
                     jobs = await self.list_jobs()
                     logger.info(f"Current crontab jobs after write: {jobs}")
-                    return f"job edited: {command}, {self._user}, {frequency}"
+                    return f"job edited: {command}, {self._username}, {frequency}"
                 except Exception as e:
                     logger.error(f"Failed to write to crontab: {str(e)}")
                     return f"Error writing to crontab: {str(e)}"
             else:
                 logger.error(f"Invalid job: command={command}, frequency={frequency}")
-                return f"Error editing job: {command}, {self._user}, {frequency}"
+                return f"Error editing job: {command}, {self._username}, {frequency}"
 
     async def enable_job_by_comment(self, comment: str, active: bool):
         logger.info(f"Enabling/disabling cron job by comment: comment={comment}, active={active}")
@@ -126,7 +125,7 @@ class CronHandler:
         ## assume iter is only 1 long as using unique comment ID
         for job in jobs:
             job.enable(active)
-            self._cron.write_to_user(user=self._user)
+            self._cron.write(user=self._username)  # Write to current user's crontab
             return job.is_enabled()
 
     async def get_job_status(self, job_id: str) -> bool:
@@ -136,32 +135,32 @@ class CronHandler:
             return job.is_enabled()
         return False
 
-    async def remove_job(self, command: str):
-        logger.info(f"Removing cron job by command: command={command}")
-        self._cron.remove_all(command=command)
-        self._cron.write_to_user(user=self._user)
+    async def remove_job(self, comment: str):
+        logger.info(f"Removing cron job by comment: comment={comment}")
+        self._cron.remove_all(comment=comment)
+        self._cron.write(user=self._username)  # Write to current user's crontab
 
     async def clear_all_jobs(self):
         logger.info("Clearing all cron jobs")
         self._cron.remove_all()
-        self._cron.write_to_user(user=self._user)
+        self._cron.write(user=self._username)  # Write to current user's crontab
 
     async def remove_by_comment(self, comment):
         logger.info(f"Removing cron job by comment: comment={comment}")
         self._cron.remove_all(comment=comment)
-        self._cron.write_to_user(user=self._user)
+        self._cron.write(user=self._username)  # Write to current user's crontab
 
     async def remove_by_time(self, time):
         logger.info(f"Removing cron job by time: time={time}")
         self._cron.remove_all(time=time)
-        self._cron.write_to_user(user=self._user)
+        self._cron.write(user=self._username)  # Write to current user's crontab
 
     async def set_global_env_vars(self, env: dict):
         logger.info(f"Setting global environment variables: env={env}")
         if self._cron.env:
             for name, value in env.items():
                 self._cron.env[name] = value
-        self._cron.write_to_user(user=self._user)
+        self._cron.write(user=self._username)  # Write to current user's crontab
 
     async def get_global_env_vars(self):
         logger.info("Getting global environment variables")
@@ -175,7 +174,7 @@ class CronHandler:
         logger.info("Clearing global environment variables")
         if self._cron.env:
             self._cron.env.clear()
-        self._cron.write_to_user(user=self._user)
+        self._cron.write(user=self._username)  # Write to current user's crontab
 
     async def validate_cron_string(self, timestring: str) -> bool:
         """Validate and normalize cron string format"""
