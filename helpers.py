@@ -78,10 +78,21 @@ async def delete_cron(link_id: str):
         return f"Error deleting job: {e}"
 
 
-async def pause_scheduler(job_id: str):
-    # print(f'Pausing job in pause_scheduler: {job_id}, State: {state}')
-    ch = CronHandler()
-    await ch.enable_job_by_comment(comment=job_id, active=False)
+async def pause_scheduler(job_id: str, active: bool = False) -> bool:
+    """
+    Pause or resume a scheduled job.
+    Args:
+        job_id: The ID of the job to pause/resume
+        active: True to start the job, False to stop it
+    Returns:
+        bool: True if the operation was successful, False otherwise
+    """
+    try:
+        ch = CronHandler()
+        return await ch.enable_job_by_comment(comment=job_id, active=active)
+    except Exception as e:
+        print(f"Error in pause_scheduler for job {job_id}: {str(e)}")
+        return False
 
 
 # log helpers

@@ -221,17 +221,22 @@ async def api_scheduler_jobs_delete(jobs_id) -> None:
     status_code=HTTPStatus.OK,
 )
 async def api_scheduler_pause(job_id: str, status: str) -> Job:
-    # TODO: status is not used
-    _ = status
-
     job = await get_scheduler_job(job_id)
     if not job:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Job does not exist."
         )
-    pause = await pause_scheduler(job_id)
-    if not pause:
+
+    # Convert status string to boolean
+    active = status.lower() == 'true'
+
+    # Pause or resume the job
+    result = await pause_scheduler(job_id, active)
+    if not result:
+        action = "starting" if active else "stopping"
         raise HTTPException(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Error in pausing job."
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=f"Error {action} job."
         )
+
     return job
