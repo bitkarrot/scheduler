@@ -82,8 +82,19 @@ class CronHandler:
 
             # Write to crontab
             try:
+                # Log the full crontab content before writing
+                logger.info("Current crontab content:")
+                for existing_job in self._cron:
+                    logger.info(f"Existing job: {existing_job}")
+                logger.info("Environment variables:")
+                for key, value in self._cron.env.items():
+                    logger.info(f"{key}={value}")
+                
                 self._cron.write()
-                logger.info(f"Crontab after write:\n{self._cron.render()}")
+                
+                # Log the crontab content after writing
+                logger.info("Crontab content after write:")
+                logger.info(self._cron.render())
                 return f"job created: {command}, {self._username}, {frequency}"
             except Exception as e:
                 logger.error(f"Failed to write to crontab: {str(e)}")

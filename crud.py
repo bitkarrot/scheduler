@@ -40,7 +40,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
             "adminkey": admin_id,
             "BASE_URL": base_url,
             "PYTHONPATH": root_path,  # Ensure Python can find the LNbits package
-            "PATH": os.environ.get("PATH", ""),  # Preserve PATH
+            "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",  # Standard PATH
             "VIRTUAL_ENV": poetry_env if os.path.exists(poetry_env) else "",
         }
 
@@ -207,7 +207,7 @@ async def update_scheduler_job(job: Job) -> Job:
             "adminkey": job.admin,
             "BASE_URL": base_url,
             "PYTHONPATH": root_path,  # Ensure Python can find the LNbits package
-            "PATH": os.environ.get("PATH", ""),  # Preserve PATH
+            "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",  # Standard PATH
             "VIRTUAL_ENV": poetry_env if os.path.exists(poetry_env) else "",
         }
 
