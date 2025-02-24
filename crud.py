@@ -26,13 +26,13 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
     try:
         # Generate unique ID
         job_id = uuid4().hex
-        
+
         # Validate cron schedule
         ch = CronHandler()
         is_valid = await ch.validate_cron_string(data.schedule)
         if not is_valid:
             raise ValueError(f"Invalid cron schedule format: {data.schedule}")
-            
+
         # Set up environment variables for the cron job
         base_url = f"http://{settings.host}:{settings.port}"
         env_vars = {
@@ -43,22 +43,22 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
             "PATH": os.environ.get("PATH", ""),  # Preserve PATH
             "VIRTUAL_ENV": poetry_env if os.path.exists(poetry_env) else "",
         }
-        
+
         logger.info(f"Creating cron job with command: {command}")
         logger.info(f"Environment variables: {env_vars}")
-        
+
         # Create the cron job first
         response = await ch.new_job(command=command, frequency=data.schedule, comment=job_id, env=env_vars)
         if isinstance(response, str) and response.startswith("Error"):
             raise ValueError(f"Failed to create cron job: {response}")
-            
+
         # Set initial state (disabled by default)
         await ch.enable_job_by_comment(comment=job_id, active=False)
-        
+
         # Prepare database data
         headers_json = json.dumps([h.dict() for h in data.headers]) if data.headers else "[]"
         extra_json = json.dumps(data.extra) if data.extra else "{}"
-        
+
         # Create database entry
         job = Job(
             id=job_id,
@@ -72,7 +72,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
             body=data.body or "{}",
             extra=json.loads(extra_json) if extra_json != "{}" else None
         )
-        
+
         await db.execute(
             """
             INSERT INTO scheduler.jobs (
@@ -95,10 +95,10 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
                 "extra": extra_json
             }
         )
-        
+
         logger.info('Scheduler job created: %s', job)
         return job
-        
+
     except Exception as e:
         # If anything fails, clean up any partially created resources
         try:
@@ -174,13 +174,13 @@ async def delete_scheduler_jobs(job_id: str) -> None:
         # Remove from crontab first
         ch = CronHandler()
         await ch.remove_by_comment(job_id)
-        
+
         # Then remove from database
         await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (job_id,))
-        
+
         # Also clean up any log entries
         await delete_log_entries(job_id)
-        
+
         logger.info(f"Deleted scheduler job and associated logs: {job_id}")
     except Exception as e:
         logger.error(f"Error deleting scheduler job {job_id}: {str(e)}")
@@ -199,7 +199,7 @@ async def update_scheduler_job(job: Job) -> Job:
 
         # Update crontab first
         ch = CronHandler()
-        
+
         # Update the command and schedule
         base_url = f"http://{settings.host}:{settings.port}"
         env_vars = {
@@ -210,10 +210,10 @@ async def update_scheduler_job(job: Job) -> Job:
             "PATH": os.environ.get("PATH", ""),  # Preserve PATH
             "VIRTUAL_ENV": poetry_env if os.path.exists(poetry_env) else "",
         }
-        
+
         # Update the job in crontab
-        await ch.edit_job(command=command, frequency=job.schedule, comment=job.id)
-        
+        await ch.edit_job(command=command, frequency=job.schedule, comment=job.id, env=env_vars)
+
         # Update the job's enabled state
         await ch.enable_job_by_comment(comment=job.id, active=job.status)
 
@@ -246,7 +246,7 @@ async def update_scheduler_job(job: Job) -> Job:
 
         logger.info('Updated scheduler job: %s', job.id)
         return await get_scheduler_job(job.id)
-        
+
     except Exception as e:
         logger.error('Failed to update scheduler job: %s', str(e))
         raise ValueError(f"Failed to update job: {str(e)}")
@@ -258,14 +258,14 @@ async def pause_scheduler(job_id: str) -> Job:
         job = await get_scheduler_job(job_id)
         if not job:
             raise ValueError(f"Job not found: {job_id}")
-            
+
         # Toggle the status
         new_status = not job.status
-        
+
         # Update crontab first
         ch = CronHandler()
         await ch.enable_job_by_comment(comment=job_id, active=new_status)
-        
+
         # Then update database
         await db.execute(
             """
@@ -273,12 +273,12 @@ async def pause_scheduler(job_id: str) -> Job:
             """,
             (new_status, job_id)
         )
-        
+
         # Get and return updated job
         updated_job = await get_scheduler_job(job_id)
         logger.info('Scheduler job %s status changed to: %s', job_id, new_status)
         return updated_job
-        
+
     except Exception as e:
         logger.error('Failed to update scheduler job status: %s', str(e))
         raise ValueError(f"Failed to update job status: {str(e)}")

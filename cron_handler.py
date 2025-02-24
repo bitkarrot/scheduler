@@ -60,7 +60,7 @@ class CronHandler:
         try:
             # Create the job with command and comment
             job = self._cron.new(command=command, comment=comment)
-            
+
             # Set environment variables
             if env:
                 for key, value in env.items():
@@ -70,12 +70,12 @@ class CronHandler:
 
             # Set the schedule
             job.setall(frequency)
-            
+
             # Validate and log the job details
             logger.info(f"Job valid: {job.is_valid()}")
             logger.info(f"Job slices: {job.slices}")
             logger.info(f"Job render: {job.render()}")
-            
+
             if not job.is_valid():
                 logger.error(f"Invalid job: frequency={frequency!r}")
                 return f"Error creating job: Invalid frequency {frequency}"
@@ -92,13 +92,21 @@ class CronHandler:
             logger.error(f"Error in new_job: {str(e)}")
             return f"Error creating job: {str(e)}"
 
-    async def edit_job(self, command: str, frequency: str, comment: str):
+    async def edit_job(self, command: str, frequency: str, comment: str, env: dict = None):
         try:
             job = await self.find_comment(comment)
             if job is not None:
                 job.clear()  # Clear existing schedule
                 job.setall(frequency)  # Set new schedule
                 job.set_command(command)  # Update command
+                
+                # Update environment variables
+                if env:
+                    for key, value in env.items():
+                        if ' ' in str(value):
+                            value = f'"{value}"'
+                        job.env[key] = value
+
                 self._cron.write()
                 return f"job edited: {command}, {self._username}, {frequency}"
             return "job not found"
@@ -153,23 +161,6 @@ class CronHandler:
         logger.info(f"Removing cron job by time: time={time}")
         self._cron.remove_all(time=time)
         self._cron.write()
-
-    async def set_global_env_vars(self, env: dict):
-        logger.info(f"Setting global environment variables: env={env}")
-        if env:
-            for name, value in env.items():
-                self._cron.env[name] = value
-            self._cron.write()
-
-    async def get_global_env_vars(self):
-        logger.info("Getting global environment variables")
-        return dict(self._cron.env)
-
-    async def clear_global_env_vars(self):
-        logger.info("Clearing global environment variables")
-        if self._cron.env:
-            self._cron.env.clear()
-            self._cron.write()
 
     async def validate_cron_string(self, timestring: str) -> bool:
         """Validate cron string format"""
