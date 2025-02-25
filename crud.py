@@ -183,8 +183,8 @@ async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> Page[J
 async def delete_scheduler_jobs(job_id: str) -> None:
     try:
         # Remove from crontab first
-        # ch = CronHandler()
-        # await ch.remove_job(job_id)
+        ch = CronHandler()
+        await ch.remove_job(job_id)
 
         # Then remove from database
         await db.execute("DELETE FROM scheduler.jobs WHERE id = :id", {"id": job_id})
