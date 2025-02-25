@@ -183,11 +183,11 @@ async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> Page[J
 async def delete_scheduler_jobs(job_id: str) -> None:
     try:
         # Remove from crontab first
-        ch = CronHandler()
-        await ch.remove_job(job_id)
+        # ch = CronHandler()
+        # await ch.remove_job(job_id)
 
         # Then remove from database
-        await db.execute("DELETE FROM scheduler.jobs WHERE id = ?", (job_id,))
+        await db.execute("DELETE FROM scheduler.jobs WHERE id = :id", {"id": job_id})
 
         # Also clean up any log entries
         await delete_log_entries(job_id)
@@ -280,9 +280,12 @@ async def pause_scheduler(job_id: str) -> Job:
         # Then update database
         await db.execute(
             """
-            UPDATE scheduler.jobs SET status = ? WHERE id = ?
+            UPDATE scheduler.jobs SET status = :status WHERE id = :id
             """,
-            (new_status, job_id)
+            {
+                "id": job_id,
+                "status": new_status
+            }
         )
 
         # Get and return updated job
