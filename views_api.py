@@ -1,3 +1,4 @@
+import logging
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,7 +24,6 @@ from .crud import (
 from .helpers import delete_complete_log, get_complete_log, pause_scheduler
 from .models import CreateJobData, Job, JobFilters, LogEntry, UpdateJobData
 from .test_run_job import test_job
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -183,11 +183,8 @@ async def api_scheduler_jobs_create(
     try:
         return await create_scheduler_jobs(info.wallet.adminkey, data)
     except Exception as e:
-        logger.error(f"Failed to create job: {str(e)}")
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail=str(e)
-        )
+        logger.error(f"Failed to create job: {e!s}")
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e))
 
 
 @scheduler_api_router.put(
@@ -254,41 +251,50 @@ async def api_scheduler_pause(job_id: str, status: str) -> Job:
             )
 
         # Convert status string to boolean
-        active = status.lower() == 'true'
+        active = status.lower() == "true"
         logger.info(f"Converted status '{status}' to boolean: {active}")
 
         # Attempt to pause or resume the job
         try:
-            logger.info(f"Calling pause_scheduler with job_id={job_id}, active={active}")
+            logger.info(
+                f"Calling pause_scheduler with job_id={job_id}, active={active}"
+            )
             result = await pause_scheduler(job_id, active)
             logger.info(f"Result from pause_scheduler: {result}")
 
             if not result:
                 action = "starting" if active else "stopping"
-                logger.warning(f"pause_scheduler returned None or False - Warning: {action} job failed but DB may be updated")
+                logger.warning(
+                    f"pause_scheduler returned None or False - Warning: {action} job failed but DB may be updated"
+                )
                 # We'll still try to return the job to the client, even if the update failed
             else:
                 logger.info(f"pause_scheduler succeeded, job status: {result}")
         except ValueError as ve:
-            logger.error(f"ValueError in pause_scheduler: {str(ve)}")
+            logger.error(f"ValueError in pause_scheduler: {ve!s}")
             # Continue to try to get the job, even if the update failed
         except Exception as e:
             if isinstance(e, HTTPException):
-                logger.error(f"HTTPException in pause_scheduler: {e.status_code}: {e.detail}")
+                logger.error(
+                    f"HTTPException in pause_scheduler: {e.status_code}: {e.detail}"
+                )
                 # Continue to try to get the job, even if the update failed
             else:
-                logger.error(f"Unexpected exception in pause_scheduler: {type(e).__name__}: {str(e)}")
+                logger.error(
+                    f"Unexpected exception in pause_scheduler: {type(e).__name__}: {e!s}"
+                )
                 import traceback
+
                 logger.error(f"Traceback: {traceback.format_exc()}")
                 # Continue to try to get the job, even if the update failed
 
         # Get the possibly updated job to return
         updated_job = await get_scheduler_job(job_id)
         if not updated_job:
-            logger.error(f"Could not find job after attempted update")
+            logger.error("Could not find job after attempted update")
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND,
-                detail="Job disappeared after update attempt"
+                detail="Job disappeared after update attempt",
             )
 
         logger.info(f"Returning job with status: {updated_job.status}")
@@ -299,10 +305,13 @@ async def api_scheduler_pause(job_id: str, status: str) -> Job:
         raise
     except Exception as e:
         # Log and convert other exceptions to HTTP exceptions
-        logger.error(f"Unexpected exception in api_scheduler_pause: {type(e).__name__}: {str(e)}")
+        logger.error(
+            f"Unexpected exception in api_scheduler_pause: {type(e).__name__}: {e!s}"
+        )
         import traceback
+
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=f"Unexpected error in api handler: {str(e)}"
+            detail=f"Unexpected error in api handler: {e!s}",
         )

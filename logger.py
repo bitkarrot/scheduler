@@ -11,7 +11,7 @@ os.makedirs(os.path.dirname(logname), exist_ok=True)
 
 # Touch the log file if it doesn't exist
 if not os.path.exists(logname):
-    open(logname, 'a').close()
+    open(logname, "a").close()
     os.chmod(logname, 0o666)  # Make it readable/writable by all
 
 # Configure logger

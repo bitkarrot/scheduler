@@ -1,7 +1,7 @@
-from typing import Union
-import logging
-import os
 import getpass
+import logging
+from typing import Union
+
 from crontab import CronSlices, CronTab
 
 logger = logging.getLogger("scheduler")
@@ -23,7 +23,7 @@ class CronHandler:
             self._cron = CronTab(user=self._username)
             logger.info(f"CronHandler initialized for user: {self._username}")
         except Exception as e:
-            logger.error(f"Failed to initialize CronTab: {str(e)}")
+            logger.error(f"Failed to initialize CronTab: {e!s}")
             raise
 
     def get_cron(self):
@@ -51,7 +51,7 @@ class CronHandler:
             print(i)
 
     async def new_job(self, command: str, frequency: str, comment: str, env: dict):
-        logger.info(f"Creating new cron job:")
+        logger.info("Creating new cron job:")
         logger.info(f"Command: {command!r}")
         logger.info(f"Frequency: {frequency!r}")
         logger.info(f"Comment: {comment!r}")
@@ -64,7 +64,7 @@ class CronHandler:
             # Set environment variables
             if env:
                 for key, value in env.items():
-                    if ' ' in str(value):
+                    if " " in str(value):
                         value = f'"{value}"'
                     job.env[key] = value
 
@@ -97,13 +97,15 @@ class CronHandler:
                 logger.info(self._cron.render())
                 return f"job created: {command}, {self._username}, {frequency}"
             except Exception as e:
-                logger.error(f"Failed to write to crontab: {str(e)}")
-                return f"Error writing to crontab: {str(e)}"
+                logger.error(f"Failed to write to crontab: {e!s}")
+                return f"Error writing to crontab: {e!s}"
         except Exception as e:
-            logger.error(f"Error in new_job: {str(e)}")
-            return f"Error creating job: {str(e)}"
+            logger.error(f"Error in new_job: {e!s}")
+            return f"Error creating job: {e!s}"
 
-    async def edit_job(self, command: str, frequency: str, comment: str, env: dict = None):
+    async def edit_job(
+        self, command: str, frequency: str, comment: str, env: dict = None
+    ):
         try:
             job = await self.find_comment(comment)
             if job is not None:
@@ -114,7 +116,7 @@ class CronHandler:
                 # Update environment variables
                 if env:
                     for key, value in env.items():
-                        if ' ' in str(value):
+                        if " " in str(value):
                             value = f'"{value}"'
                         job.env[key] = value
 
@@ -122,66 +124,75 @@ class CronHandler:
                 return f"job edited: {command}, {self._username}, {frequency}"
             return "job not found"
         except Exception as e:
-            logger.error(f"Failed to edit job: {str(e)}")
-            return f"Error editing job: {str(e)}"
+            logger.error(f"Failed to edit job: {e!s}")
+            return f"Error editing job: {e!s}"
 
     async def enable_job_by_comment(self, comment: str, active: bool):
         """
         Enable or disable a job by its comment.
-        
+
         Args:
             comment: The comment of the job to enable/disable
             active: True to enable, False to disable
-            
+
         Returns:
             True if the job was found and enabled/disabled successfully, False otherwise
         """
         try:
-            logger.info(f"Enabling/disabling cron job by comment: comment={comment}, active={active}")
-            
+            logger.info(
+                f"Enabling/disabling cron job by comment: comment={comment}, active={active}"
+            )
+
             # Find the job by comment
             jobs = list(self._cron.find_comment(comment))
             job_count = len(jobs)
             logger.info(f"Found {job_count} jobs with comment {comment}")
-            
+
             if job_count == 0:
                 logger.error(f"No jobs found with comment: {comment}")
                 return False
-                
+
             # Get the first job (should only be one since comments are unique)
             job = jobs[0]
             current_status = job.is_enabled()
-            logger.info(f"Job found, current enabled status: {current_status}, changing to: {active}")
-            
+            logger.info(
+                f"Job found, current enabled status: {current_status}, changing to: {active}"
+            )
+
             # Only update if the status is different
             if current_status == active:
-                logger.info(f"Job already in the requested state, no change needed")
+                logger.info("Job already in the requested state, no change needed")
                 return active
-                
+
             # Update job status
             job.enable(active)
-            
+
             # Write changes to crontab
             try:
                 self._cron.write()
-                logger.info(f"Crontab updated successfully")
+                logger.info("Crontab updated successfully")
             except Exception as write_error:
-                logger.error(f"Failed to write to crontab: {str(write_error)}")
+                logger.error(f"Failed to write to crontab: {write_error!s}")
                 return False
-            
+
             # Verify the status was updated
             new_status = job.is_enabled()
             logger.info(f"Job status after update: {new_status}")
-            
+
             if new_status != active:
-                logger.error(f"Job status was not updated correctly. Expected: {active}, Got: {new_status}")
+                logger.error(
+                    f"Job status was not updated correctly. Expected: {active}, Got: {new_status}"
+                )
                 return False
-                
+
             return new_status
-            
+
         except Exception as e:
-            logger.error(f"Exception in enable_job_by_comment: {type(e).__name__}: {str(e)}")
+            logger.error(
+                f"Exception in enable_job_by_comment: {type(e).__name__}: {e!s}"
+            )
             import traceback
+
             logger.error(f"Traceback: {traceback.format_exc()}")
             return False
 
@@ -232,7 +243,7 @@ class CronHandler:
             logger.info(f"CronSlices validation result: {is_valid}")
             return is_valid
         except Exception as e:
-            logger.error(f"Invalid cron string: {timestring!r}, error: {str(e)}")
+            logger.error(f"Invalid cron string: {timestring!r}, error: {e!s}")
             return False
 
     async def normalize_cron_string(self, timestring: str) -> str:

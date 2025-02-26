@@ -1,7 +1,7 @@
 const mapcrontabs = function (obj) {
   // Only clone the object, don't try to format non-existent properties
   obj._data = _.clone(obj)
-  
+
   // Normalize status to boolean regardless of input type
   if (obj.hasOwnProperty('status')) {
     if (typeof obj.status === 'string') {
@@ -12,7 +12,7 @@ const mapcrontabs = function (obj) {
       obj.status = Boolean(obj.status)
     }
   }
-  
+
   return obj
 }
 
@@ -61,7 +61,7 @@ window.app = Vue.createApp({
             name: 'status',
             align: 'left',
             label: 'Is Running?',
-            field: row => row.status ? 'Running' : 'Paused'
+            field: row => (row.status ? 'Running' : 'Paused')
           },
           {
             name: 'schedule',
@@ -136,19 +136,23 @@ window.app = Vue.createApp({
     getJobs() {
       const self = this
       LNbits.api
-        .request('GET', '/scheduler/api/v1/jobs', self.g.user.wallets[0].adminkey)
-        .then(function(response) {
+        .request(
+          'GET',
+          '/scheduler/api/v1/jobs',
+          self.g.user.wallets[0].adminkey
+        )
+        .then(function (response) {
           console.log('Jobs API response:', response)
-          
+
           // Check for response.data.data (nested structure)
           if (response && response.data) {
             let jobsArray
-            
+
             // Handle nested data structure where response.data.data contains the array
             if (response.data.data && Array.isArray(response.data.data)) {
               console.log('Found nested data structure (response.data.data)')
               jobsArray = response.data.data
-            } 
+            }
             // Handle case where response.data is the array directly
             else if (Array.isArray(response.data)) {
               console.log('Found direct data structure (response.data)')
@@ -159,7 +163,7 @@ window.app = Vue.createApp({
               console.error('Unexpected API response structure:', response)
               jobsArray = []
             }
-            
+
             // Map the jobs through our processor
             self.jobs = jobsArray.map(mapcrontabs)
             console.log('Processed jobs:', self.jobs)
@@ -168,7 +172,7 @@ window.app = Vue.createApp({
             self.jobs = []
           }
         })
-        .catch(function(error) {
+        .catch(function (error) {
           console.error('Error fetching jobs:', error)
           LNbits.utils.notifyApiError(error)
           self.jobs = []
@@ -480,14 +484,17 @@ window.app = Vue.createApp({
         // Convert newStatus to boolean regardless of input type
         let statusBoolean
         if (typeof newStatus === 'string') {
-          statusBoolean = newStatus.toLowerCase() === 'true' || newStatus === '1'
+          statusBoolean =
+            newStatus.toLowerCase() === 'true' || newStatus === '1'
         } else if (typeof newStatus === 'number') {
           statusBoolean = newStatus === 1
         } else {
           statusBoolean = Boolean(newStatus)
         }
-        
-        console.log(`Updating job ${jobId} status to: ${statusBoolean} (original value: ${newStatus})`)
+
+        console.log(
+          `Updating job ${jobId} status to: ${statusBoolean} (original value: ${newStatus})`
+        )
         this.jobs[jobIndex].status = statusBoolean
         // Force Vue to recognize the change
         this.jobs = [...this.jobs]
@@ -495,35 +502,41 @@ window.app = Vue.createApp({
     },
 
     pauseJob(jobId, status) {
-      let confirm_msg = status === 'true' ? 'Are you sure you want to Start?' : 'Stopping, Are you sure?'
+      let confirm_msg =
+        status === 'true'
+          ? 'Are you sure you want to Start?'
+          : 'Stopping, Are you sure?'
       const self = this
 
-      LNbits.utils.confirmDialog(confirm_msg).onOk(function() {
+      LNbits.utils.confirmDialog(confirm_msg).onOk(function () {
         // Track that we're attempting to pause this job
         const jobIndex = self.jobs.findIndex(job => job.id === jobId)
-        
+
         // Optimistically update UI to show desired status
         if (jobIndex !== -1) {
           // Remember original status in case we need to revert
           const originalStatus = self.jobs[jobIndex].status
-          
+
           // Optimistically update to new status
           self.updateJobStatus(jobId, status)
         }
-        
+
         // Show notification that we're processing the request
         const action = status === 'true' ? 'Starting' : 'Stopping'
-        const notification = LNbits.utils.notification(`${action} job...`, 'info')
-        
+        const notification = LNbits.utils.notification(
+          `${action} job...`,
+          'info'
+        )
+
         LNbits.api
           .request(
             'POST',
             '/scheduler/api/v1/pause/' + jobId + '/' + status,
             self.g.user.wallets[0].adminkey
           )
-          .then(function(response) {
+          .then(function (response) {
             console.log('Job status updated successfully:', response)
-            
+
             // If we got a valid response with the updated job
             if (response && response.data) {
               console.log('Updated job from server:', response.data)
@@ -532,21 +545,24 @@ window.app = Vue.createApp({
                 self.updateJobStatus(jobId, response.data.status)
               }
             }
-            
+
             // Always refresh the jobs list to ensure UI is in sync with server
-            setTimeout(function() {
+            setTimeout(function () {
               self.getJobs()
-              LNbits.utils.notification(`Job ${status === 'true' ? 'started' : 'stopped'} successfully`, 'positive')
+              LNbits.utils.notification(
+                `Job ${status === 'true' ? 'started' : 'stopped'} successfully`,
+                'positive'
+              )
             }, 500)
           })
-          .catch(function(error) {
+          .catch(function (error) {
             console.error('API error:', error)
-            
+
             // Show error notification
             LNbits.utils.notifyApiError(error)
-            
+
             // Still refresh the jobs list to get accurate state from server
-            setTimeout(function() {
+            setTimeout(function () {
               self.getJobs()
             }, 500)
           })

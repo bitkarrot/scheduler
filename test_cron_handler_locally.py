@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import asyncio
 import logging
+
 from cron_handler import CronHandler
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 async def test_cron_handler():
     try:
@@ -19,7 +21,7 @@ async def test_cron_handler():
             command="echo 'test job'",
             frequency="*/5 * * * *",  # Every 5 minutes
             comment="test_job_1",
-            env=env
+            env=env,
         )
         logger.info(f"Create job result: {result}")
 
@@ -33,7 +35,7 @@ async def test_cron_handler():
         edit_result = await ch.edit_job(
             command="echo 'edited test job'",
             frequency="*/10 * * * *",  # Every 10 minutes
-            comment="test_job_1"
+            comment="test_job_1",
         )
         logger.info(f"Edit job result: {edit_result}")
 
@@ -66,7 +68,8 @@ async def test_cron_handler():
             logger.info(job)
 
     except Exception as e:
-        logger.error(f"Error in test: {str(e)}")
+        logger.error(f"Error in test: {e!s}")
+
 
 if __name__ == "__main__":
     asyncio.run(test_cron_handler())
