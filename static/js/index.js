@@ -472,12 +472,14 @@ window.app = Vue.createApp({
             self.g.user.wallets[0].adminkey
           )
           .then(response => {
-            // Only toggle state if API call was successful
             if (response.data) {
-              const toggle_state = self.toggleJobsStatus(jobId)
-              console.log('Job status updated:', toggle_state)
-              // Force a refresh of the jobs list
-              self.getJobs()
+              // Find and update the job in the list
+              const jobIndex = self.jobs.findIndex(job => job.id === jobId)
+              if (jobIndex !== -1) {
+                self.jobs[jobIndex].status = status === 'true'
+                // Force Vue to recognize the change
+                self.jobs = [...self.jobs]
+              }
             }
           })
           .catch(function (error) {
