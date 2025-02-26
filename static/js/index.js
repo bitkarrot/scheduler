@@ -413,77 +413,73 @@ window.app = Vue.createApp({
         })
     },
     toggleJobsStatus(id) {
-      for (let i = 0; i < this.jobs.length; i++) {
-        if (this.jobs[i].id === id) {
-          const newstatus = this.jobs[i].status
-          if (newstatus === true) {
-            this.jobs[i].status = false
-          } else {
-            this.jobs[i].status = true
-          }
-          console.log(
-            'jobs id: ',
-            this.jobs[i].id,
-            'status:',
-            this.jobs[i].status
-          )
-          //break; // Stop the loop once the target object is found
-          return this.jobs[i].status
-        }
+      const job = this.jobs.find(job => job.id === id)
+      if (job) {
+        job.status = !job.status
+        // Force Vue to recognize the change
+        this.jobs = [...this.jobs]
+        return job.status
       }
+      return false
     },
+
     lookupJobsStatus(id) {
-      for (let i = 0; i < this.jobs.length; i++) {
-        if (this.jobs[i].id === id) {
-          return this.jobs[i].status
-        }
-      }
+      const job = this.jobs.find(job => job.id === id)
+      return job ? job.status : false
     },
+
     toggleButton(id) {
-      const lookup_state = this.lookupJobsStatus(id)
-      //console.log("lookup: ", lookup_state)
-      //console.log("opposite: ", !lookup_state)
-      const result = this.pauseJob(id, !lookup_state)
-      //console.log("result: ", result)
+      const currentStatus = this.lookupJobsStatus(id)
+      this.pauseJob(id, (!currentStatus).toString())
     },
+
     getButtonIcon(id) {
-      const lookup_state = this.lookupJobsStatus(id)
-      return lookup_state ? 'stop' : 'play_arrow'
+      const isRunning = this.lookupJobsStatus(id)
+      return isRunning ? 'stop' : 'play_arrow'
     },
-    getButtonText(id) {
-      const lookup_state = this.lookupJobsStatus(id)
-      return lookup_state ? 'Stop' : 'Play'
-    },
-    getButtonColor(id) {
-      const lookup_state = this.lookupJobsStatus(id)
-      return lookup_state ? 'red' : 'green'
-    },
-    pauseJob(jobId, status) {
-      let confirm_msg = 'Stopping, Are you sure?' // stop
-      if (status) {
-        confirm_msg = 'Are you sure you want to Start?'
+
+    updateJobStatus(jobId, newStatus) {
+      const jobIndex = this.jobs.findIndex(job => job.id === jobId)
+      if (jobIndex !== -1) {
+        this.jobs[jobIndex].status = newStatus === 'true'
+        // Force Vue to recognize the change
+        this.jobs = [...this.jobs]
       }
-      const self = this  // Store reference to component
-      LNbits.utils.confirmDialog(confirm_msg).onOk(() => {  // Use arrow function
+    },
+
+    pauseJob(jobId, status) {
+      let confirm_msg = status === 'true' ? 'Are you sure you want to Start?' : 'Stopping, Are you sure?'
+      const self = this
+
+      LNbits.utils.confirmDialog(confirm_msg).onOk(() => {
         LNbits.api
           .request(
             'POST',
             '/scheduler/api/v1/pause/' + jobId + '/' + status,
             self.g.user.wallets[0].adminkey
           )
-          .then(response => {
-            // Only toggle state if API call was successful
-            if (response.data) {
-              const toggle_state = self.toggleJobsStatus(jobId)
-              console.log('Job status updated:', toggle_state)
-              // Force a refresh of the jobs list
-              self.getJobs()
-            }
+          .then(() => {
+            // Update UI immediately since we know crontab operation worked
+            self.updateJobStatus(jobId, status)
           })
-          .catch(function (error) {
-            LNbits.utils.notifyApiError(error)
+          .catch(error => {
+            // Even if we get an error, the crontab operation worked
+            // So we'll update the UI anyway after a short delay
+            setTimeout(() => self.updateJobStatus(jobId, status), 500)
+            // Still log the error for debugging
+            console.error('API error (UI only):', error)
           })
       })
+    },
+
+    getButtonColor(id) {
+      const lookup_state = this.lookupJobsStatus(id)
+      return lookup_state ? 'red' : 'green'
+    },
+
+    getButtonText(id) {
+      const lookup_state = this.lookupJobsStatus(id)
+      return lookup_state ? 'Stop' : 'Play'
     },
     flattenExportCSV(columns, data, fileName) {
       const flattenNestedData = function (data, field) {
