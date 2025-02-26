@@ -49,7 +49,7 @@ window.app = Vue.createApp({
             name: 'status',
             align: 'left',
             label: 'Is Running?',
-            field: 'status'
+            field: row => row.status ? 'Running' : 'Paused'
           },
           {
             name: 'schedule',
@@ -122,19 +122,20 @@ window.app = Vue.createApp({
   methods: {
     ///////////////Jobs////////////////////////////
     getJobs() {
+      const self = this
       LNbits.api
-        .request('GET', '/scheduler/api/v1/jobs', user.wallets[0].adminkey)
-        .then(response => {
-          if (response.data && Array.isArray(response.data.data)) {
-            this.jobs = response.data.data.map(mapcrontabs)
+        .request('GET', '/scheduler/api/v1/jobs', self.g.user.wallets[0].adminkey)
+        .then(function(response) {
+          if (response.data && response.data.data && Array.isArray(response.data.data)) {
+            self.jobs = response.data.data.map(mapcrontabs)
           } else {
             console.error('Unexpected API response structure:', response)
-            this.jobs = []
+            self.jobs = []
           }
         })
-        .catch(error => {
+        .catch(function(error) {
           LNbits.utils.notifyApiError(error)
-          this.jobs = []
+          self.jobs = []
         })
     },
     openLogDialog(linkId) {
@@ -462,17 +463,22 @@ window.app = Vue.createApp({
       if (status) {
         confirm_msg = 'Are you sure you want to Start?'
       }
-      LNbits.utils.confirmDialog(confirm_msg).onOk(function () {
+      const self = this  // Store reference to component
+      LNbits.utils.confirmDialog(confirm_msg).onOk(() => {  // Use arrow function
         LNbits.api
           .request(
             'POST',
             '/scheduler/api/v1/pause/' + jobId + '/' + status,
-            this.g.user.wallets[0].adminkey
+            self.g.user.wallets[0].adminkey
           )
           .then(response => {
-            console.log('Pause Response status', response.status)
-            const toggle_state = this.toggleJobsStatus(jobId)
-            console.log('toggle state', toggle_state)
+            // Only toggle state if API call was successful
+            if (response.data) {
+              const toggle_state = self.toggleJobsStatus(jobId)
+              console.log('Job status updated:', toggle_state)
+              // Force a refresh of the jobs list
+              self.getJobs()
+            }
           })
           .catch(function (error) {
             LNbits.utils.notifyApiError(error)

@@ -132,11 +132,28 @@ async def get_scheduler_job(job_id: str) -> Optional[Job]:
     headers = [HeaderItems(**h) for h in json.loads(row.headers)] if row.headers else []
     extra = json.loads(row.extra) if row.extra else {}
 
+    # Verify actual crontab status
+    ch = CronHandler()
+    actual_status = await ch.get_job_status(job_id)
+    
+    # If database and crontab status don't match, update database
+    if actual_status != row.status:
+        logger.warning(f"Job {job_id} status mismatch: db={row.status}, crontab={actual_status}. Fixing...")
+        await db.execute(
+            """
+            UPDATE scheduler.jobs SET status = :status WHERE id = :id
+            """,
+            {
+                "id": job_id,
+                "status": actual_status
+            }
+        )
+
     return Job(
         id=row.id,
         name=row.name,
         admin=row.admin,
-        status=row.status,
+        status=actual_status,  # Use actual status from crontab
         schedule=row.schedule,
         selectedverb=row.selectedverb,
         url=row.url,
@@ -275,22 +292,26 @@ async def pause_scheduler(job_id: str) -> Job:
 
         # Update crontab first
         ch = CronHandler()
-        await ch.enable_job_by_comment(comment=job_id, active=new_status)
+        crontab_updated = await ch.enable_job_by_comment(comment=job_id, active=new_status)
+        
+        # Verify crontab update was successful
+        if crontab_updated != new_status:
+            raise ValueError(f"Failed to {'enable' if new_status else 'disable'} job in crontab")
 
-        # Then update database
+        # Then update database with the actual status
         await db.execute(
             """
             UPDATE scheduler.jobs SET status = :status WHERE id = :id
             """,
             {
                 "id": job_id,
-                "status": new_status
+                "status": crontab_updated  # Use actual status from crontab
             }
         )
 
         # Get and return updated job
         updated_job = await get_scheduler_job(job_id)
-        logger.info('Scheduler job %s status changed to: %s', job_id, new_status)
+        logger.info('Scheduler job %s status changed to: %s', job_id, crontab_updated)
         return updated_job
 
     except Exception as e:
