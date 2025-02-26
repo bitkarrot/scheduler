@@ -126,13 +126,24 @@ class CronHandler:
             return f"Error editing job: {str(e)}"
 
     async def enable_job_by_comment(self, comment: str, active: bool):
+        """Enable or disable a job by its comment. Returns True if successful, False if job not found."""
         logger.info(f"Enabling/disabling cron job by comment: comment={comment}, active={active}")
-        jobs = self._cron.find_comment(comment)
-        for job in jobs:
-            job.enable(active)
-            self._cron.write()
-            return job.is_enabled()
-        return False
+        try:
+            jobs = self._cron.find_comment(comment)
+            if not jobs:
+                logger.error(f"No job found with comment: {comment}")
+                return False
+                
+            for job in jobs:
+                job.enable(active)
+                self._cron.write()
+                enabled = job.is_enabled()
+                logger.info(f"Job {comment} enabled status: {enabled}")
+                return enabled
+            return False
+        except Exception as e:
+            logger.error(f"Error enabling/disabling job {comment}: {str(e)}")
+            return False
 
     async def get_job_status(self, job_id: str) -> bool:
         logger.info(f"Getting cron job status by ID: job_id={job_id}")

@@ -294,9 +294,22 @@ async def pause_scheduler(job_id: str) -> Job:
         ch = CronHandler()
         crontab_updated = await ch.enable_job_by_comment(comment=job_id, active=new_status)
         
-        # Verify crontab update was successful
-        if crontab_updated != new_status:
-            raise ValueError(f"Failed to {'enable' if new_status else 'disable'} job in crontab")
+        # If crontab update failed, try to recreate the job
+        if not crontab_updated:
+            logger.warning(f"Job {job_id} not found in crontab, attempting to recreate...")
+            # Get job details and recreate in crontab
+            job_details = await get_scheduler_job(job_id)
+            if job_details:
+                await ch.add_job(
+                    command=job_details.url,
+                    frequency=job_details.schedule,
+                    comment=job_id,
+                    enabled=new_status
+                )
+                crontab_updated = await ch.get_job_status(job_id)
+            
+            if not crontab_updated:
+                raise ValueError(f"Failed to {'enable' if new_status else 'disable'} job in crontab")
 
         # Then update database with the actual status
         await db.execute(
