@@ -36,13 +36,13 @@ async def save_job_execution(
     try:
         # print(f' inside save_job_execution now ')
         if response.status_code == 200:
-            logger.info(f"job_id: {job_id}, status_code: {response.status_code}")
-            # logger.info(f'job_id: {job_id}, response text: {response.text}')
+            logger.info(f"job_id: %s, status_code: %s", job_id, response.status_code)
+            # logger.info(f'job_id: %s, response text: %s', job_id, response.text)
 
             url = f"{LNBITS_BASE_URL}/scheduler/api/v1/logentry"
 
-            logger.info(f"pushdb: response.status type: {type(response.status_code)}")
-            logger.info(f"pushdb: response.text type: {type(response.text)}")
+            logger.info(f"pushdb: response.status type: %s", type(response.status_code))
+            logger.info(f"pushdb: response.text type: %s", type(response.text))
             # we have some difficulty saving response.text to db, unicode?
             data = {
                 "job_id": job_id,
@@ -54,22 +54,23 @@ async def save_job_execution(
 
             logger.info(
                 "pushdb: now pushing execution data to "
-                f"the database for job_id: {job_id}"
+                "the database for job_id: %s",
+                job_id,
             )
-            logger.info(f"pushdb: calling api : {url} with params: {data}")
+            logger.info(f"pushdb: calling api : %s with params: %s", url, data)
 
             pushdb_response = httpx.post(
                 url=url, headers={"X-Api-Key": adminkey}, json=data
             )
             logger.info(
-                f"SaveJobExecution: pushdb status: {pushdb_response.status_code}"
+                f"SaveJobExecution: pushdb status: %s", pushdb_response.status_code
             )
-            # logger.info(f'SaveJobExecution: pushdb text: {pushdb_response.text}')
+            # logger.info(f'SaveJobExecution: pushdb text: %s', pushdb_response.text)
 
             if pushdb_response.status_code == 200:
-                logger.info(f"success: saved results to db for job_id: {job_id}")
+                logger.info(f"success: saved results to db for job_id: %s", job_id)
     except Exception as e:
-        logger.error(f"error, saving to database for job_id: {job_id}")
+        logger.error(f"error, saving to database for job_id: %s", job_id)
         logger.error(e)
 
 
@@ -77,11 +78,11 @@ async def process_json_body(request_body):
     try:
         json_data = json.loads(request_body)
         # Code to process the JSON data
-        logger.info("Successfully parsed JSON:", json_data)
+        logger.info("Successfully parsed JSON: %s", json_data)
         return json_data
     except json.JSONDecodeError as e:
         # Code to handle the case where the body is not JSON
-        logger.info("Error decoding JSON:", str(e))
+        logger.info("Error decoding JSON: %s", str(e))
         logger.info("The provided body is not in JSON format")
         return {}
 
@@ -112,15 +113,15 @@ async def call_api(method_name, url, headers, body) -> Optional[httpx.Response]:
 
             assert response, "response is None"
             logger.info(
-                f"[run_cron_job]: call_api response status: {response.status_code}"
+                f"[run_cron_job]: call_api response status: %s", response.status_code
             )
-            logger.info(f"[run_cron_job]: call_api response text: {response.text}")
+            logger.info(f"[run_cron_job]: call_api response text: %s", response.text)
             return response
         else:
-            logger.info(f"Invalid method name: {method_name}")
+            logger.info(f"Invalid method name: %s", method_name)
 
     except json.JSONDecodeError as exc:
-        logger.info(f"body json decode error: {exc!s}")
+        logger.info(f"body json decode error: %s", exc)
         raise exc
     return None
 
@@ -135,15 +136,16 @@ async def get_job_by_id(job_id: str, adminkey: str):
 
         response = httpx.get(url=url, headers={"X-Api-Key": adminkey})
         logger.info(
-            f"[get_job_by_id]: response items in get_job_by_id: {response.text}\n"
+            f"[get_job_by_id]: response items in get_job_by_id: %s\n", response.text
         )
         items = json.loads(response.text)
         return items
     except Exception as e:
-        logger.error(f"[get_job_by_id]: exception thrown: {e}")
+        logger.error(f"[get_job_by_id]: exception thrown: %s", e)
         logger.error(
             "[get_job_by_id]: Error trying to fetch data from db, "
-            f"check is LNBITS server running?: {e}"
+            "check is LNBITS server running?: %s",
+            e,
         )
 
 
@@ -164,7 +166,7 @@ async def clear_log_file(logname: str) -> bool:
 async def check_logfile(logfile: str) -> None:
     # Check if the file exists
     if os.path.exists(logfile):
-        logger.info(f"[check_logfile]: The file {logfile} exists.")
+        logger.info(f"[check_logfile]: The file %s exists.", logfile)
     else:
         # Create the file
         with open(logfile, "w") as file:
@@ -208,14 +210,14 @@ async def main() -> None:
         response = await call_api(method_name, url, json_headers, body)
         assert response, "response is None"
         logger.info(
-            f"[run_cron_job]: response status from api call: {response.status_code}"
+            f"[run_cron_job]: response status from api call: %s", response.status_code
         )
-        logger.info(f"response text from api call: {response.text}")
+        logger.info(f"response text from api call: %s", response.text)
 
         await save_job_execution(response=response, job_id=job_id, adminkey=adminkey)
 
     except Exception as e:
-        logger.error(f"exception thrown in main() run_cron_job: {e}")
+        logger.error(f"exception thrown in main() run_cron_job: %s", e)
 
 
 asyncio.run(main())
