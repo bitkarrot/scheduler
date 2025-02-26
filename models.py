@@ -32,7 +32,8 @@ class CreateJobData(BaseModel):
     def validate_schedule(cls, v):
         if not CronSlices.is_valid(v):
             raise ValueError(
-                f'Invalid cron schedule format: {v}. Example format: "*/5 * * * *" for every 5 minutes'
+                f"Invalid cron schedule format: {v}."
+                + 'Example format: "*/5 * * * *" for every 5 minutes'
             )
         return v
 

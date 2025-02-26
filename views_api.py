@@ -265,9 +265,11 @@ async def api_scheduler_pause(job_id: str, status: str) -> Job:
             if not result:
                 action = "starting" if active else "stopping"
                 logger.warning(
-                    f"pause_scheduler returned None or False - Warning: {action} job failed but DB may be updated"
+                    "pause_scheduler returned None or False -"
+                    + f"Warning: {action} job failed but DB maybe updated"
                 )
-                # We'll still try to return the job to the client, even if the update failed
+                # We'll still try to return the job to
+                # the client, even if the update failed
             else:
                 logger.info(f"pause_scheduler succeeded, job status: {result}")
         except ValueError as ve:
@@ -281,7 +283,7 @@ async def api_scheduler_pause(job_id: str, status: str) -> Job:
                 # Continue to try to get the job, even if the update failed
             else:
                 logger.error(
-                    f"Unexpected exception in pause_scheduler: {type(e).__name__}: {e!s}"
+                    f"Unexpected exception @ pause_scheduler: {type(e).__name__}: {e!s}"
                 )
                 import traceback
 
