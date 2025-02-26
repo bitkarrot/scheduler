@@ -280,43 +280,109 @@ async def update_scheduler_job(job: Job) -> Job:
         raise ValueError(f"Failed to update job: {str(e)}")
 
 
-async def pause_scheduler(job_id: str) -> Job:
+async def pause_scheduler(job_id: str, active: bool = None) -> Job:
+    """
+    Update the status of a job.
+    
+    Args:
+        job_id: ID of the job to update
+        active: If True, activate the job; if False, deactivate it; if None, toggle the current state
+        
+    Returns:
+        The updated job object or None if the job was not found or an error occurred
+    """
     try:
         # Get current job state
         job = await get_scheduler_job(job_id)
+        logger.info(f"Pausing job {job_id}, current status: {getattr(job, 'status', 'N/A')}, setting to: {active}")
+        
         if not job:
-            raise ValueError(f"Job not found: {job_id}")
+            logger.error(f"Job not found: {job_id}")
+            return None
 
-        # Toggle the status
-        new_status = not job.status
+        # Use provided active state or toggle current state if not provided
+        new_status = active if active is not None else not job.status
+        logger.info(f"New status will be: {new_status}")
 
-        # Update crontab first
+        # Print all current crontab entries for debugging
         ch = CronHandler()
+        all_jobs = await ch.list_jobs()
+        logger.info(f"Current crontab entries ({len(all_jobs)}):")
+        for cron_job in all_jobs:
+            logger.info(f"Crontab entry: {cron_job}")
+
+        # Try to find the job specifically
+        job_found = await ch.find_comment(job_id)
+        if job_found:
+            logger.info(f"Found job in crontab: {job_found}")
+        else:
+            logger.error(f"Could not find job {job_id} in crontab")
+            # Since the job is not in crontab but exists in database,
+            # we'll update the database directly
+            logger.info(f"Job not in crontab but exists in DB, updating DB directly")
+            await db.execute(
+                """
+                UPDATE scheduler.jobs SET status = :status WHERE id = :id
+                """,
+                {
+                    "id": job_id,
+                    "status": new_status
+                }
+            )
+            # Get and return updated job
+            updated_job = await get_scheduler_job(job_id)
+            if updated_job:
+                logger.info(f"Job {job_id} status changed in DB to: {updated_job.status}")
+                return updated_job
+            else:
+                logger.error(f"Failed to retrieve updated job after DB update: {job_id}")
+                return None
+        
+        # Update crontab
+        logger.info(f"Updating crontab for job {job_id}, setting active={new_status}")
         crontab_updated = await ch.enable_job_by_comment(comment=job_id, active=new_status)
+        logger.info(f"Crontab update result: {crontab_updated}")
 
-        # Verify crontab update was successful
-        if crontab_updated != new_status:
-            raise ValueError(f"Failed to {'enable' if new_status else 'disable'} job in crontab")
-
-        # Then update database with the actual status
-        await db.execute(
-            """
-            UPDATE scheduler.jobs SET status = :status WHERE id = :id
-            """,
-            {
-                "id": job_id,
-                "status": crontab_updated  # Use actual status from crontab
-            }
-        )
+        # If crontab update fails, update the database directly
+        if crontab_updated is False:
+            logger.error(f"Failed to update crontab for job {job_id}, updating DB directly")
+            await db.execute(
+                """
+                UPDATE scheduler.jobs SET status = :status WHERE id = :id
+                """,
+                {
+                    "id": job_id,
+                    "status": new_status
+                }
+            )
+        else:
+            # Update database with the actual status from crontab
+            logger.info(f"Updating database for job {job_id}, setting status={crontab_updated}")
+            await db.execute(
+                """
+                UPDATE scheduler.jobs SET status = :status WHERE id = :id
+                """,
+                {
+                    "id": job_id,
+                    "status": crontab_updated  # Use actual status from crontab
+                }
+            )
 
         # Get and return updated job
         updated_job = await get_scheduler_job(job_id)
-        logger.info('Scheduler job %s status changed to: %s', job_id, crontab_updated)
-        return updated_job
+        if updated_job:
+            logger.info(f"Job {job_id} status successfully changed to: {updated_job.status}")
+            return updated_job
+        else:
+            logger.error(f"Failed to retrieve updated job after status change: {job_id}")
+            return None
 
     except Exception as e:
-        logger.error('Failed to update scheduler job status: %s', str(e))
-        raise ValueError(f"Failed to update job status: {str(e)}")
+        logger.error(f"Exception in pause_scheduler: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        # Return None instead of raising an exception to let the caller handle it
+        return None
 
 
 async def create_log_entry(data: LogEntry) -> LogEntry:

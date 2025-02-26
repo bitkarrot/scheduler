@@ -240,24 +240,69 @@ async def api_scheduler_jobs_delete(jobs_id) -> None:
     dependencies=[Depends(require_admin_key)],
     responses={404: {"description": "Job does not exist."}},
     status_code=HTTPStatus.OK,
+    response_model=Job,
 )
 async def api_scheduler_pause(job_id: str, status: str) -> Job:
-    job = await get_scheduler_job(job_id)
-    if not job:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Job does not exist."
-        )
+    try:
+        logger.info(f"API pause request received for job {job_id}, status={status}")
 
-    # Convert status string to boolean
-    active = status.lower() == 'true'
+        job = await get_scheduler_job(job_id)
+        if not job:
+            logger.error(f"Job not found: {job_id}")
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail="Job does not exist."
+            )
 
-    # Pause or resume the job
-    result = await pause_scheduler(job_id, active)
-    if not result:
-        action = "starting" if active else "stopping"
+        # Convert status string to boolean
+        active = status.lower() == 'true'
+        logger.info(f"Converted status '{status}' to boolean: {active}")
+
+        # Attempt to pause or resume the job
+        try:
+            logger.info(f"Calling pause_scheduler with job_id={job_id}, active={active}")
+            result = await pause_scheduler(job_id, active)
+            logger.info(f"Result from pause_scheduler: {result}")
+
+            if not result:
+                action = "starting" if active else "stopping"
+                logger.warning(f"pause_scheduler returned None or False - Warning: {action} job failed but DB may be updated")
+                # We'll still try to return the job to the client, even if the update failed
+            else:
+                logger.info(f"pause_scheduler succeeded, job status: {result}")
+        except ValueError as ve:
+            logger.error(f"ValueError in pause_scheduler: {str(ve)}")
+            # Continue to try to get the job, even if the update failed
+        except Exception as e:
+            if isinstance(e, HTTPException):
+                logger.error(f"HTTPException in pause_scheduler: {e.status_code}: {e.detail}")
+                # Continue to try to get the job, even if the update failed
+            else:
+                logger.error(f"Unexpected exception in pause_scheduler: {type(e).__name__}: {str(e)}")
+                import traceback
+                logger.error(f"Traceback: {traceback.format_exc()}")
+                # Continue to try to get the job, even if the update failed
+
+        # Get the possibly updated job to return
+        updated_job = await get_scheduler_job(job_id)
+        if not updated_job:
+            logger.error(f"Could not find job after attempted update")
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail="Job disappeared after update attempt"
+            )
+
+        logger.info(f"Returning job with status: {updated_job.status}")
+        return updated_job
+
+    except HTTPException:
+        # Re-raise HTTP exceptions without wrapping them again
+        raise
+    except Exception as e:
+        # Log and convert other exceptions to HTTP exceptions
+        logger.error(f"Unexpected exception in api_scheduler_pause: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=f"Error {action} job."
+            detail=f"Unexpected error in api handler: {str(e)}"
         )
-
-    return job

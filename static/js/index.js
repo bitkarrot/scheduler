@@ -452,22 +452,42 @@ window.app = Vue.createApp({
       const self = this
 
       LNbits.utils.confirmDialog(confirm_msg).onOk(() => {
+        // Track that we're attempting to pause this job
+        const jobIndex = this.jobs.findIndex(job => job.id === jobId)
+        
+        // Optimistically update UI to show desired status
+        if (jobIndex !== -1) {
+          // Remember original status in case we need to revert
+          const originalStatus = this.jobs[jobIndex].status
+          
+          // Optimistically update to new status
+          this.updateJobStatus(jobId, status)
+        }
+        
         LNbits.api
           .request(
             'POST',
             '/scheduler/api/v1/pause/' + jobId + '/' + status,
             self.g.user.wallets[0].adminkey
           )
-          .then(() => {
-            // Update UI immediately since we know crontab operation worked
-            self.updateJobStatus(jobId, status)
+          .then(function(response) {
+            console.log('Job status updated successfully')
+            
+            // Always refresh the jobs list to ensure UI is in sync with server
+            setTimeout(function() {
+              self.getJobs()
+            }, 500)
           })
-          .catch(error => {
-            // Even if we get an error, the crontab operation worked
-            // So we'll update the UI anyway after a short delay
-            setTimeout(() => self.updateJobStatus(jobId, status), 500)
-            // Still log the error for debugging
-            console.error('API error (UI only):', error)
+          .catch(function(error) {
+            console.error('API error:', error)
+            
+            // Show error notification
+            LNbits.utils.notifyApiError(error)
+            
+            // Still refresh the jobs list to get accurate state from server
+            setTimeout(function() {
+              self.getJobs()
+            }, 500)
           })
       })
     },

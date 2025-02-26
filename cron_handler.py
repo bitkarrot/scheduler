@@ -126,13 +126,64 @@ class CronHandler:
             return f"Error editing job: {str(e)}"
 
     async def enable_job_by_comment(self, comment: str, active: bool):
-        logger.info(f"Enabling/disabling cron job by comment: comment={comment}, active={active}")
-        jobs = self._cron.find_comment(comment)
-        for job in jobs:
+        """
+        Enable or disable a job by its comment.
+        
+        Args:
+            comment: The comment of the job to enable/disable
+            active: True to enable, False to disable
+            
+        Returns:
+            True if the job was found and enabled/disabled successfully, False otherwise
+        """
+        try:
+            logger.info(f"Enabling/disabling cron job by comment: comment={comment}, active={active}")
+            
+            # Find the job by comment
+            jobs = list(self._cron.find_comment(comment))
+            job_count = len(jobs)
+            logger.info(f"Found {job_count} jobs with comment {comment}")
+            
+            if job_count == 0:
+                logger.error(f"No jobs found with comment: {comment}")
+                return False
+                
+            # Get the first job (should only be one since comments are unique)
+            job = jobs[0]
+            current_status = job.is_enabled()
+            logger.info(f"Job found, current enabled status: {current_status}, changing to: {active}")
+            
+            # Only update if the status is different
+            if current_status == active:
+                logger.info(f"Job already in the requested state, no change needed")
+                return active
+                
+            # Update job status
             job.enable(active)
-            self._cron.write()
-            return job.is_enabled()
-        return False
+            
+            # Write changes to crontab
+            try:
+                self._cron.write()
+                logger.info(f"Crontab updated successfully")
+            except Exception as write_error:
+                logger.error(f"Failed to write to crontab: {str(write_error)}")
+                return False
+            
+            # Verify the status was updated
+            new_status = job.is_enabled()
+            logger.info(f"Job status after update: {new_status}")
+            
+            if new_status != active:
+                logger.error(f"Job status was not updated correctly. Expected: {active}, Got: {new_status}")
+                return False
+                
+            return new_status
+            
+        except Exception as e:
+            logger.error(f"Exception in enable_job_by_comment: {type(e).__name__}: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return False
 
     async def get_job_status(self, job_id: str) -> bool:
         logger.info(f"Getting cron job status by ID: job_id={job_id}")
