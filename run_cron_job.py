@@ -45,6 +45,7 @@ async def save_job_execution(
             logger.info(f"pushdb: response.text type: %s", type(response.text))
             # we have some difficulty saving response.text to db, unicode?
             data = {
+                "id": os.urandom(16).hex(),  # Generate a unique ID for the log entry
                 "job_id": job_id,
                 "status": str(response.status_code),
                 # 'response': 'sample text', # str(response.text),
