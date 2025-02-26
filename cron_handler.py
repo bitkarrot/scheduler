@@ -89,9 +89,9 @@ class CronHandler:
                 logger.info("Environment variables:")
                 for key, value in self._cron.env.items():
                     logger.info(f"{key}={value}")
-                
+
                 self._cron.write()
-                
+
                 # Log the crontab content after writing
                 logger.info("Crontab content after write:")
                 logger.info(self._cron.render())
@@ -110,7 +110,7 @@ class CronHandler:
                 job.clear()  # Clear existing schedule
                 job.setall(frequency)  # Set new schedule
                 job.set_command(command)  # Update command
-                
+
                 # Update environment variables
                 if env:
                     for key, value in env.items():
@@ -126,24 +126,13 @@ class CronHandler:
             return f"Error editing job: {str(e)}"
 
     async def enable_job_by_comment(self, comment: str, active: bool):
-        """Enable or disable a job by its comment. Returns True if successful, False if job not found."""
         logger.info(f"Enabling/disabling cron job by comment: comment={comment}, active={active}")
-        try:
-            jobs = self._cron.find_comment(comment)
-            if not jobs:
-                logger.error(f"No job found with comment: {comment}")
-                return False
-                
-            for job in jobs:
-                job.enable(active)
-                self._cron.write()
-                enabled = job.is_enabled()
-                logger.info(f"Job {comment} enabled status: {enabled}")
-                return enabled
-            return False
-        except Exception as e:
-            logger.error(f"Error enabling/disabling job {comment}: {str(e)}")
-            return False
+        jobs = self._cron.find_comment(comment)
+        for job in jobs:
+            job.enable(active)
+            self._cron.write()
+            return job.is_enabled()
+        return False
 
     async def get_job_status(self, job_id: str) -> bool:
         logger.info(f"Getting cron job status by ID: job_id={job_id}")
