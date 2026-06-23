@@ -137,3 +137,9 @@ If you encounter issues:
 - Job status can be toggled (pause/resume)
 - No crontab entries needed
 - Works in Docker containers without modifications
+
+## Dependency Note
+
+If `python-crontab` still appears in `poetry.lock`, that does **not** mean this
+extension is still using OS crontab. It is currently a transitive dependency of
+`lnbits` itself, not a direct dependency of the scheduler extension.

@@ -113,6 +113,12 @@ If you see jobs in database but not running:
 
 Note: APScheduler 4.x has breaking API changes - stick with 3.x for now.
 
+### Why `python-crontab` may still appear in `poetry.lock`
+
+This extension no longer imports or uses `python-crontab`.
+If it appears in `poetry.lock`, it is currently pulled **transitively** by the
+upstream `lnbits` package dependency tree (verified via `poetry show --tree lnbits`).
+
 ## Architecture
 
 ```
