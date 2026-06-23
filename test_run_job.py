@@ -24,7 +24,7 @@ logger.addHandler(handler)
 
 async def test_job(job_id: str) -> str:
     """
-    A clone of what is actually run when run_cron_job.py is executed
+    A clone of job execution behavior used by the scheduler
     This is used to execute the API call and log the result.
     """
     try:

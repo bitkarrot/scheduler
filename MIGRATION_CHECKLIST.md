@@ -4,7 +4,6 @@
 
 - [ ] Backup your LNBits database
 - [ ] Note down all active scheduler jobs (via UI or API)
-- [ ] Check current crontab entries: `crontab -l | grep scheduler`
 
 ## Installation Steps
 
@@ -46,17 +45,8 @@ Check logs for these messages:
 
 ### 5. Clean Up Old Crontab Entries (Optional)
 
-```bash
-# View current crontab
-crontab -l
-
-# Edit to remove scheduler entries
-crontab -e
-# Delete lines related to scheduler/run_cron_job.py
-
-# Or remove all for current user
-# crontab -r  # WARNING: removes ALL cron jobs
-```
+If you are upgrading from a pre-APScheduler release and manually created crontab
+entries, you can remove those legacy entries.
 
 ## Post-Migration Verification
 
@@ -114,8 +104,7 @@ poetry install
 # 3. Restart LNBits
 sudo systemctl restart lnbits
 
-# 4. Manually recreate crontab entries
-# (You'll need to recreate jobs via UI/API)
+# 4. Recreate jobs via UI/API if needed
 ```
 
 ## Key Differences

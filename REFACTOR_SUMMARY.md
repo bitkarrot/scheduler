@@ -11,24 +11,24 @@ This refactoring migrates the LNBits Scheduler extension from OS crontab to APSc
 
 ## Files Added
 
-- `scheduler_handler.py` - APScheduler management (replaces `cron_handler.py`)
-- `job_runner.py` - Async job execution logic (replaces subprocess calls to `run_cron_job.py`)
+- `scheduler_handler.py` - APScheduler management
+- `job_runner.py` - Async job execution logic
 - `REFACTOR_SUMMARY.md` - This file
 
 ## Files Modified
 
 - `__init__.py` - Added startup/shutdown hooks for APScheduler lifecycle
-- `crud.py` - Replaced CronHandler calls with scheduler_handler functions
-- `models.py` - Removed python-crontab dependency, updated validators
-- `helpers.py` - Simplified, removed crontab-specific functions
-- `pyproject.toml` - Replaced python-crontab with apscheduler + httpx
+- `crud.py` - Replaced cron file operations with scheduler_handler functions
+- `models.py` - Updated validation for APScheduler cron expressions
+- `helpers.py` - Simplified helper surface
+- `pyproject.toml` - Uses apscheduler + httpx
 - `requirements.txt` - Updated dependencies
-- `run_cron_job.py` - Marked as deprecated (kept for reference)
 
-## Files That Can Be Deleted (Optional)
+## Files Removed
 
-- `cron_handler.py` - Fully replaced by scheduler_handler.py
-- `test_cron_handler_locally.py` - Tests the old cron system
+- `cron_handler.py`
+- `run_cron_job.py`
+- `test_cron_handler_locally.py`
 
 ## Key Behavior Changes
 
@@ -59,7 +59,7 @@ This refactoring migrates the LNBits Scheduler extension from OS crontab to APSc
 1. Stop LNBits
 2. Update dependencies: `poetry install` or `pip install -r requirements.txt`
 3. Start LNBits - existing jobs will be automatically migrated on startup
-4. Old crontab entries can be manually cleaned: `crontab -e` and remove scheduler entries
+4. Old crontab entries from previous versions can be manually cleaned if present.
 
 ### For New Installations
 

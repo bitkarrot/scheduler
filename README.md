@@ -1,6 +1,6 @@
 # Scheduler extension
 
-lnbits scheduler extension [previously: crontabs]
+lnbits scheduler extension
 
 IMPORTANT:
 
