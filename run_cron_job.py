@@ -1,3 +1,24 @@
+#!/usr/bin/env python3
+"""
+Legacy compatibility shim for run_cron_job.py
+
+This file is kept for backward compatibility but is no longer used.
+The scheduler now uses APScheduler's in-process job execution.
+
+See job_runner.py for the new implementation.
+"""
+
+import sys
+
+print(
+    "WARNING: run_cron_job.py is deprecated. "
+    "The scheduler now uses APScheduler for job execution.",
+    file=sys.stderr,
+)
+print("Please update your configuration to use the new scheduler.", file=sys.stderr)
+
+# Original code below for reference:
+# " "" 
 import asyncio
 import datetime as dt
 import json
@@ -220,4 +241,8 @@ async def main() -> None:
         logger.error("exception thrown in main() run_cron_job: %s", e)
 
 
-asyncio.run(main())
+# asyncio.run(main())
+# """
+
+# Uncomment the above lines if you need to test the old subprocess-based execution
+# However, this is no longer the recommended approach

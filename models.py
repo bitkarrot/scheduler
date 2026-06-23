@@ -1,10 +1,9 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from crontab import CronSlices
 from fastapi import Query
 from lnbits.db import FilterModel
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class HeaderItems(BaseModel):
@@ -28,12 +27,15 @@ class CreateJobData(BaseModel):
     )
     extra: Optional[dict[str, str]] = Query(default=None)
 
-    @validator("schedule")
+    @field_validator("schedule")
+    @classmethod
     def validate_schedule(cls, v):
-        if not CronSlices.is_valid(v):
+        # Basic validation - more detailed validation done by APScheduler
+        parts = v.split()
+        if len(parts) != 5:
             raise ValueError(
-                f"Invalid cron schedule format: {v}."
-                + 'Example format: "*/5 * * * *" for every 5 minutes'
+                f"Invalid cron schedule format: {v}. "
+                + 'Must have 5 fields. Example: "*/5 * * * *" for every 5 minutes'
             )
         return v
 

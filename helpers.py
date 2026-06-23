@@ -1,81 +1,18 @@
 import json
 import os
-import sys
 
-from lnbits.settings import settings
-
-from .cron_handler import CronHandler
-from .models import Job
-
-# TODO: use `settings.lnbits_extensions_path`
-
-# python path
-py_path = sys.executable
-dir_path = os.path.dirname(os.path.realpath(__name__))
-command = py_path + f" {dir_path}/lnbits/extensions/scheduler/run_cron_job.py"
+from .scheduler_handler import enable_job
 
 # .log path
-log_path = f"{dir_path}/lnbits/extensions/scheduler/scheduler.log"
+dir_path = os.path.dirname(os.path.realpath(__file__))
+log_path = os.path.join(dir_path, "scheduler.log")
 
 
 async def convert_headers(headers: list) -> str:
-    # print(f'header list length: "{len(headers)}')
+    """Convert header items to JSON string."""
     allitems_as_dicts = [item.to_dict() for item in headers]
     headers_string = json.dumps(allitems_as_dicts)
-    # print(f'headers as json string: {headers_string}')
     return headers_string
-
-
-async def create_scheduler_jobs(link_id: str, admin_id: str, schedule: str):
-    base_url = f"http://{settings.host}:{settings.port}"
-    env_vars = {"ID": link_id, "adminkey": admin_id, "BASE_URL": base_url}
-
-    ch = CronHandler()
-    is_valid = await ch.validate_cron_string(schedule)
-    if not is_valid:
-        assert is_valid, "Invalid cron schedule, please check the format."
-        return f"Error in cron string syntax {schedule}"
-    response = await create_cron(link_id, command, schedule, env_vars)
-
-    if response.startswith("Error"):
-        assert response.startswith("Error"), "Error creating Cron job"
-        return f"Error creating cron job: {response}"
-
-
-# crontab-specific methods, direct to system cron
-async def create_cron(comment: str, command: str, schedule: str, env_vars: dict):
-    try:
-        ch = CronHandler()
-        response = await ch.new_job(command, schedule, comment=comment, env=env_vars)
-        # make sure job is not running on creation by default
-        status = await ch.enable_job_by_comment(comment=comment, active=False)
-        print(f"create_cron: {response}, {status}")
-        if status is False:
-            return response
-        else:  # error setting job to 'Not Running' and creating job
-            raise ValueError(
-                f"Error setting job to 'Not Running' and creating job: {response}"
-            )
-    except Exception as exc:
-        return f"Error creating cron job: {exc!s}"
-
-
-async def update_cron(job: Job):
-    # check to make sure DB was updated
-    # write update to cron tab
-    ch = CronHandler()
-    await ch.enable_job_by_comment(comment=job.id, active=job.status)
-    await ch.edit_job(command, job.schedule, comment=job.id)
-
-
-async def delete_cron(link_id: str):
-    # the comment in actual crontab is the job ID in LNBits
-    try:
-        ch = CronHandler()
-        response = await ch.remove_by_comment(link_id)
-        return response
-    except Exception as e:
-        return f"Error deleting job: {e}"
 
 
 async def pause_scheduler(job_id: str, active: bool = False) -> bool:
@@ -88,8 +25,7 @@ async def pause_scheduler(job_id: str, active: bool = False) -> bool:
         bool: True if the operation was successful, False otherwise
     """
     try:
-        ch = CronHandler()
-        return await ch.enable_job_by_comment(comment=job_id, active=active)
+        return await enable_job(job_id, active)
     except Exception as e:
         print(f"Error in pause_scheduler for job {job_id}: {e!s}")
         return False

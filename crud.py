@@ -1,41 +1,19 @@
 import json
-import os
-import sys
 from typing import Optional
 from uuid import uuid4
 
 from lnbits.db import Database, Filters, Page
-from lnbits.settings import settings
 
-from .cron_handler import CronHandler
 from .logger import logger
 from .models import CreateJobData, HeaderItems, Job, JobFilters, LogEntry
+from .scheduler_handler import (
+    add_job,
+    enable_job,
+    remove_job,
+    validate_cron_string,
+)
 
 db = Database("ext_scheduler")
-
-# Get the absolute paths
-dir_path = os.path.dirname(os.path.realpath(__file__))
-root_path = os.path.dirname(os.path.dirname(dir_path))
-poetry_env = os.path.join(root_path, ".venv")
-python_path = (
-    os.path.join(poetry_env, "bin", "python")
-    if os.path.exists(poetry_env)
-    else sys.executable
-)
-command = f"{python_path} {os.path.join(dir_path, 'run_cron_job.py')}"
-
-logger.info(f"Using Python interpreter: {python_path}")
-logger.info(f"Using command: {command}")
-
-
-def get_safe_path():
-    """Get PATH from virtualenv or fall back to standard path"""
-    standard_path = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-    if poetry_env and os.path.exists(poetry_env):
-        bin_dir = os.path.join(poetry_env, "bin")
-        if os.path.exists(bin_dir):
-            return f"{bin_dir}:{standard_path}"
-    return standard_path
 
 
 async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
@@ -44,34 +22,9 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
         job_id = uuid4().hex
 
         # Validate cron schedule
-        ch = CronHandler()
-        is_valid = await ch.validate_cron_string(data.schedule)
+        is_valid = await validate_cron_string(data.schedule)
         if not is_valid:
             raise ValueError(f"Invalid cron schedule format: {data.schedule}")
-
-        # Set up environment variables for the cron job
-        base_url = f"http://{settings.host}:{settings.port}"
-        env_vars = {
-            "ID": job_id,
-            "adminkey": admin_id,
-            "BASE_URL": base_url,
-            "PYTHONPATH": root_path,  # Ensure Python can find the LNbits package
-            "PATH": get_safe_path(),
-            "VIRTUAL_ENV": poetry_env if os.path.exists(poetry_env) else "",
-        }
-
-        logger.info(f"Creating cron job with command: {command}")
-        logger.info(f"Environment variables: {env_vars}")
-
-        # Create the cron job first
-        response = await ch.new_job(
-            command=command, frequency=data.schedule, comment=job_id, env=env_vars
-        )
-        if isinstance(response, str) and response.startswith("Error"):
-            raise ValueError(f"Failed to create cron job: {response}")
-
-        # Set initial state (disabled by default)
-        await ch.enable_job_by_comment(comment=job_id, active=False)
 
         # Prepare database data
         headers_json = (
@@ -84,7 +37,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
             id=job_id,
             name=data.name or f"Job-{job_id}",
             admin=admin_id,
-            status=False,  # Start disabled
+            status=data.status,  # Use the status from the input
             schedule=data.schedule,
             selectedverb=data.selectedverb,
             url=data.url,
@@ -118,15 +71,21 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
             },
         )
 
+        # Add to APScheduler if status is running (True)
+        if job.status:
+            from .job_runner import execute_job
+
+            await add_job(
+                job_id=job.id,
+                cron_expr=job.schedule,
+                func=execute_job,
+                args=[job.id],
+            )
+
         logger.info("Scheduler job created: %s", job)
         return job
 
     except Exception as e:
-        # If anything fails, clean up any partially created resources
-        try:
-            await ch.remove_by_comment(job_id)
-        except:
-            pass
         logger.error("Failed to create scheduler job: %s", str(e))
         raise ValueError(f"Failed to create scheduler job: {e!s}")
 
@@ -143,27 +102,11 @@ async def get_scheduler_job(job_id: str) -> Optional[Job]:
     headers = [HeaderItems(**h) for h in json.loads(row.headers)] if row.headers else []
     extra = json.loads(row.extra) if row.extra else {}
 
-    # Verify actual crontab status
-    ch = CronHandler()
-    actual_status = await ch.get_job_status(job_id)
-
-    # If database and crontab status don't match, update database
-    if actual_status != row.status:
-        logger.warning(
-            f"Job {job_id} status mismatch: db={row.status}, crontab={actual_status}. Fixing..."
-        )
-        await db.execute(
-            """
-            UPDATE scheduler.jobs SET status = :status WHERE id = :id
-            """,
-            {"id": job_id, "status": actual_status},
-        )
-
     return Job(
         id=row.id,
         name=row.name,
         admin=row.admin,
-        status=actual_status,  # Use actual status from crontab
+        status=row.status,
         schedule=row.schedule,
         selectedverb=row.selectedverb,
         url=row.url,
@@ -209,9 +152,8 @@ async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> Page[J
 
 async def delete_scheduler_jobs(job_id: str) -> None:
     try:
-        # Remove from crontab first
-        ch = CronHandler()
-        await ch.remove_job(job_id)
+        # Remove from APScheduler
+        await remove_job(job_id)
 
         # Then remove from database
         await db.execute("DELETE FROM scheduler.jobs WHERE id = :id", {"id": job_id})
@@ -235,29 +177,7 @@ async def update_scheduler_job(job: Job) -> Job:
         )
         extra_json = json.dumps(job.extra) if job.extra else "{}"
 
-        # Update crontab first
-        ch = CronHandler()
-
-        # Update the command and schedule
-        base_url = f"http://{settings.host}:{settings.port}"
-        env_vars = {
-            "ID": job.id,
-            "adminkey": job.admin,
-            "BASE_URL": base_url,
-            "PYTHONPATH": root_path,  # Ensure Python can find the LNbits package
-            "PATH": get_safe_path(),
-            "VIRTUAL_ENV": poetry_env if os.path.exists(poetry_env) else "",
-        }
-
-        # Update the job in crontab
-        await ch.edit_job(
-            command=command, frequency=job.schedule, comment=job.id, env=env_vars
-        )
-
-        # Update the job's enabled state
-        await ch.enable_job_by_comment(comment=job.id, active=job.status)
-
-        # Then update database
+        # Update database
         await db.execute(
             """
             UPDATE scheduler.jobs SET
@@ -284,6 +204,21 @@ async def update_scheduler_job(job: Job) -> Job:
             },
         )
 
+        # Update APScheduler
+        from .job_runner import execute_job
+
+        if job.status:
+            # Job should be running - add or update it
+            await add_job(
+                job_id=job.id,
+                cron_expr=job.schedule,
+                func=execute_job,
+                args=[job.id],
+            )
+        else:
+            # Job should be stopped - remove it from scheduler
+            await remove_job(job.id)
+
         logger.info("Updated scheduler job: %s", job.id)
         return await get_scheduler_job(job.id)
 
@@ -292,7 +227,7 @@ async def update_scheduler_job(job: Job) -> Job:
         raise ValueError(f"Failed to update job: {e!s}")
 
 
-async def pause_scheduler(job_id: str, active: bool = None) -> Job:
+async def pause_scheduler(job_id: str, active: bool = None) -> Optional[Job]:
     """
     Update the status of a job.
 
@@ -318,22 +253,10 @@ async def pause_scheduler(job_id: str, active: bool = None) -> Job:
         new_status = active if active is not None else not job.status
         logger.info(f"New status will be: {new_status}")
 
-        # Try crontab update but don't rely on it for database update
-        try:
-            ch = CronHandler()
-            crontab_job = await ch.find_comment(job_id)
-            if crontab_job:
-                logger.info(f"Found job in crontab, updating status to {new_status}")
-                await ch.enable_job_by_comment(comment=job_id, active=new_status)
-            else:
-                logger.warning(
-                    f"Job {job_id} not found in crontab, only updating database"
-                )
-        except Exception as e:
-            logger.error(f"Error updating crontab: {e!s}")
-            logger.info("Will continue with database update only")
+        # Update in-process scheduler
+        await enable_job(job_id, new_status)
 
-        # Update database directly with the new status
+        # Update database status (source of truth)
         logger.info(f"Setting database status for job {job_id} to {new_status}")
         await db.execute(
             """
@@ -412,3 +335,38 @@ async def delete_log_entries(job_id: str) -> None:
     delete all log entries from data base for particular job
     """
     await db.execute("DELETE FROM scheduler.logs WHERE job_id = :id", {"id": job_id})
+
+
+async def get_all_active_scheduler_jobs() -> list[Job]:
+    """
+    Get all jobs with status=True (running) for scheduler initialization.
+    """
+    rows = await db.fetchall(
+        "SELECT * FROM scheduler.jobs WHERE status = :status",
+        {"status": True},
+    )
+
+    jobs = []
+    for row in rows:
+        # Parse JSON strings back to Python objects
+        headers = (
+            [HeaderItems(**h) for h in json.loads(row.headers)] if row.headers else []
+        )
+        extra = json.loads(row.extra) if row.extra else {}
+
+        jobs.append(
+            Job(
+                id=row.id,
+                name=row.name,
+                admin=row.admin,
+                status=row.status,
+                schedule=row.schedule,
+                selectedverb=row.selectedverb,
+                url=row.url,
+                headers=headers,
+                body=row.body,
+                extra=extra,
+            )
+        )
+
+    return jobs

@@ -1,1 +1,2 @@
-python-crontab==3.0.0
+apscheduler>=3.10.0,<4.0
+httpx>=0.27.0
