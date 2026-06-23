@@ -1,7 +1,15 @@
 {
   "name": "Scheduler",
-  "short_description": "Generate Scheduled tasks via crontabs for lnbits",
+  "short_description": "Generate Scheduled tasks via crontabs for LNbits",
   "tile": "/scheduler/static/image/scheduler.png",
-  "contributors": ["bitkarrot"],
-  "min_lnbits_version": "1.0.0"
+  "contributors": [
+    {
+      "name": "bitkarrot",
+      "uri": "https://github.com/bitkarrot",
+      "role": "Lead dev"
+    }
+  ],
+  "version": "1.0.0",
+  "min_lnbits_version": "1.5.4",
+  "license": "MIT"
 }

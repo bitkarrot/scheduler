@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Optional
 
 from crontab import CronSlices
 from fastapi import Query
@@ -16,17 +15,17 @@ class HeaderItems(BaseModel):
 
 
 class CreateJobData(BaseModel):
-    name: Optional[str] = Query(default=None, description="Name of the Job")
+    name: str | None = Query(default=None, description="Name of the Job")
     status: bool = Query(False)  # true is active, false if paused
-    selectedverb: Optional[str] = Query(default=None)
-    url: Optional[str] = Query(default=None)
-    headers: Optional[list[HeaderItems]]
-    body: Optional[str] = Query(default=None)
+    selectedverb: str | None = Query(default=None)
+    url: str | None = Query(default=None)
+    headers: list[HeaderItems] | None
+    body: str | None = Query(default=None)
     schedule: str = Field(
         ...,
         description="Cron schedule expression (e.g. '*/5 * * * *' for every 5 minutes)",
     )
-    extra: Optional[dict[str, str]] = Query(default=None)
+    extra: dict[str, str] | None = Query(default=None)
 
     @validator("schedule")
     def validate_schedule(cls, v):
@@ -40,14 +39,14 @@ class CreateJobData(BaseModel):
 
 class UpdateJobData(BaseModel):
     id: str
-    name: Optional[str] = Query(default=None, description="Name of the Job")
+    name: str | None = Query(default=None, description="Name of the Job")
     status: bool
-    selectedverb: Optional[str] = None
-    url: Optional[str] = None
-    headers: Optional[list[HeaderItems]]
-    body: Optional[str] = None
+    selectedverb: str | None = None
+    url: str | None = None
+    headers: list[HeaderItems] | None
+    body: str | None = None
     schedule: str = Query(default=None, description="Schedule to run")
-    extra: Optional[dict[str, str]] = Query(
+    extra: dict[str, str] | None = Query(
         default=None, description="Partial update for extra field"
     )
 
@@ -58,26 +57,26 @@ class Job(BaseModel):
     admin: str
     status: bool
     schedule: str
-    selectedverb: Optional[str] = None
-    url: Optional[str] = None
-    headers: Optional[list[HeaderItems]]
-    body: Optional[str] = None
-    extra: Optional[dict[str, str]]
+    selectedverb: str | None = None
+    url: str | None = None
+    headers: list[HeaderItems] | None
+    body: str | None = None
+    extra: dict[str, str] | None
 
 
 class JobFilters(FilterModel):
     id: str
     name: str
-    schedule: Optional[str] = None
-    selectedverb: Optional[str] = None
-    url: Optional[str] = None
-    body: Optional[str] = None
-    extra: Optional[dict[str, str]]
+    schedule: str | None = None
+    selectedverb: str | None = None
+    url: str | None = None
+    body: str | None = None
+    extra: dict[str, str] | None
 
 
 class LogEntry(BaseModel):
     id: str
     job_id: str
-    status: Optional[str] = None
-    response: Optional[str] = None
+    status: str | None = None
+    response: str | None = None
     timestamp: datetime = datetime.now(timezone.utc)

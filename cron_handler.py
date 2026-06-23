@@ -1,6 +1,5 @@
 import getpass
 import logging
-from typing import Union
 
 from crontab import CronSlices, CronTab
 
@@ -15,7 +14,7 @@ https://pypi.org/project/python-crontab/
 
 
 class CronHandler:
-    def __init__(self, user: Union[str, bool] = None):
+    def __init__(self, user: str | bool | None = None):
         """Initialize CronHandler"""
         try:
             self._username = getpass.getuser()
@@ -87,8 +86,9 @@ class CronHandler:
                 for existing_job in self._cron:
                     logger.info(f"Existing job: {existing_job}")
                 logger.info("Environment variables:")
-                for key, value in self._cron.env.items():
-                    logger.info(f"{key}={value}")
+                if self._cron.env:
+                    for key, value in self._cron.env.items():
+                        logger.info(f"{key}={value}")
 
                 self._cron.write()
 
@@ -104,7 +104,7 @@ class CronHandler:
             return f"Error creating job: {e!s}"
 
     async def edit_job(
-        self, command: str, frequency: str, comment: str, env: dict = None
+        self, command: str, frequency: str, comment: str, env: dict | None = None
     ):
         try:
             job = await self.find_comment(comment)
@@ -140,7 +140,8 @@ class CronHandler:
         """
         try:
             logger.info(
-                f"Enabling/disabling cron job by comment: comment={comment}, active={active}"
+                "Enabling/disabling cron job by comment: "
+                f"comment={comment}, active={active}"
             )
 
             # Find the job by comment
@@ -156,7 +157,8 @@ class CronHandler:
             job = jobs[0]
             current_status = job.is_enabled()
             logger.info(
-                f"Job found, current enabled status: {current_status}, changing to: {active}"
+                "Job found, current enabled status: "
+                f"{current_status}, changing to: {active}"
             )
 
             # Only update if the status is different
@@ -181,7 +183,8 @@ class CronHandler:
 
             if new_status != active:
                 logger.error(
-                    f"Job status was not updated correctly. Expected: {active}, Got: {new_status}"
+                    "Job status was not updated correctly. "
+                    f"Expected: {active}, Got: {new_status}"
                 )
                 return False
 

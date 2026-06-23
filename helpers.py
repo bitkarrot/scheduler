@@ -11,11 +11,11 @@ from .models import Job
 
 # python path
 py_path = sys.executable
-dir_path = os.path.dirname(os.path.realpath(__name__))
-command = py_path + f" {dir_path}/lnbits/extensions/scheduler/run_cron_job.py"
+dir_path = os.path.dirname(os.path.realpath(__file__))
+command = py_path + f" {os.path.join(dir_path, 'run_cron_job.py')}"
 
 # .log path
-log_path = f"{dir_path}/lnbits/extensions/scheduler/scheduler.log"
+log_path = os.path.join(dir_path, "scheduler.log")
 
 
 async def convert_headers(headers: list) -> str:

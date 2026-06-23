@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from typing import Optional
+from typing import Any
 from uuid import uuid4
 
 from lnbits.db import Database, Filters, Page
@@ -88,9 +88,11 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
             schedule=data.schedule,
             selectedverb=data.selectedverb,
             url=data.url,
-            headers=[HeaderItems(**h) for h in json.loads(headers_json)]
-            if headers_json != "[]"
-            else None,
+            headers=(
+                [HeaderItems(**h) for h in json.loads(headers_json)]
+                if headers_json != "[]"
+                else None
+            ),
             body=data.body or "{}",
             extra=json.loads(extra_json) if extra_json != "{}" else None,
         )
@@ -98,7 +100,8 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
         await db.execute(
             """
             INSERT INTO scheduler.jobs (
-                id, name, admin, status, schedule, selectedverb, url, headers, body, extra
+                id, name, admin, status, schedule,
+                selectedverb, url, headers, body, extra
             ) VALUES (
                 :id, :name, :admin, :status, :schedule, :selectedverb,
                 :url, :headers, :body, :extra
@@ -125,14 +128,14 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
         # If anything fails, clean up any partially created resources
         try:
             await ch.remove_by_comment(job_id)
-        except:
+        except Exception:
             pass
         logger.error("Failed to create scheduler job: %s", str(e))
-        raise ValueError(f"Failed to create scheduler job: {e!s}")
+        raise ValueError(f"Failed to create scheduler job: {e!s}") from e
 
 
-async def get_scheduler_job(job_id: str) -> Optional[Job]:
-    row = await db.fetchone(
+async def get_scheduler_job(job_id: str) -> Job | None:
+    row: Any = await db.fetchone(
         "SELECT * FROM scheduler.jobs WHERE id = :id",
         {"id": job_id},
     )
@@ -150,7 +153,8 @@ async def get_scheduler_job(job_id: str) -> Optional[Job]:
     # If database and crontab status don't match, update database
     if actual_status != row.status:
         logger.warning(
-            f"Job {job_id} status mismatch: db={row.status}, crontab={actual_status}. Fixing..."
+            f"Job {job_id} status mismatch: "
+            f"db={row.status}, crontab={actual_status}. Fixing..."
         )
         await db.execute(
             """
@@ -174,7 +178,7 @@ async def get_scheduler_job(job_id: str) -> Optional[Job]:
 
 
 async def get_scheduler_jobs(admin: str, filters: Filters[JobFilters]) -> Page[Job]:
-    rows = await db.fetch_page(
+    rows: Page[Any] = await db.fetch_page(
         "SELECT * FROM scheduler.jobs",
         ["admin = :admin"],
         {"admin": admin},
@@ -222,7 +226,7 @@ async def delete_scheduler_jobs(job_id: str) -> None:
         logger.info(f"Deleted scheduler job and associated logs: {job_id}")
     except Exception as e:
         logger.error(f"Error deleting scheduler job {job_id}: {e!s}")
-        raise ValueError(f"Failed to delete scheduler job: {e!s}")
+        raise ValueError(f"Failed to delete scheduler job: {e!s}") from e
 
 
 async def update_scheduler_job(job: Job) -> Job:
@@ -285,20 +289,23 @@ async def update_scheduler_job(job: Job) -> Job:
         )
 
         logger.info("Updated scheduler job: %s", job.id)
-        return await get_scheduler_job(job.id)
+        updated_job = await get_scheduler_job(job.id)
+        assert updated_job, "Updated job not found"
+        return updated_job
 
     except Exception as e:
         logger.error("Failed to update scheduler job: %s", str(e))
-        raise ValueError(f"Failed to update job: {e!s}")
+        raise ValueError(f"Failed to update job: {e!s}") from e
 
 
-async def pause_scheduler(job_id: str, active: bool = None) -> Job:
+async def pause_scheduler(job_id: str, active: bool | None = None) -> Job | None:
     """
     Update the status of a job.
 
     Args:
         job_id: ID of the job to update
-        active: If True, activate the job; if False, deactivate it; if None, toggle the current state
+        active: If True, activate the job; if False, deactivate it;
+            if None, toggle the current state
 
     Returns:
         The updated job object or None if the job was not found or an error occurred
@@ -307,7 +314,8 @@ async def pause_scheduler(job_id: str, active: bool = None) -> Job:
         # Get current job state
         job = await get_scheduler_job(job_id)
         logger.info(
-            f"Pausing job {job_id}, current status: {getattr(job, 'status', 'N/A')}, setting to: {active}"
+            f"Pausing job {job_id}, current status: {getattr(job, 'status', 'N/A')}, "
+            f"setting to: {active}"
         )
 
         if not job:

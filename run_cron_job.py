@@ -4,7 +4,6 @@ import json
 import logging
 import logging.handlers
 import os
-from typing import Optional
 
 import httpx
 
@@ -87,7 +86,7 @@ async def process_json_body(request_body):
         return {}
 
 
-async def call_api(method_name, url, headers, body) -> Optional[httpx.Response]:
+async def call_api(method_name, url, headers, body) -> httpx.Response | None:
     """
     Call API with parameters from database,
     assume body, headers is a string from the db

@@ -19,9 +19,10 @@ from .crud import (
     get_log_entries,
     get_scheduler_job,
     get_scheduler_jobs,
+    pause_scheduler,
     update_scheduler_job,
 )
-from .helpers import delete_complete_log, get_complete_log, pause_scheduler
+from .helpers import delete_complete_log, get_complete_log
 from .models import CreateJobData, Job, JobFilters, LogEntry, UpdateJobData
 from .test_run_job import test_job
 
@@ -184,7 +185,7 @@ async def api_scheduler_jobs_create(
         return await create_scheduler_jobs(info.wallet.adminkey, data)
     except Exception as e:
         logger.error(f"Failed to create job: {e!s}")
-        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e)) from None
 
 
 @scheduler_api_router.put(
@@ -316,4 +317,4 @@ async def api_scheduler_pause(job_id: str, status: str) -> Job:
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail=f"Unexpected error in api handler: {e!s}",
-        )
+        ) from None

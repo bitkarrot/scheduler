@@ -6,7 +6,7 @@ IMPORTANT:
 
 - **The user that runs LNBits server MUST have crontab -e permissions in order to read/write to crontab file.**
 - This extension should be limited to admin account(s).
-- min version v.10
+- min version v1.5.4
 - The following file must be executable:
 
 ```sh

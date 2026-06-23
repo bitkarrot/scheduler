@@ -1,28 +1,53 @@
+[project]
+name = "lnbits-scheduler"
+version = "1.0.0"
+requires-python = ">=3.10,<3.13"
+description = "LNbits Scheduler extension for scheduled tasks via crontabs."
+authors = [{name = "bitkarrot", email = "info@bitkarrot.co"}]
+
+dependencies = ["lnbits>=1.5.4"]
+
+[dependency-groups]
+dev = [
+    "black",
+    "pytest-asyncio",
+    "pytest",
+    "mypy==1.17.1",
+    "pre-commit",
+    "ruff",
+    "types-python-crontab",
+]
+
 [tool.poetry]
 name = "lnbits-scheduler"
-version = "0.0.0"
-description = "LNbits, free and open-source Lightning wallet and accounts system."
-authors = ["Alan Bits <alan@lnbits.com>"]
+version = "1.0.0"
+description = "LNbits Scheduler extension for scheduled tasks via crontabs."
+authors = ["bitkarrot <info@bitkarrot.co>"]
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.10 | ^3.9"
-lnbits = {version = "*",  allow-prereleases = true}
+python = ">=3.10,<3.13"
+lnbits = {version = ">=1.5.4"}
 
 [tool.poetry.group.dev.dependencies]
-black = "^24.3.0"
+black = "^26.3.1"
 pytest-asyncio = "^0.21.0"
-pytest = "^7.3.2"
-mypy = "^1.5.1"
-pre-commit = "^3.2.2"
-ruff = "^0.3.2"
+pytest = "^9.0.2"
+mypy = "^1.17.1"
+pre-commit = "^4.5.1"
+ruff = "^0.14.10"
 types-python-crontab = "^3.2.0.20240703"
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
 [tool.mypy]
-exclude = "(nostr/*)"
+exclude = "(nostr/|test_|tests/)"
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
+
 [[tool.mypy.overrides]]
 module = [
   "lnbits.*",
@@ -33,6 +58,8 @@ module = [
   "pyqrcode.*",
   "shortuuid.*",
   "httpx.*",
+  "crontab",
+  "crontab.*",
 ]
 ignore_missing_imports = "True"
 
