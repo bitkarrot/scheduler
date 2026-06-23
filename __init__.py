@@ -21,7 +21,7 @@ scheduler_static_files = [
 
 
 @scheduler_ext.on_event("startup")
-async def on_startup():
+async def on_startup() -> None:
     """Initialize APScheduler and reload active jobs from DB on startup."""
     from .crud import get_all_active_scheduler_jobs
     from .job_runner import execute_job
@@ -41,7 +41,7 @@ async def on_startup():
 
 
 @scheduler_ext.on_event("shutdown")
-async def on_shutdown():
+async def on_shutdown() -> None:
     """Shutdown APScheduler gracefully."""
     from .scheduler_handler import stop_scheduler
 

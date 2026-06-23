@@ -51,7 +51,7 @@ async def api_get_testlog(job_id: str) -> str:
 
 
 @scheduler_api_router.get(
-    "/api/v1/logentry/{log_id}",
+    "/api/v1/logentry/{job_id}",
     status_code=HTTPStatus.OK,
     name="Log entries for a specific job id from DB",
     summary="get log entires for job from DB",
@@ -59,20 +59,20 @@ async def api_get_testlog(job_id: str) -> str:
     dependencies=[Depends(require_admin_key)],
     response_model=str,
 )
-async def api_get_log_entries(log_id: str) -> str:
-    return await get_log_entries(log_id)
+async def api_get_log_entries(job_id: str) -> str:
+    return await get_log_entries(job_id)
 
 
 @scheduler_api_router.delete(
-    "/api/v1/logentry/{log_id}",
+    "/api/v1/logentry/{job_id}",
     name="Job Log Delete",
     summary="Delete a Job's Log from DB",
     description="Delete Job Log from DB",
     dependencies=[Depends(require_admin_key)],
     response_model=bool,
 )
-async def api_job_log_delete(log_id: str) -> None:
-    await delete_log_entries(log_id)
+async def api_job_log_delete(job_id: str) -> None:
+    await delete_log_entries(job_id)
 
 
 @scheduler_api_router.post(
@@ -185,7 +185,7 @@ async def api_scheduler_jobs_create(
         return await create_scheduler_jobs(info.wallet.adminkey, data)
     except Exception as e:
         logger.error(f"Failed to create job: {e!s}")
-        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e)) from e
 
 
 @scheduler_api_router.put(
@@ -203,7 +203,7 @@ async def api_scheduler_jobs_update(job_id: str, data: UpdateJobData) -> Job:
             status_code=HTTPStatus.NOT_FOUND, detail="Jobs does not exist."
         )
 
-    for key, value in data.dict().items():
+    for key, value in data.dict(exclude_unset=True, exclude={"id"}).items():
         setattr(job, key, value)
 
     return await update_scheduler_job(job)
@@ -218,7 +218,7 @@ async def api_scheduler_jobs_update(job_id: str, data: UpdateJobData) -> Job:
     responses={404: {"description": "Jobs does not exist."}},
     status_code=HTTPStatus.OK,
 )
-async def api_scheduler_jobs_delete(jobs_id) -> None:
+async def api_scheduler_jobs_delete(jobs_id: str) -> None:
     jobs = await get_scheduler_job(jobs_id)
     if not jobs:
         raise HTTPException(
@@ -241,80 +241,21 @@ async def api_scheduler_jobs_delete(jobs_id) -> None:
     response_model=Job,
 )
 async def api_scheduler_pause(job_id: str, status: str) -> Job:
-    try:
-        logger.info(f"API pause request received for job {job_id}, status={status}")
+    logger.info(f"API pause request received for job {job_id}, status={status}")
 
-        job = await get_scheduler_job(job_id)
-        if not job:
-            logger.error(f"Job not found: {job_id}")
-            raise HTTPException(
-                status_code=HTTPStatus.NOT_FOUND, detail="Job does not exist."
-            )
-
-        # Convert status string to boolean
-        active = status.lower() == "true"
-        logger.info(f"Converted status '{status}' to boolean: {active}")
-
-        # Attempt to pause or resume the job
-        try:
-            logger.info(
-                f"Calling pause_scheduler with job_id={job_id}, active={active}"
-            )
-            result = await pause_scheduler(job_id, active)
-            logger.info(f"Result from pause_scheduler: {result}")
-
-            if not result:
-                action = "starting" if active else "stopping"
-                logger.warning(
-                    "pause_scheduler returned None or False -"
-                    + f"Warning: {action} job failed but DB maybe updated"
-                )
-                # We'll still try to return the job to
-                # the client, even if the update failed
-            else:
-                logger.info(f"pause_scheduler succeeded, job status: {result}")
-        except ValueError as ve:
-            logger.error(f"ValueError in pause_scheduler: {ve!s}")
-            # Continue to try to get the job, even if the update failed
-        except Exception as e:
-            if isinstance(e, HTTPException):
-                logger.error(
-                    f"HTTPException in pause_scheduler: {e.status_code}: {e.detail}"
-                )
-                # Continue to try to get the job, even if the update failed
-            else:
-                logger.error(
-                    f"Unexpected exception @ pause_scheduler: {type(e).__name__}: {e!s}"
-                )
-                import traceback
-
-                logger.error(f"Traceback: {traceback.format_exc()}")
-                # Continue to try to get the job, even if the update failed
-
-        # Get the possibly updated job to return
-        updated_job = await get_scheduler_job(job_id)
-        if not updated_job:
-            logger.error("Could not find job after attempted update")
-            raise HTTPException(
-                status_code=HTTPStatus.NOT_FOUND,
-                detail="Job disappeared after update attempt",
-            )
-
-        logger.info(f"Returning job with status: {updated_job.status}")
-        return updated_job
-
-    except HTTPException:
-        # Re-raise HTTP exceptions without wrapping them again
-        raise
-    except Exception as e:
-        # Log and convert other exceptions to HTTP exceptions
-        logger.error(
-            f"Unexpected exception in api_scheduler_pause: {type(e).__name__}: {e!s}"
+    job = await get_scheduler_job(job_id)
+    if not job:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail="Job does not exist.",
         )
-        import traceback
 
-        logger.error(f"Traceback: {traceback.format_exc()}")
+    active = status.lower() == "true"
+    updated_job = await pause_scheduler(job_id, active)
+    if not updated_job:
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=f"Unexpected error in api handler: {e!s}",
+            detail="Failed to update scheduler job state",
         )
+
+    return updated_job

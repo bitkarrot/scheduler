@@ -35,6 +35,8 @@ async def execute_job(job_id: str) -> None:
                 body_data = job.body
 
         method = (job.selectedverb or "GET").upper()
+        if not job.url:
+            raise ValueError("Job URL is missing")
         request_kwargs = {
             "method": method,
             "url": job.url,

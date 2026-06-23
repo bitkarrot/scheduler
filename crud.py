@@ -16,10 +16,15 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
         # Generate unique ID
         job_id = uuid4().hex
 
+        # Validate required runtime fields
+        if not data.url:
+            raise ValueError("URL is required")
+
         # Validate cron schedule
-        is_valid = await validate_cron_string(data.schedule)
+        schedule = data.schedule.strip()
+        is_valid = await validate_cron_string(schedule)
         if not is_valid:
-            raise ValueError(f"Invalid cron schedule format: {data.schedule}")
+            raise ValueError(f"Invalid cron schedule format: {schedule}")
 
         # Prepare database data
         headers_json = (
@@ -33,7 +38,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
             name=data.name or f"Job-{job_id}",
             admin=admin_id,
             status=data.status,  # Use the status from the input
-            schedule=data.schedule,
+            schedule=schedule,
             selectedverb=data.selectedverb,
             url=data.url,
             headers=[HeaderItems(**h) for h in json.loads(headers_json)]
@@ -46,7 +51,16 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
         await db.execute(
             """
             INSERT INTO scheduler.jobs (
-                id, name, admin, status, schedule, selectedverb, url, headers, body, extra
+                id,
+                name,
+                admin,
+                status,
+                schedule,
+                selectedverb,
+                url,
+                headers,
+                body,
+                extra
             ) VALUES (
                 :id, :name, :admin, :status, :schedule, :selectedverb,
                 :url, :headers, :body, :extra
@@ -57,7 +71,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
                 "name": job.name,
                 "admin": job.admin,
                 "status": job.status,
-                "schedule": job.schedule,
+                "schedule": schedule,
                 "selectedverb": job.selectedverb,
                 "url": job.url,
                 "headers": headers_json,
@@ -82,7 +96,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
 
     except Exception as e:
         logger.error("Failed to create scheduler job: %s", str(e))
-        raise ValueError(f"Failed to create scheduler job: {e!s}")
+        raise ValueError(f"Failed to create scheduler job: {e!s}") from e
 
 
 async def get_scheduler_job(job_id: str) -> Optional[Job]:
@@ -94,7 +108,9 @@ async def get_scheduler_job(job_id: str) -> Optional[Job]:
         return None
 
     # Parse JSON strings back to Python objects
-    headers = [HeaderItems(**h) for h in json.loads(row.headers)] if row.headers else []
+    headers = (
+        [HeaderItems(**h) for h in json.loads(row.headers)] if row.headers else []
+    )
     extra = json.loads(row.extra) if row.extra else {}
 
     return Job(
@@ -159,11 +175,19 @@ async def delete_scheduler_jobs(job_id: str) -> None:
         logger.info(f"Deleted scheduler job and associated logs: {job_id}")
     except Exception as e:
         logger.error(f"Error deleting scheduler job {job_id}: {e!s}")
-        raise ValueError(f"Failed to delete scheduler job: {e!s}")
+        raise ValueError(f"Failed to delete scheduler job: {e!s}") from e
 
 
 async def update_scheduler_job(job: Job) -> Job:
     try:
+        if not job.url:
+            raise ValueError("URL is required")
+
+        schedule = job.schedule.strip()
+        is_valid = await validate_cron_string(schedule)
+        if not is_valid:
+            raise ValueError(f"Invalid cron schedule format: {schedule}")
+
         # Convert headers and extra to JSON strings
         headers_json = (
             json.dumps([h.dict() if hasattr(h, "dict") else h for h in job.headers])
@@ -190,7 +214,7 @@ async def update_scheduler_job(job: Job) -> Job:
                 "id": job.id,
                 "name": job.name,
                 "status": job.status,
-                "schedule": job.schedule,
+                "schedule": schedule,
                 "selectedverb": job.selectedverb,
                 "url": job.url,
                 "headers": headers_json,
@@ -206,7 +230,7 @@ async def update_scheduler_job(job: Job) -> Job:
             # Job should be running - add or update it
             await add_job(
                 job_id=job.id,
-                cron_expr=job.schedule,
+                cron_expr=schedule,
                 func=execute_job,
                 args=[job.id],
             )
@@ -219,43 +243,38 @@ async def update_scheduler_job(job: Job) -> Job:
 
     except Exception as e:
         logger.error("Failed to update scheduler job: %s", str(e))
-        raise ValueError(f"Failed to update job: {e!s}")
+        raise ValueError(f"Failed to update job: {e!s}") from e
 
 
 async def pause_scheduler(job_id: str, active: Optional[bool] = None) -> Optional[Job]:
     """Update a job status and keep APScheduler runtime in sync with DB."""
-    try:
-        job = await get_scheduler_job(job_id)
-        if not job:
-            logger.error(f"Job not found: {job_id}")
-            return None
-
-        new_status = active if active is not None else not job.status
-
-        # Keep runtime scheduler state aligned with desired status.
-        if new_status:
-            from .job_runner import execute_job
-
-            await add_job(
-                job_id=job.id,
-                cron_expr=job.schedule,
-                func=execute_job,
-                args=[job.id],
-            )
-        else:
-            await remove_job(job.id)
-
-        # DB is source of truth
-        await db.execute(
-            "UPDATE scheduler.jobs SET status = :status WHERE id = :id",
-            {"id": job_id, "status": new_status},
-        )
-
-        return await get_scheduler_job(job_id)
-
-    except Exception as e:
-        logger.error(f"Exception in pause_scheduler: {type(e).__name__}: {e!s}")
+    job = await get_scheduler_job(job_id)
+    if not job:
+        logger.error(f"Job not found: {job_id}")
         return None
+
+    new_status = active if active is not None else not job.status
+
+    # Keep runtime scheduler state aligned with desired status.
+    if new_status:
+        from .job_runner import execute_job
+
+        await add_job(
+            job_id=job.id,
+            cron_expr=job.schedule,
+            func=execute_job,
+            args=[job.id],
+        )
+    else:
+        await remove_job(job.id)
+
+    # DB is source of truth
+    await db.execute(
+        "UPDATE scheduler.jobs SET status = :status WHERE id = :id",
+        {"id": job_id, "status": new_status},
+    )
+
+    return await get_scheduler_job(job_id)
 
 
 async def create_log_entry(data: LogEntry) -> LogEntry:

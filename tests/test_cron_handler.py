@@ -1,6 +1,12 @@
 import pytest
 
-from scheduler_handler import add_job, get_job_status, remove_job, start_scheduler, stop_scheduler
+from scheduler_handler import (
+    add_job,
+    get_job_status,
+    remove_job,
+    start_scheduler,
+    stop_scheduler,
+)
 
 
 async def _noop(job_id: str) -> None:
