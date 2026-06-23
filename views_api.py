@@ -19,9 +19,10 @@ from .crud import (
     get_log_entries,
     get_scheduler_job,
     get_scheduler_jobs,
+    pause_scheduler,
     update_scheduler_job,
 )
-from .helpers import delete_complete_log, get_complete_log, pause_scheduler
+from .helpers import delete_complete_log, get_complete_log
 from .models import CreateJobData, Job, JobFilters, LogEntry, UpdateJobData
 from .test_run_job import test_job
 

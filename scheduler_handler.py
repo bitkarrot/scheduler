@@ -24,10 +24,13 @@ async def start_scheduler() -> None:
 
 
 async def stop_scheduler() -> None:
+    global _scheduler
     scheduler = get_scheduler()
     if scheduler.running:
         scheduler.shutdown(wait=False)
         logger.info("APScheduler stopped")
+    # Re-create on next startup (important for reload/tests)
+    _scheduler = None
 
 
 async def add_job(job_id: str, cron_expr: str, func, args: list | None = None) -> str:

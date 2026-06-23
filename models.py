@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi import Query
 from lnbits.db import FilterModel
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, validator
 
 
 class HeaderItems(BaseModel):
@@ -27,8 +27,7 @@ class CreateJobData(BaseModel):
     )
     extra: Optional[dict[str, str]] = Query(default=None)
 
-    @field_validator("schedule")
-    @classmethod
+    @validator("schedule")
     def validate_schedule(cls, v):
         # Basic validation - more detailed validation done by APScheduler
         parts = v.split()

@@ -28,19 +28,34 @@ async def execute_job(job_id: str) -> None:
         if job.body:
             try:
                 import json
-                body_data = json.loads(job.body) if job.body else None
+
+                body_data = json.loads(job.body)
             except json.JSONDecodeError:
-                logger.warning(f"Job {job_id}: body is not valid JSON, sending as-is")
+                logger.warning(f"Job {job_id}: body is not valid JSON, sending as raw")
                 body_data = job.body
 
+        method = (job.selectedverb or "GET").upper()
+        request_kwargs = {
+            "method": method,
+            "url": job.url,
+            "headers": headers_dict,
+        }
+
+        # Keep compatibility with legacy behavior:
+        # - GET/DELETE: body treated as query params when JSON object
+        # - POST/PUT/PATCH: body treated as JSON if parseable, raw content otherwise
+        if method in {"GET", "DELETE"}:
+            if isinstance(body_data, dict):
+                request_kwargs["params"] = body_data
+        else:
+            if isinstance(body_data, (dict, list)):
+                request_kwargs["json"] = body_data
+            elif isinstance(body_data, str) and body_data.strip():
+                request_kwargs["content"] = body_data
+
         async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.request(
-                method=job.selectedverb,
-                url=job.url,
-                headers=headers_dict,
-                json=body_data if body_data else None,
-            )
-        
+            response = await client.request(**request_kwargs)
+
         log_entry = LogEntry(
             id="",  # Will be generated in create_log_entry
             job_id=job_id,

@@ -1,47 +1,24 @@
-import asyncio
-import logging
-import os
+import pytest
 
-from ..cron_handler import CronHandler
-from ..utils import get_env_data_as_dict
-
-# This is a sample logging file, for Testing Purposes only
-dir_path = os.path.dirname(os.path.realpath(__file__))
-filename = os.path.join(dir_path, "logfile.log")
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-file_handler = logging.FileHandler(filename)
-file_handler.setLevel(logging.INFO)
-file_handler.setFormatter(
-    logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-)
-logger.addHandler(file_handler)
+from helpers import get_complete_log
 
 
-async def main():
-
-    logger.info(f"Path: {dir_path}")
-    logger.info("sample test logger info")
-    logger.error("sample error message")
-    logger.warning("sample warning mesg")
-
-    try:
-        _vars = get_env_data_as_dict(f"{dir_path}/.env")
-        logger.info(_vars)
-        username = _vars["SCHEDULER_USER"]
-        job_id = os.environ.get("ID")
-        assert job_id, "Job ID not found in environment variables"
-        print(f"jobID: {job_id}")
-
-        ch = CronHandler(username)
-        status = await ch.get_job_status(job_id)
-        logger.info(f"ID: {job_id}, Job Status: {status}")
-        print(f"ID: {job_id}, Job Status: {status}")
-    except Exception as e:
-        print(e)
-        logger.error(f"Error: {e}")
+@pytest.mark.asyncio
+async def test_get_complete_log_when_missing_file():
+    # Ensure helper returns a string either way and does not crash.
+    output = await get_complete_log()
+    assert isinstance(output, str)
 
 
-asyncio.run(main())
+@pytest.mark.asyncio
+async def test_get_complete_log_reads_content(tmp_path, monkeypatch):
+    test_log = tmp_path / "scheduler.log"
+    test_log.write_text("line1\nline2\n", encoding="utf-8")
+
+    import helpers
+
+    monkeypatch.setattr(helpers, "log_path", str(test_log))
+
+    output = await get_complete_log()
+    assert "line1" in output
+    assert "line2" in output

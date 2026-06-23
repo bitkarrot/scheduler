@@ -6,12 +6,7 @@ from lnbits.db import Database, Filters, Page
 
 from .logger import logger
 from .models import CreateJobData, HeaderItems, Job, JobFilters, LogEntry
-from .scheduler_handler import (
-    add_job,
-    enable_job,
-    remove_job,
-    validate_cron_string,
-)
+from .scheduler_handler import add_job, remove_job, validate_cron_string
 
 db = Database("ext_scheduler")
 
@@ -227,63 +222,39 @@ async def update_scheduler_job(job: Job) -> Job:
         raise ValueError(f"Failed to update job: {e!s}")
 
 
-async def pause_scheduler(job_id: str, active: bool = None) -> Optional[Job]:
-    """
-    Update the status of a job.
-
-    Args:
-        job_id: ID of the job to update
-        active: If True, activate the job; if False, deactivate it; if None, toggle the current state
-
-    Returns:
-        The updated job object or None if the job was not found or an error occurred
-    """
+async def pause_scheduler(job_id: str, active: Optional[bool] = None) -> Optional[Job]:
+    """Update a job status and keep APScheduler runtime in sync with DB."""
     try:
-        # Get current job state
         job = await get_scheduler_job(job_id)
-        logger.info(
-            f"Pausing job {job_id}, current status: {getattr(job, 'status', 'N/A')}, setting to: {active}"
-        )
-
         if not job:
             logger.error(f"Job not found: {job_id}")
             return None
 
-        # Use provided active state or toggle current state if not provided
         new_status = active if active is not None else not job.status
-        logger.info(f"New status will be: {new_status}")
 
-        # Update in-process scheduler
-        await enable_job(job_id, new_status)
+        # Keep runtime scheduler state aligned with desired status.
+        if new_status:
+            from .job_runner import execute_job
 
-        # Update database status (source of truth)
-        logger.info(f"Setting database status for job {job_id} to {new_status}")
+            await add_job(
+                job_id=job.id,
+                cron_expr=job.schedule,
+                func=execute_job,
+                args=[job.id],
+            )
+        else:
+            await remove_job(job.id)
+
+        # DB is source of truth
         await db.execute(
-            """
-            UPDATE scheduler.jobs SET status = :status WHERE id = :id
-            """,
+            "UPDATE scheduler.jobs SET status = :status WHERE id = :id",
             {"id": job_id, "status": new_status},
         )
 
-        # Get and return updated job
-        updated_job = await get_scheduler_job(job_id)
-        if updated_job:
-            logger.info(
-                f"Job {job_id} status successfully changed to: {updated_job.status}"
-            )
-            return updated_job
-        else:
-            logger.error(
-                f"Failed to retrieve updated job after status change: {job_id}"
-            )
-            return None
+        return await get_scheduler_job(job_id)
 
     except Exception as e:
         logger.error(f"Exception in pause_scheduler: {type(e).__name__}: {e!s}")
-        import traceback
-
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        # Return None instead of raising an exception to let the caller handle it
         return None
 
 

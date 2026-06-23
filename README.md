@@ -4,14 +4,9 @@ lnbits scheduler extension [previously: crontabs]
 
 IMPORTANT:
 
-- **The user that runs LNBits server MUST have crontab -e permissions in order to read/write to crontab file.**
 - This extension should be limited to admin account(s).
 - min version v.10
-- The following file must be executable:
-
-```sh
-chmod +x run_cron_job.py
-```
+- Scheduler now runs in-process via APScheduler 3.x (no OS crontab permissions required).
 
 ## Video Demo
 

@@ -1,8 +1,6 @@
 import json
 import os
 
-from .scheduler_handler import enable_job
-
 # .log path
 dir_path = os.path.dirname(os.path.realpath(__file__))
 log_path = os.path.join(dir_path, "scheduler.log")
@@ -13,22 +11,6 @@ async def convert_headers(headers: list) -> str:
     allitems_as_dicts = [item.to_dict() for item in headers]
     headers_string = json.dumps(allitems_as_dicts)
     return headers_string
-
-
-async def pause_scheduler(job_id: str, active: bool = False) -> bool:
-    """
-    Pause or resume a scheduled job.
-    Args:
-        job_id: The ID of the job to pause/resume
-        active: True to start the job, False to stop it
-    Returns:
-        bool: True if the operation was successful, False otherwise
-    """
-    try:
-        return await enable_job(job_id, active)
-    except Exception as e:
-        print(f"Error in pause_scheduler for job {job_id}: {e!s}")
-        return False
 
 
 # log helpers
