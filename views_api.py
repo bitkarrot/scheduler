@@ -24,11 +24,28 @@ from .crud import (
 )
 from .helpers import delete_complete_log, get_complete_log
 from .models import CreateJobData, Job, JobFilters, LogEntry, UpdateJobData
+from .scheduler_handler import HAS_APSCHEDULER
 from .test_run_job import test_job
 
 logger = logging.getLogger(__name__)
 
 scheduler_api_router = APIRouter()
+
+
+@scheduler_api_router.get(
+    "/api/v1/runtime",
+    status_code=HTTPStatus.OK,
+    name="Scheduler runtime info",
+    summary="Get scheduler runtime backend",
+    description="Shows whether APScheduler is installed or fallback mode is active.",
+    dependencies=[Depends(require_admin_key)],
+)
+async def api_scheduler_runtime() -> dict:
+    return {
+        "runtime": "apscheduler" if HAS_APSCHEDULER else "fallback",
+        "apscheduler_installed": HAS_APSCHEDULER,
+    }
+
 
 
 @scheduler_api_router.get(

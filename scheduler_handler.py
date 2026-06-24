@@ -155,6 +155,10 @@ async def add_job(
     func: Callable[..., Awaitable[None]],
     args: list | None = None,
 ) -> str:
+    # Ensure runtime scheduler is alive even if startup hook did not run
+    # (can happen on some hot-install/activation flows).
+    await start_scheduler()
+
     if HAS_APSCHEDULER:
         scheduler = get_scheduler()
         trigger = CronTrigger.from_crontab(cron_expr)

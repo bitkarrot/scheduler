@@ -3,10 +3,20 @@ import logging
 from fastapi import APIRouter
 
 from .crud import db
+from .scheduler_handler import HAS_APSCHEDULER
 from .views import scheduler_generic_router
 from .views_api import scheduler_api_router
 
 logger = logging.getLogger("scheduler")
+
+
+def scheduler_runtime_info() -> dict:
+    """Expose active scheduler runtime in extension info panel."""
+    return {
+        "scheduler_runtime": "apscheduler" if HAS_APSCHEDULER else "fallback",
+        "apscheduler_installed": HAS_APSCHEDULER,
+    }
+
 
 scheduler_ext: APIRouter = APIRouter(prefix="/scheduler", tags=["scheduler"])
 scheduler_ext.include_router(scheduler_generic_router)
