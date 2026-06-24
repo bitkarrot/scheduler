@@ -132,14 +132,18 @@
             v-if="runtimeInfo.runtime === 'apscheduler'"
             color="positive"
             label="APScheduler"
-          />
+          ></q-badge>
           <q-badge
-            v-else-if="runtimeInfo.runtime === 'fallback'"
+            v-if="runtimeInfo.runtime === 'fallback'"
             color="warning"
             text-color="black"
             label="Fallback"
-          />
-          <q-badge v-else color="grey" label="Unknown" />
+          ></q-badge>
+          <q-badge
+            v-if="runtimeInfo.runtime !== 'apscheduler' && runtimeInfo.runtime !== 'fallback'"
+            color="grey"
+            label="Unknown"
+          ></q-badge>
         </div>
 
         <q-banner
