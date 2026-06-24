@@ -89,7 +89,9 @@ async def test_update_scheduler_job_uses_trimmed_schedule(ext_modules, monkeypat
 
     await crud.update_scheduler_job(job)
 
+    assert db_execute.await_args is not None
     assert db_execute.await_args.args[1]["schedule"] == "*/10 * * * *"
+    assert add_job_mock.await_args is not None
     assert add_job_mock.await_args.kwargs["cron_expr"] == "*/10 * * * *"
 
 

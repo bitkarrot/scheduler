@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime
 
@@ -27,7 +28,6 @@ async def execute_job(job_id: str) -> None:
         body_data = None
         if job.body:
             try:
-                import json
 
                 body_data = json.loads(job.body)
             except json.JSONDecodeError:

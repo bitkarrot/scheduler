@@ -152,30 +152,38 @@
           rounded
           class="bg-orange-2 text-black q-mt-sm"
         >
-          <div class="text-weight-medium">Recommendation: install APScheduler</div>
+          <div class="text-weight-medium">
+            Recommendation: install APScheduler
+          </div>
           <div class="text-caption q-mt-xs">
             You're running in fallback mode. Scheduler works, but APScheduler is
             recommended for production reliability.
           </div>
-          <pre class="q-mt-sm" style="white-space: pre-wrap; margin: 0">cd /home/exedev/lnbits
+          <pre class="q-mt-sm" style="white-space: pre-wrap; margin: 0">
+cd /home/exedev/lnbits
 . .venv/bin/activate
 pip install "apscheduler&gt;=3.10,&lt;4"
-# restart LNbits service afterwards</pre>
+# restart LNbits service afterwards</pre
+          >
         </q-banner>
       </q-card-section>
       <q-card-section class="q-pa-none">
         <q-separator></q-separator>
         <q-list>
-          <q-expansion-item icon="tips_and_updates" label="Runtime recommendation">
+          <q-expansion-item
+            icon="tips_and_updates"
+            label="Runtime recommendation"
+          >
             <q-card>
               <q-card-section class="text-caption">
-                If <b>Runtime = Fallback</b>, APScheduler is not installed in the
-                LNbits Python environment.
-                <br /><br />
+                If <b>Runtime = Fallback</b>, APScheduler is not installed in
+                the LNbits Python environment. <br /><br />
                 Install it with:
-                <pre style="white-space: pre-wrap; margin: 0">cd /home/exedev/lnbits
+                <pre style="white-space: pre-wrap; margin: 0">
+cd /home/exedev/lnbits
 . .venv/bin/activate
-pip install "apscheduler&gt;=3.10,&lt;4"</pre>
+pip install "apscheduler&gt;=3.10,&lt;4"</pre
+                >
                 Then restart LNbits and confirm the badge changes to
                 <b>APScheduler</b>.
               </q-card-section>

@@ -1,5 +1,6 @@
 import logging
 from http import HTTPStatus
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from lnbits.core.models import WalletTypeInfo
@@ -45,7 +46,6 @@ async def api_scheduler_runtime() -> dict:
         "runtime": "apscheduler" if HAS_APSCHEDULER else "fallback",
         "apscheduler_installed": HAS_APSCHEDULER,
     }
-
 
 
 @scheduler_api_router.get(
@@ -213,7 +213,7 @@ async def api_scheduler_jobs_create(
     response_model=Job,
     dependencies=[Depends(require_admin_key)],
 )
-async def api_scheduler_jobs_update(job_id: str, data: UpdateJobData) -> Job:
+async def api_scheduler_jobs_update(job_id: str, data: UpdateJobData) -> Optional[Job]:
     job = await get_scheduler_job(job_id)
     if not job:
         raise HTTPException(

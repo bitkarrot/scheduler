@@ -33,22 +33,27 @@ This refactoring migrates the LNBits Scheduler extension from OS crontab to APSc
 ## Key Behavior Changes
 
 ### Job Creation
+
 - **Before**: Created entry in OS crontab file + database
 - **After**: Creates database entry + adds to in-process APScheduler
 
 ### Job Execution
+
 - **Before**: Cron daemon spawns Python subprocess → cold start → HTTP call
 - **After**: APScheduler directly calls async coroutine → immediate HTTP call
 
 ### Job Status
+
 - **Before**: Database + crontab file (could drift)
 - **After**: Database only (APScheduler rehydrated on startup)
 
 ### Startup Behavior
+
 - **After**: On startup, all jobs with `status=True` are loaded from DB into APScheduler
 - This means scheduler state survives restarts correctly
 
 ### Misfire Handling
+
 - APScheduler configured with 60s grace time
 - If app is down when job should fire, it runs immediately on startup (within 60s window)
 
@@ -70,6 +75,7 @@ This refactoring migrates the LNBits Scheduler extension from OS crontab to APSc
 ## API Compatibility
 
 All existing API endpoints remain unchanged:
+
 - `GET /api/v1/jobs` - List jobs
 - `POST /api/v1/jobs` - Create job
 - `PUT /api/v1/jobs/{job_id}` - Update job
@@ -79,6 +85,7 @@ All existing API endpoints remain unchanged:
 ## Testing
 
 Test job execution:
+
 ```bash
 # Via API test endpoint
 curl -X GET "http://localhost:5000/scheduler/api/v1/test_log/{job_id}" \
@@ -86,6 +93,7 @@ curl -X GET "http://localhost:5000/scheduler/api/v1/test_log/{job_id}" \
 ```
 
 Check APScheduler status in logs:
+
 ```
 [scheduler] APScheduler started
 [scheduler] Loaded N active jobs from DB into scheduler
@@ -96,13 +104,16 @@ Check APScheduler status in logs:
 ## Troubleshooting
 
 ### Jobs not running
+
 1. Check database: `status` should be `true` (1)
 2. Check logs for "APScheduler started" message
 3. Check logs for "Loaded X active jobs" message
 4. Verify cron expression with APScheduler validator
 
 ### Migration from old version
+
 If you see jobs in database but not running:
+
 1. Toggle job status off then on via API
 2. This will re-register the job with APScheduler
 
@@ -149,6 +160,7 @@ Log result to database
 ## Configuration
 
 APScheduler settings in `scheduler_handler.py`:
+
 - `misfire_grace_time=60` - Jobs can run up to 60s late
 - `replace_existing=True` - Job updates replace old schedule
 - Scheduler runs in AsyncIO mode - native to FastAPI
@@ -156,6 +168,7 @@ APScheduler settings in `scheduler_handler.py`:
 ## Logs
 
 Job execution logs stored in database (`scheduler.logs` table):
+
 - `job_id` - Job identifier
 - `status` - HTTP status code (or "0" for errors)
 - `response` - HTTP response body (truncated to 4000 chars)

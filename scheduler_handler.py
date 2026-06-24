@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Awaitable, Callable, Optional
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
 logger = logging.getLogger("scheduler")
 
@@ -17,8 +17,11 @@ except Exception:  # pragma: no cover - depends on host runtime
     CronTrigger = None  # type: ignore[assignment]
     HAS_APSCHEDULER = False
 
+if TYPE_CHECKING:
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-_scheduler: Optional["AsyncIOScheduler"] = None
+
+_scheduler: Optional[Any] = None
 _fallback_runner: Optional[asyncio.Task] = None
 _fallback_jobs: dict[str, dict] = {}
 
@@ -96,7 +99,8 @@ async def _fallback_loop() -> None:
                 continue
             job["last_run"] = now
             try:
-                asyncio.create_task(job["func"](*job.get("args", [])))
+                task = asyncio.create_task(job["func"](*job.get("args", [])))
+                job["task"] = task
             except Exception as exc:
                 logger.error(f"Fallback scheduler failed to schedule {job_id}: {exc}")
 
@@ -106,9 +110,10 @@ async def _fallback_loop() -> None:
         await asyncio.sleep(delay)
 
 
-def get_scheduler() -> "AsyncIOScheduler":
+def get_scheduler() -> Any:
     if not HAS_APSCHEDULER:
         raise RuntimeError("APScheduler not available")
+    assert AsyncIOScheduler is not None
     global _scheduler
     if _scheduler is None:
         _scheduler = AsyncIOScheduler()
@@ -161,7 +166,7 @@ async def add_job(
 
     if HAS_APSCHEDULER:
         scheduler = get_scheduler()
-        trigger = CronTrigger.from_crontab(cron_expr)
+        trigger = CronTrigger.from_crontab(cron_expr)  # type: ignore[union-attr]
         scheduler.add_job(
             func,
             trigger=trigger,
@@ -249,6 +254,7 @@ async def list_jobs() -> list[str]:
 async def validate_cron_string(expr: str) -> bool:
     try:
         if HAS_APSCHEDULER:
+            assert CronTrigger is not None
             CronTrigger.from_crontab(expr)
         else:
             _parse_cron(expr)

@@ -32,6 +32,7 @@ poetry run lnbits
 ### 3. Verify Scheduler Started
 
 Check logs for these messages:
+
 ```
 [scheduler] APScheduler started
 [scheduler] Loaded N active jobs from DB into scheduler
@@ -62,6 +63,7 @@ entries, you can remove those legacy entries.
 ### Jobs show in UI but don't run
 
 **Solution**: Toggle job status off then on
+
 ```bash
 curl -X POST "http://localhost:5000/scheduler/api/v1/pause/{job_id}/false" \
   -H "X-Api-Key: your-admin-key"
@@ -72,19 +74,22 @@ curl -X POST "http://localhost:5000/scheduler/api/v1/pause/{job_id}/true" \
 ### APScheduler not starting
 
 **Check**: Dependencies installed correctly
+
 ```bash
 poetry show apscheduler httpx
 # Should show version 3.10.x for apscheduler
 ```
 
 **Check**: No import errors
+
 ```bash
 poetry run python -c "from apscheduler.schedulers.asyncio import AsyncIOScheduler; print('OK')"
 ```
 
 ### Jobs run but fail with HTTP errors
 
-**Check**: 
+**Check**:
+
 1. URL is accessible from LNBits server
 2. Headers (especially auth) are correct
 3. Body format matches API expectations
@@ -109,14 +114,14 @@ sudo systemctl restart lnbits
 
 ## Key Differences
 
-| Feature | Old (Crontab) | New (APScheduler) |
-|---------|---------------|-------------------|
-| Execution | Subprocess | In-process coroutine |
-| State | Crontab + DB | Database only |
-| Permissions | Needs crontab access | No special permissions |
-| Docker | Requires cron daemon | Works out of the box |
-| Performance | Cold start per job | Instant execution |
-| Debugging | Check cron logs + app logs | App logs only |
+| Feature     | Old (Crontab)              | New (APScheduler)      |
+| ----------- | -------------------------- | ---------------------- |
+| Execution   | Subprocess                 | In-process coroutine   |
+| State       | Crontab + DB               | Database only          |
+| Permissions | Needs crontab access       | No special permissions |
+| Docker      | Requires cron daemon       | Works out of the box   |
+| Performance | Cold start per job         | Instant execution      |
+| Debugging   | Check cron logs + app logs | App logs only          |
 
 ## Support
 
@@ -130,6 +135,7 @@ If you encounter issues:
 ## Success Criteria
 
 ✅ Migration is successful when:
+
 - APScheduler starts on application startup
 - All existing jobs are loaded into APScheduler
 - Jobs execute at their scheduled times

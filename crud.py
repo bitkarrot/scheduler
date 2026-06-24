@@ -41,9 +41,11 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
             schedule=schedule,
             selectedverb=data.selectedverb,
             url=data.url,
-            headers=[HeaderItems(**h) for h in json.loads(headers_json)]
-            if headers_json != "[]"
-            else None,
+            headers=(
+                [HeaderItems(**h) for h in json.loads(headers_json)]
+                if headers_json != "[]"
+                else None
+            ),
             body=data.body or "{}",
             extra=json.loads(extra_json) if extra_json != "{}" else None,
         )
@@ -108,9 +110,7 @@ async def get_scheduler_job(job_id: str) -> Optional[Job]:
         return None
 
     # Parse JSON strings back to Python objects
-    headers = (
-        [HeaderItems(**h) for h in json.loads(row.headers)] if row.headers else []
-    )
+    headers = [HeaderItems(**h) for h in json.loads(row.headers)] if row.headers else []
     extra = json.loads(row.extra) if row.extra else {}
 
     return Job(
@@ -178,7 +178,7 @@ async def delete_scheduler_jobs(job_id: str) -> None:
         raise ValueError(f"Failed to delete scheduler job: {e!s}") from e
 
 
-async def update_scheduler_job(job: Job) -> Job:
+async def update_scheduler_job(job: Job) -> Optional[Job]:
     try:
         if not job.url:
             raise ValueError("URL is required")
