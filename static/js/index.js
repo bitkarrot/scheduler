@@ -107,6 +107,11 @@ window.app = Vue.createApp({
       jobStatus: {
         show: false,
         data: {}
+      },
+      runtimeInfo: {
+        loaded: false,
+        runtime: 'unknown',
+        apscheduler_installed: null
       }
     }
   },
@@ -176,6 +181,30 @@ window.app = Vue.createApp({
           console.error('Error fetching jobs:', error)
           LNbits.utils.notifyApiError(error)
           self.jobs = []
+        })
+    },
+    getRuntimeInfo() {
+      const self = this
+      LNbits.api
+        .request(
+          'GET',
+          '/scheduler/api/v1/runtime',
+          self.g.user.wallets[0].adminkey
+        )
+        .then(function (response) {
+          const data = response && response.data ? response.data : {}
+          self.runtimeInfo.runtime = data.runtime || 'unknown'
+          self.runtimeInfo.apscheduler_installed =
+            typeof data.apscheduler_installed === 'boolean'
+              ? data.apscheduler_installed
+              : null
+          self.runtimeInfo.loaded = true
+        })
+        .catch(function (error) {
+          console.error('Error fetching runtime info:', error)
+          self.runtimeInfo.loaded = true
+          self.runtimeInfo.runtime = 'unknown'
+          self.runtimeInfo.apscheduler_installed = null
         })
     },
     openLogDialog(linkId) {
@@ -668,6 +697,7 @@ window.app = Vue.createApp({
   created() {
     if (this.g.user.wallets.length) {
       this.getJobs()
+      this.getRuntimeInfo()
     }
   }
 })
