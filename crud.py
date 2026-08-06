@@ -28,7 +28,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
 
         # Prepare database data
         headers_json = (
-            json.dumps([h.dict() for h in data.headers]) if data.headers else "[]"
+            json.dumps([h.model_dump() for h in data.headers]) if data.headers else "[]"
         )
         extra_json = json.dumps(data.extra) if data.extra else "{}"
 
@@ -190,7 +190,7 @@ async def update_scheduler_job(job: Job) -> Optional[Job]:
 
         # Convert headers and extra to JSON strings
         headers_json = (
-            json.dumps([h.dict() if hasattr(h, "dict") else h for h in job.headers])
+            json.dumps([h.model_dump() if hasattr(h, "dict") else h for h in job.headers])
             if job.headers
             else "[]"
         )

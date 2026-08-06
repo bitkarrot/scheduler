@@ -220,7 +220,7 @@ async def api_scheduler_jobs_update(job_id: str, data: UpdateJobData) -> Optiona
             status_code=HTTPStatus.NOT_FOUND, detail="Jobs does not exist."
         )
 
-    for key, value in data.dict(exclude_unset=True, exclude={"id"}).items():
+    for key, value in data.model_dump(exclude_unset=True, exclude={"id"}).items():
         setattr(job, key, value)
 
     return await update_scheduler_job(job)
