@@ -1,3 +1,38 @@
+[project]
+name = "lnbits-scheduler"
+version = "0.0.0"
+description = "LNbits, free and open-source Lightning wallet and accounts system."
+requires-python = ">=3.10,<3.13"
+authors = [{name = "Alan Bits", email = "alan@lnbits.com"}]
+dependencies = [
+    "lnbits",
+    "apscheduler>=3.10.0,<4.0",
+    "httpx>=0.27.0",
+    # Security-pinned transitive dependencies (resolved via Dependabot alerts)
+    "Pillow>=12.3.0",
+    "cryptography>=50.0.0",
+    "urllib3>=2.7.0",
+    "aiohttp>=3.14.3",
+    "h11>=0.16.0",
+    "ecdsa>=0.19.2",
+    "filelock>=3.20.3",
+    "idna>=3.15",
+    "marshmallow>=3.26.2",
+    "python-dotenv>=1.2.2",
+    "requests>=2.33.0",
+    "virtualenv>=20.36.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=26.3.1",
+    "pytest-asyncio>=0.21.0",
+    "pytest>=9.0.3",
+    "mypy>=1.5.1",
+    "pre-commit>=3.2.2",
+    "ruff>=0.3.2",
+]
+
 [tool.poetry]
 name = "lnbits-scheduler"
 version = "0.0.0"
@@ -114,3 +149,7 @@ extend-immutable-calls = [
     "fastapi.Query",
     "lnbits.decorators.parse_filters"
 ]
+
+[tool.uv]
+package = false
+prerelease = "allow"
