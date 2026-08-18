@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 from uuid import uuid4
 
 from lnbits.db import Database, Filters, Page
@@ -101,7 +100,7 @@ async def create_scheduler_jobs(admin_id: str, data: CreateJobData) -> Job:
         raise ValueError(f"Failed to create scheduler job: {e!s}") from e
 
 
-async def get_scheduler_job(job_id: str) -> Optional[Job]:
+async def get_scheduler_job(job_id: str) -> Job | None:
     row = await db.fetchone(
         "SELECT * FROM scheduler.jobs WHERE id = :id",
         {"id": job_id},
@@ -178,7 +177,7 @@ async def delete_scheduler_jobs(job_id: str) -> None:
         raise ValueError(f"Failed to delete scheduler job: {e!s}") from e
 
 
-async def update_scheduler_job(job: Job) -> Optional[Job]:
+async def update_scheduler_job(job: Job) -> Job | None:
     try:
         if not job.url:
             raise ValueError("URL is required")
@@ -246,7 +245,7 @@ async def update_scheduler_job(job: Job) -> Optional[Job]:
         raise ValueError(f"Failed to update job: {e!s}") from e
 
 
-async def pause_scheduler(job_id: str, active: Optional[bool] = None) -> Optional[Job]:
+async def pause_scheduler(job_id: str, active: bool | None = None) -> Job | None:
     """Update a job status and keep APScheduler runtime in sync with DB."""
     job = await get_scheduler_job(job_id)
     if not job:

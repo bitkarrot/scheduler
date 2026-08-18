@@ -1,7 +1,8 @@
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
+from typing import TYPE_CHECKING, Any
 
 logger = logging.getLogger("scheduler")
 
@@ -21,8 +22,8 @@ if TYPE_CHECKING:
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
-_scheduler: Optional[Any] = None
-_fallback_runner: Optional[asyncio.Task] = None
+_scheduler: Any | None = None
+_fallback_runner: asyncio.Task | None = None
 _fallback_jobs: dict[str, dict] = {}
 
 
