@@ -1,6 +1,5 @@
 import logging
 from http import HTTPStatus
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from lnbits.core.models import WalletTypeInfo
@@ -213,7 +212,7 @@ async def api_scheduler_jobs_create(
     response_model=Job,
     dependencies=[Depends(require_admin_key)],
 )
-async def api_scheduler_jobs_update(job_id: str, data: UpdateJobData) -> Optional[Job]:
+async def api_scheduler_jobs_update(job_id: str, data: UpdateJobData) -> Job | None:
     job = await get_scheduler_job(job_id)
     if not job:
         raise HTTPException(
