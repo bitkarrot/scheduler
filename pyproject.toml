@@ -33,6 +33,12 @@ dev = [
     "ruff>=0.3.2",
 ]
 
+[tool.poetry]
+# The shared lnbits lint workflow runs `poetry install`; this project is an
+# LNbits extension (not a package), so disable package mode to skip installing
+# the root project.
+package-mode = false
+
 [tool.mypy]
 explicit_package_bases = true
 namespace_packages = true
